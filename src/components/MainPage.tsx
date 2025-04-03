@@ -130,14 +130,14 @@ export function MainPage() {
                                 },
                                 {
                                     id: 6,
-                                    name: "Lightning Bolt",
-                                    image: "https://cards.scryfall.io/large/front/7/7/77c6fa74-5543-42ac-9ead-0e890b188e99.jpg?1706239968",
+                                    name: "Asmoranomardicadaistinaculdacar",
+                                    image: "https://cards.scryfall.io/large/front/d/9/d99a9a7d-d9ca-4c11-80ab-e39d5943a315.jpg?1632831210",
                                     quantity: 1,
                                 },
                                 {
                                     id: 7,
-                                    name: "Lightning Bolt",
-                                    image: "https://cards.scryfall.io/large/front/7/7/77c6fa74-5543-42ac-9ead-0e890b188e99.jpg?1706239968",
+                                    name: "Okina, Temple to the Grandfathers",
+                                    image: "https://cards.scryfall.io/large/front/e/e/ee8cf7aa-388c-47ec-be59-6ba98f3853cb.jpg?1562765617",
                                     quantity: 1,
                                 },
                                 ].map((e) => (
@@ -156,19 +156,6 @@ export function MainPage() {
                                         }}
                                         key={e.id}
                                     >
-                                        <CardHeader
-                                            title={e.name} sx={{ display: { xs: "none", sm: "block" } }}
-                                            slotProps={{
-                                                title: {
-                                                    sx: {
-                                                        textAlign: { xs: "left", md: "center" },
-                                                        fontSize: `${1.5 * scale}rem`, // Dynamically adjust font size based on scale
-                                                        height: `${80 * scale}px`
-                                                    },
-                                                }
-                                            }}
-                                        />
-                                        <Divider sx={{ display: { xs: "none", sm: "block" } }} />
                                         <CardMedia
                                             component="img"
                                             image={e.image}
@@ -192,20 +179,27 @@ export function MainPage() {
                                         >
                                             <CardHeader
                                                 title={e.name}
-                                                titleTypographyProps={{
-                                                    sx: {
-                                                        textAlign: { xs: "left", md: "center" },
-                                                        fontSize: `${1.5 * scale}rem`, // Dynamically adjust font size based on scale
-                                                    },
-                                                    display: { xs: "block", sm: "none" }
+                                                slotProps={{
+                                                    title: {
+                                                        sx: {
+                                                            textAlign: { xs: "left", md: "center" },
+                                                            fontSize: `${1.2 * scale}rem`,
+                                                            wordBreak: "break-all"
+                                                        },
+                                                    }
+                                                }}
+                                                sx={{
+                                                    maxWidth: "100%",
+                                                    padding: '0',
                                                 }}
                                             />
-                                            <Divider sx={{ display: { xs: "block", sm: "none" } }} />
+                                            <Divider />
                                             <CardActions
                                                 sx={{
                                                     display: "flex",
                                                     justifyContent: "space-between",
                                                     marginTop: "auto",
+                                                    paddingX: 0,
                                                 }}
                                             >
                                                 <Grid container justifyContent={"left"}>
