@@ -1,5 +1,17 @@
 ---
+import BaseHead from "../components/BaseHead.astro";
 import { MainPage } from "../components/MainPage";
+import { SITE_TITLE, SITE_DESCRIPTION } from "../consts";
 ---
 
-<MainPage client:load />
+<!doctype html>
+<html lang="en">
+    <head>
+        <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+    </head>
+    <body>
+        <main>
+            <MainPage client:load />
+        </main>
+    </body>
+</html>
