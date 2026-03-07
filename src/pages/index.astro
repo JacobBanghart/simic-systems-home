@@ -10,6 +10,7 @@ import Stripe from "stripe";
 import type { ProductData } from "../types";
 
 const { env } = Astro.locals.runtime;
+const homeTitle = `Magic: The Gathering Booster Boxes | ${SITE_TITLE}`;
 
 let products: ProductData[] = [];
 
@@ -47,12 +48,49 @@ if (cached) {
     console.error("Failed to fetch products from Stripe:", error);
   }
 }
+
+const productListSchema = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: homeTitle,
+  description: SITE_DESCRIPTION,
+  url: Astro.url.href,
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: products.map((product, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: Astro.url.href,
+      item: {
+        "@type": "Product",
+        name: product.name,
+        description: product.description,
+        image: product.image ? [product.image] : undefined,
+        category: product.category,
+        offers: {
+          "@type": "Offer",
+          priceCurrency: "USD",
+          price: (product.price / 100).toFixed(2),
+          availability:
+            product.quantity > 0
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+          url: Astro.url.href,
+        },
+      },
+    })),
+  },
+};
 ---
 
 <!doctype html>
 <html lang="en">
     <head>
-        <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+        <BaseHead title={homeTitle} description={SITE_DESCRIPTION} />
+        <script
+            type="application/ld+json"
+            set:html={JSON.stringify(productListSchema)}
+        />
     </head>
     <body>
         <Header />
