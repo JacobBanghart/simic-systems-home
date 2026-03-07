@@ -1,12 +1,14 @@
-import { createTheme, type ThemeOptions } from '@mui/material/styles';
+import { createTheme } from '@mui/material/styles';
 
 export const themeOptions = createTheme({
     colorSchemes: {
         dark: true,
         light: true,
     },
+    cssVariables: {
+        colorSchemeSelector: '[data-theme="%s"]',
+    },
     palette: {
-        mode: 'light',
         primary: {
             main: '#279214',
             light: '#0fde3e',
@@ -14,5 +16,5 @@ export const themeOptions = createTheme({
         secondary: {
             main: '#008fff',
         },
-    }
+    },
 })

@@ -14,6 +14,22 @@
   --gray-gradient: rgba(var(--gray-light), 50%), #fff;
   --box-shadow: 0 2px 6px rgba(var(--gray), 25%),
     0 8px 24px rgba(var(--gray), 33%), 0 16px 32px rgba(var(--gray), 33%);
+  --bg-primary: #fff;
+  --bg-secondary: #f5f5f5;
+}
+
+html[data-theme="dark"] {
+  --accent: #6b7fff;
+  --accent-dark: #4d65ff;
+  --black: 230, 233, 240;
+  --gray: 160, 170, 195;
+  --gray-light: 40, 44, 55;
+  --gray-dark: 210, 215, 225;
+  --gray-gradient: rgba(var(--gray-light), 50%), #121218;
+  --box-shadow: 0 2px 6px rgba(0, 0, 0, 40%),
+    0 8px 24px rgba(0, 0, 0, 50%),  0 16px 32px rgba(0, 0, 0, 50%);
+  --bg-primary: #121218;
+  --bg-secondary: #1a1a24;
 }
 
 @font-face {
@@ -37,8 +53,7 @@ body {
   margin: 0;
   padding: 0;
   text-align: left;
-  background: linear-gradient(var(--gray-gradient)) no-repeat;
-  background-size: 100% 600px;
+  background: var(--bg-primary);
   word-wrap: break-word;
   overflow-wrap: break-word;
   color: rgb(var(--gray-dark));
@@ -121,7 +136,6 @@ img {
 
 code {
   padding: 2px 5px;
-  /* background-color: rgb(var(--gray-light)); */
   border-radius: 2px;
 }
 
@@ -160,12 +174,8 @@ hr {
   height: 1px;
   width: 1px;
   overflow: hidden;
-  /* IE6, IE7 - a 0 height clip, off to the bottom right of the visible 1px box */
   clip: rect(1px 1px 1px 1px);
-  /* maybe deprecated but we need to support legacy browsers */
   clip: rect(1px, 1px, 1px, 1px);
-  /* modern browsers, clip-path works inwards from each corner */
   clip-path: inset(50%);
-  /* added line to stop words getting smushed together (as they go onto separate lines and some screen readers do not understand line feeds as a space */
   white-space: nowrap;
 }

@@ -2,6 +2,8 @@
 export const prerender = false;
 
 import BaseHead from "../components/BaseHead.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
 import { MainPage } from "../components/MainPage";
 import { SITE_TITLE, SITE_DESCRIPTION } from "../consts";
 import Stripe from "stripe";
@@ -53,8 +55,10 @@ if (cached) {
         <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
     </head>
     <body>
+        <Header />
         <main>
             <MainPage client:load products={products} />
         </main>
+        <Footer />
     </body>
 </html>
