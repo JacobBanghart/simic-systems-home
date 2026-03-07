@@ -5,7 +5,9 @@ export const prerender = false;
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const { env } = (locals as any).runtime;
-  const stripe = new Stripe(env.STRIPE_SECRET_KEY);
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+    httpClient: Stripe.createFetchHttpClient(),
+  });
 
   const body = await request.text();
   const sig = request.headers.get("stripe-signature");
@@ -16,10 +18,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(
+    event = await stripe.webhooks.constructEventAsync(
       body,
       sig,
-      env.STRIPE_WEBHOOK_SECRET
+      env.STRIPE_WEBHOOK_SECRET,
+      undefined,
+      Stripe.createSubtleCryptoProvider()
     );
   } catch (err) {
     console.error("Webhook signature verification failed:", err);
