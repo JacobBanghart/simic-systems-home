@@ -27,6 +27,43 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const stripe = new Stripe(env.STRIPE_SECRET_KEY);
 
     const origin = new URL(request.url).origin;
+    const checkoutItems = await Promise.all(
+      body.items.map(async (item) => {
+        if (!item.priceId || item.quantity <= 0) {
+          throw new Error("Invalid cart item");
+        }
+
+        const price = await stripe.prices.retrieve(item.priceId, {
+          expand: ["product"],
+        });
+
+        if (!price.active) {
+          throw new Error("One or more cart items are no longer available");
+        }
+
+        if (!price.product || typeof price.product === "string") {
+          throw new Error("One or more cart items are no longer available");
+        }
+
+        const product = price.product as Stripe.Product;
+        const availableQuantity = parseInt(product.metadata.quantity || "0", 10);
+
+        if (item.quantity > availableQuantity) {
+          const label = product.name || "This product";
+          throw new Error(
+            availableQuantity > 0
+              ? `${label} only has ${availableQuantity} available`
+              : `${label} is out of stock`
+          );
+        }
+
+        return {
+          priceId: price.id,
+          quantity: item.quantity,
+        };
+      })
+    );
+
     const shippingRates = await stripe.shippingRates.list({
       active: true,
       limit: 100,
@@ -37,7 +74,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      line_items: body.items.map((item) => ({
+      line_items: checkoutItems.map((item) => ({
         price: item.priceId,
         quantity: item.quantity,
       })),
