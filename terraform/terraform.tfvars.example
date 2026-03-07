@@ -1,0 +1,7 @@
+# Cloudflare credentials -- never commit real values
+cloudflare_account_id = "REPLACE_ME"
+cloudflare_api_token  = "REPLACE_ME"
+
+# R2 backend auth is via environment variables (not in this file):
+#   export AWS_ACCESS_KEY_ID=<R2 access key>
+#   export AWS_SECRET_ACCESS_KEY=<R2 secret key>

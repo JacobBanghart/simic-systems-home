@@ -1,28 +1,28 @@
----
+import type { APIRoute } from "astro";
+import Stripe from "stripe";
+import type { ProductData } from "../../types";
+
 export const prerender = false;
 
-import BaseHead from "../components/BaseHead.astro";
-import { MainPage } from "../components/MainPage";
-import { SITE_TITLE, SITE_DESCRIPTION } from "../consts";
-import Stripe from "stripe";
-import type { ProductData } from "../types";
+export const GET: APIRoute = async ({ locals }) => {
+  const { env } = (locals as any).runtime;
 
-const { env } = Astro.locals.runtime;
+  const cached = await env.PRODUCT_CACHE.get("products", "json") as ProductData[] | null;
+  if (cached) {
+    return new Response(JSON.stringify(cached), {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
-let products: ProductData[] = [];
-
-const cached = await env.PRODUCT_CACHE.get("products", "json") as ProductData[] | null;
-if (cached) {
-  products = cached;
-} else {
   try {
     const stripe = new Stripe(env.STRIPE_SECRET_KEY);
+
     const stripeProducts = await stripe.products.list({
       active: true,
       expand: ["data.default_price"],
     });
 
-    products = stripeProducts.data
+    const products: ProductData[] = stripeProducts.data
       .filter((product) => product.default_price && typeof product.default_price !== "string")
       .map((product) => {
         const price = product.default_price as Stripe.Price;
@@ -41,20 +41,15 @@ if (cached) {
     await env.PRODUCT_CACHE.put("products", JSON.stringify(products), {
       expirationTtl: 300,
     });
+
+    return new Response(JSON.stringify(products), {
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
     console.error("Failed to fetch products from Stripe:", error);
+    return new Response(JSON.stringify({ error: "Failed to load products" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
-}
----
-
-<!doctype html>
-<html lang="en">
-    <head>
-        <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-    </head>
-    <body>
-        <main>
-            <MainPage client:load products={products} />
-        </main>
-    </body>
-</html>
+};

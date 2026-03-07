@@ -26,3 +26,14 @@ pnpm-debug.log*
 # wrangler files
 .wrangler
 .dev.vars
+
+# internal docs
+docs/
+
+# terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/terraform.tfvars
+terraform/backend.conf
+terraform/.terraform.lock.hcl

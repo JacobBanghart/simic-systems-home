@@ -2,4 +2,4 @@
 // You can import this data from anywhere in your site by using the `import` keyword.
 
 export const SITE_TITLE = "Simic Systems";
-export const SITE_DESCRIPTION = "Under Construction!";
+export const SITE_DESCRIPTION = "MTG booster boxes and trading card products";
