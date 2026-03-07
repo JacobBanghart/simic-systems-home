@@ -9,7 +9,12 @@ import react from "@astrojs/react"
 // https://astro.build/config
 export default defineConfig({
   site: "https://simic.systems",
-  integrations: [mdx(), sitemap(), react({
+  integrations: [mdx(), sitemap({
+    filter: (page) =>
+      !page.includes('/checkout/') &&
+      !page.includes('/blog/') &&
+      !page.includes('/api/'),
+  }), react({
     experimentalReactChildren: true
   })],
   adapter: cloudflare({

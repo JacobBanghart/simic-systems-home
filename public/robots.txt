@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /checkout/
+Disallow: /blog/
+Disallow: /api/
+
+Sitemap: https://simic.systems/sitemap-index.xml
