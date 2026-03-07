@@ -6,6 +6,7 @@ import {
   ThemeProvider,
   IconButton,
   Badge,
+  Stack,
 } from "@mui/material";
 import { useState } from "react";
 import { themeOptions } from "./theme";
@@ -90,6 +91,16 @@ function StoreContent({ products }: MainPageProps) {
 
       {/* Product Grid */}
       <Container maxWidth="lg" sx={{ py: 3 }}>
+        <Stack spacing={1.5} sx={{ mb: 4, maxWidth: 820 }}>
+          <Typography component="h1" variant="h3">
+            Magic: The Gathering Booster Boxes and Sealed MTG Products
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Shop sealed Magic: The Gathering booster boxes, collector boxes,
+            play boosters, and other MTG products with secure checkout and
+            United States shipping.
+          </Typography>
+        </Stack>
         {renderProductGrid(products)}
       </Container>
 

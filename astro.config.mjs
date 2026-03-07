@@ -12,7 +12,6 @@ export default defineConfig({
   integrations: [mdx(), sitemap({
     filter: (page) =>
       !page.includes('/checkout/') &&
-      !page.includes('/blog/') &&
       !page.includes('/api/'),
   }), react({
     experimentalReactChildren: true
