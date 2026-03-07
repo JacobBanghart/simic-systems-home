@@ -1,0 +1,68 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE } from '../consts';
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`Contact - ${SITE_TITLE}`} description="Contact Simic Systems" />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<article>
+				<h1>Contact Us</h1>
+				<p>
+					Have a question about an order, a product, or anything else? We're here to help.
+				</p>
+
+				<h2>Email</h2>
+				<p>
+					<a href="mailto:contact@simic.systems">contact@simic.systems</a>
+				</p>
+				<p>
+					We aim to respond to all inquiries within 1–2 business days.
+				</p>
+
+				<h2>Order Issues</h2>
+				<p>
+					If you have a problem with an order (damaged item, wrong product, shipping question), please include:
+				</p>
+				<ul>
+					<li>Your order number or Stripe receipt email</li>
+					<li>A description of the issue</li>
+					<li>Photos, if applicable (damaged packaging, wrong item, etc.)</li>
+				</ul>
+
+				<h2>Returns</h2>
+				<p>
+					For return requests, please review our <a href="/shipping">Shipping & Returns</a> policy first, then email us to initiate a return.
+				</p>
+			</article>
+		</main>
+		<Footer />
+	</body>
+</html>
+<style>
+	main {
+		max-width: 720px;
+		margin: 0 auto;
+		padding: 1rem 1.5rem;
+	}
+	article h1 {
+		margin-bottom: 1rem;
+	}
+	article h2 {
+		margin-top: 2rem;
+		margin-bottom: 0.5rem;
+	}
+	ul {
+		margin-bottom: 1.5em;
+	}
+	li {
+		margin-bottom: 0.5em;
+	}
+</style>

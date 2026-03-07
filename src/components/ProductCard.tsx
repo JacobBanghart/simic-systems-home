@@ -1,27 +1,21 @@
 import {
   Card,
-  CardHeader,
-  Divider,
-  CardMedia,
-  CardActions,
   Typography,
   Button,
   Box,
-  Grid,
 } from "@mui/material";
 import type { ProductData } from "../types";
 
 interface ProductCardProps {
   product: ProductData;
   onAddToCart: (product: ProductData) => void;
-  scale: number;
 }
 
 function formatPrice(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
-export function ProductCard({ product, onAddToCart, scale }: ProductCardProps) {
+export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const outOfStock = product.quantity <= 0;
 
   return (
@@ -29,97 +23,90 @@ export function ProductCard({ product, onAddToCart, scale }: ProductCardProps) {
       sx={{
         display: "flex",
         flexDirection: { xs: "row", sm: "column" },
-        width: { xs: "100%", sm: `${14 * scale}rem` },
-        height: "auto",
-        backgroundColor: "background.paper",
+        width: { xs: "100%", sm: "18rem" },
         boxShadow: 3,
         border: "1px solid",
         borderColor: "divider",
         borderRadius: "8px",
-        transformOrigin: "top left",
         opacity: outOfStock ? 0.6 : 1,
+        overflow: "hidden",
       }}
     >
-      <CardMedia
+      <Box
         component="img"
-        image={product.image}
+        src={product.image}
         alt={product.name}
         sx={{
-          paddingX: { xs: "0px", sm: "8px" },
-          width: { xs: "40%", sm: "calc(100% - 16px)" },
-          marginTop: { xs: "0px", sm: "8px" },
-          height: "auto",
+          width: { xs: "40%", sm: "100%" },
+          height: { xs: "auto", sm: "14rem" },
+          flexShrink: 0,
           objectFit: "contain",
+          objectPosition: "center",
+          padding: "12px",
+          boxSizing: "border-box",
+          display: "block",
         }}
       />
       <Box
         sx={{
           display: "flex",
           flexDirection: "column",
-          justifyContent: "space-between",
-          padding: 2,
+          padding: "12px",
           flex: 1,
+          gap: "4px",
         }}
       >
-        <CardHeader
-          title={product.name}
-          slotProps={{
-            title: {
-              sx: {
-                textAlign: { xs: "left", md: "center" },
-                fontSize: `${1.2 * scale}rem`,
-                wordBreak: "break-all",
-              },
-            },
-          }}
-          sx={{
-            maxWidth: "100%",
-            padding: "0",
-          }}
-        />
         <Typography
           sx={{
-            textAlign: { xs: "left", md: "center" },
-            fontSize: `${1.1 * scale}rem`,
-            fontWeight: "bold",
-            py: 1,
+            fontSize: "0.9rem",
+            fontWeight: 600,
+            lineHeight: 1.3,
+            wordBreak: "break-word",
+            textAlign: "center",
           }}
         >
-          {formatPrice(product.price)}
+          {product.name}
         </Typography>
-        <Divider />
-        <CardActions
+        <Box
           sx={{
             display: "flex",
+            alignItems: "baseline",
             justifyContent: "space-between",
-            marginTop: "auto",
-            paddingX: 0,
+            mt: "auto",
+            pt: "8px",
           }}
         >
-          <Grid container justifyContent={"left"}>
-            <Typography
-              gutterBottom
-              sx={{
-                color: "text.secondary",
-                fontSize: `${1 * scale}rem`,
-                paddingLeft: "8px",
-              }}
-            >
-              {outOfStock
-                ? "Out of Stock"
-                : `Qty Available: ${product.quantity}`}
-            </Typography>
-            <Button
-              onClick={() => onAddToCart(product)}
-              disabled={outOfStock}
-              sx={{
-                fontSize: `${0.9 * scale}rem`,
-              }}
-            >
-              {outOfStock ? "Sold Out" : "Add to Cart"}
-            </Button>
-          </Grid>
-        </CardActions>
+          <Typography
+            sx={{
+              fontSize: "1.1rem",
+              fontWeight: 700,
+            }}
+          >
+            {formatPrice(product.price)}
+          </Typography>
+          <Typography
+            sx={{
+              color: "text.secondary",
+              fontSize: "0.75rem",
+            }}
+          >
+            {outOfStock ? "Out of stock" : `${product.quantity} available`}
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          onClick={() => onAddToCart(product)}
+          disabled={outOfStock}
+          fullWidth
+          size="small"
+          sx={{
+            mt: "8px",
+            fontSize: "0.8rem",
+            textTransform: "none",
+          }}
+        >
+          {outOfStock ? "Sold Out" : "Add to Cart"}
+        </Button>
       </Box>
     </Card>
   );

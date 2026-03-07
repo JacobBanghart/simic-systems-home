@@ -1,0 +1,82 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE } from '../consts';
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`Terms of Service - ${SITE_TITLE}`} description="Terms of service for Simic Systems" />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<article>
+				<h1>Terms of Service</h1>
+				<p><em>Last updated: March 7, 2026</em></p>
+
+				<p>
+					By using the Simic Systems website at simic.systems and making purchases, you agree to the following terms.
+				</p>
+
+				<h2>Products</h2>
+				<p>
+					All products sold through our store are factory-sealed trading card products. Product images and descriptions are provided for reference. Actual packaging may vary slightly from what is shown.
+				</p>
+				<p>
+					Product availability and pricing are subject to change without notice. We reserve the right to limit quantities, refuse orders, or cancel orders at our discretion.
+				</p>
+
+				<h2>Orders and Payment</h2>
+				<p>
+					All payments are processed securely through Stripe. By placing an order, you confirm that the payment information you provide is accurate and that you are authorized to use the payment method.
+				</p>
+				<p>
+					Prices are listed in US dollars. You are responsible for any applicable taxes or duties.
+				</p>
+
+				<h2>Shipping</h2>
+				<p>
+					We ship to addresses within the United States only. See our <a href="/shipping">Shipping & Returns</a> page for full details on shipping timelines and return procedures.
+				</p>
+
+				<h2>Returns and Refunds</h2>
+				<p>
+					Returns are accepted within 14 days of delivery for unopened, factory-sealed items. See our <a href="/shipping">Shipping & Returns</a> page for the complete return policy.
+				</p>
+
+				<h2>Limitation of Liability</h2>
+				<p>
+					Simic Systems is not responsible for delays caused by shipping carriers, customs, or circumstances beyond our control. Our liability is limited to the purchase price of the products ordered.
+				</p>
+
+				<h2>Changes to These Terms</h2>
+				<p>
+					We may update these terms from time to time. Changes will be posted on this page with an updated "last updated" date. Continued use of the site after changes constitutes acceptance of the new terms.
+				</p>
+
+				<h2>Contact</h2>
+				<p>
+					Questions about these terms? Contact us at <a href="mailto:contact@simic.systems">contact@simic.systems</a>.
+				</p>
+			</article>
+		</main>
+		<Footer />
+	</body>
+</html>
+<style>
+	main {
+		max-width: 720px;
+		margin: 0 auto;
+		padding: 1rem 1.5rem;
+	}
+	article h1 {
+		margin-bottom: 1rem;
+	}
+	article h2 {
+		margin-top: 2rem;
+		margin-bottom: 0.5rem;
+	}
+</style>

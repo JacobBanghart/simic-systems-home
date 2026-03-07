@@ -1,0 +1,65 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE } from '../consts';
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`About - ${SITE_TITLE}`} description="About Simic Systems - your source for trading card products" />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<article>
+				<h1>About Simic Systems</h1>
+				<p>
+					Simic Systems is an online retailer specializing in sealed Magic: The Gathering products. We carry booster boxes, collector boxes, and other sealed products.
+				</p>
+				<p>
+					We're committed to offering competitive prices on genuine, factory-sealed products shipped directly to you. Every item in our store is sourced from authorized distributors.
+				</p>
+
+				<h2>What We Sell</h2>
+				<ul>
+					<li><strong>Booster boxes</strong> — Draft, set, collector, and play boosters</li>
+					<li><strong>Collector products</strong> — Bundle packs, special edition sets, and more</li>
+				</ul>
+
+				<h2>How It Works</h2>
+				<ol>
+					<li>Browse our store and add items to your cart</li>
+					<li>Check out securely through Stripe</li>
+					<li>We ship your order via USPS within the United States</li>
+				</ol>
+
+				<p>
+					Have a question? Visit our <a href="/contact">contact page</a> to get in touch.
+				</p>
+			</article>
+		</main>
+		<Footer />
+	</body>
+</html>
+<style>
+	main {
+		max-width: 720px;
+		margin: 0 auto;
+		padding: 1rem 1.5rem;
+	}
+	article h1 {
+		margin-bottom: 1rem;
+	}
+	article h2 {
+		margin-top: 2rem;
+		margin-bottom: 0.5rem;
+	}
+	ul, ol {
+		margin-bottom: 1.5em;
+	}
+	li {
+		margin-bottom: 0.5em;
+	}
+</style>

@@ -1,0 +1,77 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE } from '../consts';
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`Shipping & Returns - ${SITE_TITLE}`} description="Shipping and return policy for Simic Systems" />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<article>
+				<h1>Shipping & Returns</h1>
+
+				<h2>Shipping Policy</h2>
+				<p>
+					We currently ship to addresses within the <strong>United States</strong> only. Orders are shipped via USPS.
+				</p>
+				<ul>
+					<li>Orders are typically processed and shipped within 1–3 business days.</li>
+					<li>You will receive a shipping confirmation email with tracking information once your order has shipped.</li>
+					<li>Delivery times vary by location but generally take 3–7 business days after shipment.</li>
+				</ul>
+
+				<h2>Return Policy</h2>
+				<p>
+					Due to the nature of sealed trading card products, we accept returns under the following conditions:
+				</p>
+				<ul>
+					<li>Items must be <strong>unopened and in original factory-sealed condition</strong>.</li>
+					<li>Return requests must be made within <strong>14 days</strong> of delivery.</li>
+					<li>The buyer is responsible for return shipping costs.</li>
+					<li>Once we receive and inspect the returned item, a refund will be issued to your original payment method within 5–10 business days.</li>
+				</ul>
+
+				<h2>Damaged or Incorrect Orders</h2>
+				<p>
+					If your order arrives damaged or you receive the wrong item, please contact us within 7 days of delivery at <a href="mailto:contact@simic.systems">contact@simic.systems</a>. Include photos of the issue and your order number, and we'll make it right.
+				</p>
+
+				<h2>Refunds</h2>
+				<p>
+					Refunds are processed back to the original payment method used at checkout. Please allow 5–10 business days for the refund to appear on your statement after we've processed the return.
+				</p>
+
+				<p>
+					Questions about shipping or returns? <a href="/contact">Contact us</a>.
+				</p>
+			</article>
+		</main>
+		<Footer />
+	</body>
+</html>
+<style>
+	main {
+		max-width: 720px;
+		margin: 0 auto;
+		padding: 1rem 1.5rem;
+	}
+	article h1 {
+		margin-bottom: 1rem;
+	}
+	article h2 {
+		margin-top: 2rem;
+		margin-bottom: 0.5rem;
+	}
+	ul {
+		margin-bottom: 1.5em;
+	}
+	li {
+		margin-bottom: 0.5em;
+	}
+</style>
