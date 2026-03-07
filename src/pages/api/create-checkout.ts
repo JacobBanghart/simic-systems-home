@@ -41,6 +41,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
         price: item.priceId,
         quantity: item.quantity,
       })),
+      automatic_tax: {
+        enabled: true,
+      },
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout/cancel`,
       shipping_address_collection: {
