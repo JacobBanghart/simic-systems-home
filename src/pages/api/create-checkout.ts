@@ -1,0 +1,58 @@
+import type { APIRoute } from "astro";
+import Stripe from "stripe";
+
+export const prerender = false;
+
+export const POST: APIRoute = async ({ request, locals }) => {
+  const { env } = (locals as any).runtime;
+
+  let body: { items: { priceId: string; quantity: number }[] };
+  try {
+    body = await request.json();
+  } catch {
+    return new Response(JSON.stringify({ error: "Invalid request body" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  if (!body.items || !Array.isArray(body.items) || body.items.length === 0) {
+    return new Response(JSON.stringify({ error: "Cart is empty" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  try {
+    const stripe = new Stripe(env.STRIPE_SECRET_KEY);
+
+    const origin = new URL(request.url).origin;
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      line_items: body.items.map((item) => ({
+        price: item.priceId,
+        quantity: item.quantity,
+      })),
+      success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/checkout/cancel`,
+      shipping_address_collection: {
+        allowed_countries: ["US"],
+      },
+    });
+
+    return new Response(JSON.stringify({ url: session.url }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Failed to create checkout session:", error);
+    const message =
+      error instanceof Stripe.errors.StripeError
+        ? error.message
+        : "Failed to create checkout session";
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+};
