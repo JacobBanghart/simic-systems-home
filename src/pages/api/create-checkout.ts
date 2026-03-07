@@ -27,6 +27,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const stripe = new Stripe(env.STRIPE_SECRET_KEY);
 
     const origin = new URL(request.url).origin;
+    const shippingRates = await stripe.shippingRates.list({
+      active: true,
+      limit: 100,
+    });
+    const shippingOptions = shippingRates.data.map((shippingRate) => ({
+      shipping_rate: shippingRate.id,
+    }));
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -39,6 +46,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       shipping_address_collection: {
         allowed_countries: ["US"],
       },
+      ...(shippingOptions.length > 0 ? { shipping_options: shippingOptions } : {}),
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
