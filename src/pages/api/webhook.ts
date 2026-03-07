@@ -3,6 +3,17 @@ import Stripe from "stripe";
 
 export const prerender = false;
 
+const PRODUCT_CACHE_KEY = "products";
+const productCacheInvalidationEvents = new Set([
+  "checkout.session.completed",
+  "product.created",
+  "product.updated",
+  "product.deleted",
+  "price.created",
+  "price.updated",
+  "price.deleted",
+]);
+
 export const POST: APIRoute = async ({ request, locals }) => {
   const { env } = (locals as any).runtime;
   const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
@@ -57,14 +68,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
         });
       }
 
-      await env.PRODUCT_CACHE.delete("products");
-
       console.log(
         `Sale completed: ${session.id}, amount: ${session.amount_total}`
       );
     } catch (err) {
       console.error("Error processing checkout.session.completed:", err);
     }
+  }
+
+  if (productCacheInvalidationEvents.has(event.type)) {
+    await env.PRODUCT_CACHE.delete(PRODUCT_CACHE_KEY);
   }
 
   return new Response(JSON.stringify({ received: true }), {

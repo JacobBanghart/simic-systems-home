@@ -19,6 +19,7 @@ export const GET: APIRoute = async ({ locals }) => {
 
     const stripeProducts = await stripe.products.list({
       active: true,
+      limit: 100,
       expand: ["data.default_price"],
     });
 
