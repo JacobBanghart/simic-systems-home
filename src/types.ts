@@ -7,6 +7,7 @@ export interface ProductData {
   priceId: string;
   quantity: number;
   image: string;
+  sortOrder: number;
 }
 
 export interface CartItem {

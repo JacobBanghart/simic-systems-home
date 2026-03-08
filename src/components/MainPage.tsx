@@ -44,7 +44,11 @@ function StoreContent({ products }: MainPageProps) {
         return right.quantity - left.quantity;
       case "featured":
       default:
-        return 0;
+        if (left.sortOrder !== right.sortOrder) {
+          return left.sortOrder - right.sortOrder;
+        }
+
+        return left.name.localeCompare(right.name);
     }
   });
 

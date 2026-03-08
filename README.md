@@ -46,10 +46,44 @@ All commands are run from the root of the project, from a terminal:
 | `npm install`             | Installs dependencies                            |
 | `npm run dev`             | Starts local dev server at `localhost:4321`      |
 | `npm run build`           | Build your production site to `./dist/`          |
+| `npm run catalog:plan`    | Preview Stripe catalog changes from `catalog/products.mjs` |
+| `npm run catalog:pull`    | Pull current Stripe products into `catalog/products.mjs` |
+| `npm run catalog:sync`    | Apply catalog changes to Stripe                  |
 | `npm run preview`         | Preview your build locally, before deploying     |
 | `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `npm run astro -- --help` | Get help using the Astro CLI                     |
 | `npm run deploy`          | Deploy your production site to Cloudflare        |
+
+## Stripe Catalog Management
+
+This project can manage storefront products from a single repo file instead of editing each product manually in Stripe.
+
+Edit [catalog/products.mjs](catalog/products.mjs) to control:
+
+- product name and description
+- price in cents
+- product image URL
+- category metadata
+- display order in the storefront
+- active or hidden status
+- optional stock quantity
+
+Then run:
+
+```bash
+npm run catalog:pull
+npm run catalog:plan
+npm run catalog:sync
+```
+
+Notes:
+
+- `npm run catalog:pull` is the easiest bootstrap path if you already have products in Stripe.
+- The sync script uses `STRIPE_SECRET_KEY` from your shell or `.dev.vars`.
+- Price changes create a new Stripe price and swap the product's default price, which is the correct Stripe workflow.
+- If `quantity` is omitted for a product, the current Stripe stock metadata is preserved.
+- Managed products removed from the catalog file are archived in Stripe the next time you sync.
+- Storefront cache now refreshes within about 60 seconds after Stripe changes.
 
 ## 👀 Want to learn more?
 

@@ -36,6 +36,9 @@
   "scripts": {
     "astro": "astro",
     "build": "astro build",
+    "catalog:plan": "node scripts/sync-stripe-catalog.mjs --dry-run",
+    "catalog:pull": "node scripts/pull-stripe-catalog.mjs",
+    "catalog:sync": "node scripts/sync-stripe-catalog.mjs",
     "check": "astro build && tsc && wrangler deploy --dry-run",
     "deploy": "astro build && wrangler deploy",
     "dev": "astro dev",

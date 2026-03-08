@@ -1,9 +1,9 @@
 import type { APIRoute } from "astro";
 import Stripe from "stripe";
+import { invalidateProductCache } from "../../lib/stripeProducts";
 
 export const prerender = false;
 
-const PRODUCT_CACHE_KEY = "products";
 const productCacheInvalidationEvents = new Set([
   "checkout.session.completed",
   "product.created",
@@ -77,7 +77,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   if (productCacheInvalidationEvents.has(event.type)) {
-    await env.PRODUCT_CACHE.delete(PRODUCT_CACHE_KEY);
+    await invalidateProductCache(env);
   }
 
   return new Response(JSON.stringify({ received: true }), {
