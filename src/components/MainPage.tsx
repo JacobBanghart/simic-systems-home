@@ -95,12 +95,6 @@ function StoreContent({ products }: MainPageProps) {
       <Grid
         container
         spacing={{ xs: 2, md: 3 }}
-        fontSize={{ xs: "0.5rem", sm: "0.8rem", md: "1rem" }}
-        sx={{
-          flexWrap: "wrap",
-          containerType: "inline-size",
-          paddingTop: "15px",
-        }}
       >
         {items.map((product) => (
           <ProductCard
