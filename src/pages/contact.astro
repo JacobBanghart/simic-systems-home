@@ -2,6 +2,7 @@
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import { ContactForm } from '../components/ContactForm';
 import { SITE_TITLE } from '../consts';
 ---
 
@@ -16,16 +17,11 @@ import { SITE_TITLE } from '../consts';
 			<article>
 				<h1>Contact Us</h1>
 				<p>
-					Have a question about an order, a product, or anything else? We're here to help.
+					Have a question about an order, a product, or anything else? Fill out the form below or email us directly at
+					<a href="mailto:contact@simic.systems">contact@simic.systems</a>.
 				</p>
 
-				<h2>Email</h2>
-				<p>
-					<a href="mailto:contact@simic.systems">contact@simic.systems</a>
-				</p>
-				<p>
-					We aim to respond to all inquiries within 1–2 business days.
-				</p>
+				<ContactForm client:load />
 
 				<h2>Order Issues</h2>
 				<p>
@@ -39,7 +35,7 @@ import { SITE_TITLE } from '../consts';
 
 				<h2>Returns</h2>
 				<p>
-					For return requests, please review our <a href="/shipping">Shipping & Returns</a> policy first, then email us to initiate a return.
+					For return requests, please review our <a href="/shipping/">Shipping & Returns</a> policy first, then contact us to initiate a return.
 				</p>
 			</article>
 		</main>
