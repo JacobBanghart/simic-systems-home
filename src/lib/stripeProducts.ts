@@ -9,12 +9,12 @@ interface StoreEnv {
   STRIPE_SECRET_KEY: string;
 }
 
-function parseInteger(value: string | undefined, fallback: number): number {
+export function parseInteger(value: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(value ?? "", 10);
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function mapStripeProduct(product: Stripe.Product): ProductData | null {
+export function mapStripeProduct(product: Stripe.Product): ProductData | null {
   if (!product.default_price || typeof product.default_price === "string") {
     return null;
   }
