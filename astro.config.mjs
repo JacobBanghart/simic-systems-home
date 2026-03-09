@@ -1,6 +1,5 @@
 // @ts-check
 import { defineConfig } from "astro/config";
-import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 
 import cloudflare from "@astrojs/cloudflare";
@@ -10,7 +9,7 @@ import react from "@astrojs/react"
 export default defineConfig({
   site: "https://simic.systems",
   trailingSlash: "always",
-  integrations: [mdx(), sitemap({
+  integrations: [sitemap({
     filter: (page) =>
       !page.includes('/checkout/') &&
       !page.includes('/api/'),
