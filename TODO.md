@@ -13,7 +13,7 @@ This document tracks features for the simic.systems storefront. Completed items 
 
 ## Priority 2: Trust & Conversion (Done)
 
-- [x] **2.1 Contact Form** — React form with validation, honeypot spam prevention, submissions stored in KV
+- [x] **2.1 Contact Form** — React form with validation, honeypot spam prevention, emailed via Cloudflare send_email
 - [x] **2.2 Trust Badges** — Secure checkout lock icon, payment method labels, Powered by Stripe badge
 - [x] **2.3 FAQ Page** — 8 questions with accordion UI, FAQPage schema.org, linked in header and footer
 
