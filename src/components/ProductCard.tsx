@@ -3,6 +3,7 @@ import {
   Typography,
   Button,
   Box,
+  Grid,
 } from "@mui/material";
 import type { ProductData } from "../types";
 import { formatPrice } from "../lib/format";
@@ -17,19 +18,20 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const productUrl = `/product/${product.id}/`;
 
   return (
-    <Card
-      sx={{
-        display: "flex",
-        flexDirection: { xs: "row", sm: "column" },
-        width: { xs: "100%", sm: "18rem" },
-        boxShadow: 3,
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: "8px",
-        opacity: outOfStock ? 0.6 : 1,
-        overflow: "hidden",
-      }}
-    >
+    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+      <Card
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "row", sm: "column" },
+          height: "100%",
+          boxShadow: 3,
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: "8px",
+          opacity: outOfStock ? 0.6 : 1,
+          overflow: "hidden",
+        }}
+      >
       <Box
         component="a"
         href={productUrl}
@@ -136,6 +138,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           {outOfStock ? "Sold Out" : "Add to Cart"}
         </Button>
       </Box>
-    </Card>
+      </Card>
+    </Grid>
   );
 }
