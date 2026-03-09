@@ -46,7 +46,9 @@ function StoreContent({ products }: MainPageProps) {
   const [category, setCategory] = useState("all");
   const { addToCart, cartCount } = useCart();
 
-  const categories = ["all", ...new Set(products.map((p) => p.category))];
+  const uniqueCategories = [...new Set(products.map((p) => p.category))];
+  const hasMultipleCategories = uniqueCategories.length > 1;
+  const categories = ["all", ...uniqueCategories];
 
   const filteredProducts = products
     .filter((product) => {
@@ -96,8 +98,6 @@ function StoreContent({ products }: MainPageProps) {
         fontSize={{ xs: "0.5rem", sm: "0.8rem", md: "1rem" }}
         sx={{
           flexWrap: "wrap",
-          justifyContent: { xs: "flex-start", sm: "center" },
-          gap: "16px",
           containerType: "inline-size",
           paddingTop: "15px",
         }}
@@ -184,8 +184,33 @@ function StoreContent({ products }: MainPageProps) {
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={2}
-          sx={{ mb: 3, alignItems: { sm: "center" } }}
+          sx={{ mb: 3, alignItems: { sm: "center" }, justifyContent: "flex-end" }}
         >
+          {hasMultipleCategories && (
+            <ToggleButtonGroup
+              value={category}
+              exclusive
+              onChange={(_e, value) => {
+                if (value !== null) setCategory(value);
+              }}
+              size="small"
+              aria-label="Filter by category"
+              sx={{
+                flexWrap: "wrap",
+                mr: "auto",
+                "& .MuiToggleButton-root": {
+                  textTransform: "none",
+                  px: 2,
+                },
+              }}
+            >
+              {categories.map((cat) => (
+                <ToggleButton key={cat} value={cat}>
+                  {CATEGORY_LABELS[cat] || cat}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
+          )}
           <TextField
             size="small"
             placeholder="Search products..."
@@ -209,28 +234,6 @@ function StoreContent({ products }: MainPageProps) {
               },
             }}
           />
-          <ToggleButtonGroup
-            value={category}
-            exclusive
-            onChange={(_e, value) => {
-              if (value !== null) setCategory(value);
-            }}
-            size="small"
-            aria-label="Filter by category"
-            sx={{
-              flexWrap: "wrap",
-              "& .MuiToggleButton-root": {
-                textTransform: "none",
-                px: 2,
-              },
-            }}
-          >
-            {categories.map((cat) => (
-              <ToggleButton key={cat} value={cat}>
-                {CATEGORY_LABELS[cat] || cat}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
         </Stack>
 
         {renderProductGrid(filteredProducts)}
