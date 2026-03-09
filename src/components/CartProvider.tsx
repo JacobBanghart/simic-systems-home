@@ -52,6 +52,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating from localStorage on mount
     setCartItems(loadCart());
     setInitialized(true);
   }, []);
