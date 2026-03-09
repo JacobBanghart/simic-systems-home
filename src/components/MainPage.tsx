@@ -217,12 +217,24 @@ function StoreContent({ products }: MainPageProps) {
         {/* SEO content — visible but below the fold */}
         <Box sx={{ mt: 6, pt: 4, borderTop: "1px solid", borderColor: "divider" }}>
           <Typography component="h1" variant="h5" sx={{ mb: 1, fontSize: { xs: "1.1rem", sm: "1.3rem" } }}>
-            Magic: The Gathering Booster Boxes and Sealed MTG Products
+            Buy Sealed Magic: The Gathering Products Online
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Simic Systems is an online trading card game store specializing in
+            factory sealed MTG products. Browse our selection of Magic: The
+            Gathering booster boxes, collector boxes, play boosters, draft
+            boosters, bundles, and commander decks — all authentic and officially
+            licensed.
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Every order ships with secure checkout powered by Stripe, with
+            shipping available across the United States. Check back regularly
+            for new set releases, restocks, and pre-orders.
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Shop sealed Magic: The Gathering booster boxes, collector boxes,
-            play boosters, and other MTG products with secure checkout and
-            United States shipping.
+            Looking for booster packs, set boosters, or collector boxes at
+            competitive prices? Shop our full catalog above and add items to your
+            cart for fast, reliable shipping.
           </Typography>
         </Box>
       </Container>
