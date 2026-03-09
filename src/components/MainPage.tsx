@@ -142,17 +142,6 @@ function StoreContent({ products }: MainPageProps) {
 
       {/* Product Grid */}
       <Container maxWidth="lg" sx={{ py: 3 }}>
-        <Stack spacing={1.5} sx={{ mb: 3, maxWidth: 820 }}>
-          <Typography component="h1" variant="h3" sx={{ fontSize: { xs: "1.6rem", sm: "2rem", md: "3rem" } }}>
-            Magic: The Gathering Booster Boxes and Sealed MTG Products
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: "0.85rem", sm: "1rem" } }}>
-            Shop sealed Magic: The Gathering booster boxes, collector boxes,
-            play boosters, and other MTG products with secure checkout and
-            United States shipping.
-          </Typography>
-        </Stack>
-
         {/* Controls: Category Filters, Sort, Search */}
         <Stack
           direction={{ xs: "column", sm: "row" }}
@@ -224,6 +213,18 @@ function StoreContent({ products }: MainPageProps) {
         </Stack>
 
         {renderProductGrid(filteredProducts)}
+
+        {/* SEO content — visible but below the fold */}
+        <Box sx={{ mt: 6, pt: 4, borderTop: "1px solid", borderColor: "divider" }}>
+          <Typography component="h1" variant="h5" sx={{ mb: 1, fontSize: { xs: "1.1rem", sm: "1.3rem" } }}>
+            Magic: The Gathering Booster Boxes and Sealed MTG Products
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Shop sealed Magic: The Gathering booster boxes, collector boxes,
+            play boosters, and other MTG products with secure checkout and
+            United States shipping.
+          </Typography>
+        </Box>
       </Container>
 
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
