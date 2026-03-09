@@ -21,7 +21,7 @@ const { title, description, image = "/banner.webp" } = Astro.props;
 <!-- Theme init (runs before paint to prevent flash) -->
 <script is:inline>
 (function() {
-	var stored = localStorage.getItem('theme');
+	const stored = localStorage.getItem('theme');
 	if (stored === 'dark' || stored === 'light') {
 		document.documentElement.setAttribute('data-theme', stored);
 	} else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
