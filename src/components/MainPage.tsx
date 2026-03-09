@@ -163,8 +163,23 @@ function StoreContent({ products }: MainPageProps) {
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={2}
-          sx={{ mb: 3, alignItems: { sm: "center" } }}
+          sx={{ mb: 3, alignItems: { sm: "center" }, justifyContent: "space-between" }}
         >
+          <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 200 } }}>
+            <InputLabel id="sort-products-label">Sort</InputLabel>
+            <Select
+              labelId="sort-products-label"
+              value={sortBy}
+              label="Sort"
+              onChange={(event) => setSortBy(event.target.value as SortOption)}
+            >
+              <MenuItem value="featured">Featured</MenuItem>
+              <MenuItem value="price-asc">Price: Low to High</MenuItem>
+              <MenuItem value="price-desc">Price: High to Low</MenuItem>
+              <MenuItem value="name-asc">Name: A to Z</MenuItem>
+              <MenuItem value="stock-desc">Stock: High to Low</MenuItem>
+            </Select>
+          </FormControl>
           {hasMultipleCategories && (
             <ToggleButtonGroup
               value={category}
@@ -189,22 +204,6 @@ function StoreContent({ products }: MainPageProps) {
               ))}
             </ToggleButtonGroup>
           )}
-          <Box sx={{ flex: 1 }} />
-          <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 200 } }}>
-            <InputLabel id="sort-products-label">Sort</InputLabel>
-            <Select
-              labelId="sort-products-label"
-              value={sortBy}
-              label="Sort"
-              onChange={(event) => setSortBy(event.target.value as SortOption)}
-            >
-              <MenuItem value="featured">Featured</MenuItem>
-              <MenuItem value="price-asc">Price: Low to High</MenuItem>
-              <MenuItem value="price-desc">Price: High to Low</MenuItem>
-              <MenuItem value="name-asc">Name: A to Z</MenuItem>
-              <MenuItem value="stock-desc">Stock: High to Low</MenuItem>
-            </Select>
-          </FormControl>
           <TextField
             size="small"
             placeholder="Search products..."
