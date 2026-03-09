@@ -1,0 +1,135 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE } from '../consts';
+
+const faqs = [
+	{
+		question: "What payment methods do you accept?",
+		answer: "We accept Visa, Mastercard, American Express, Apple Pay, and Google Pay. All payments are processed securely through Stripe."
+	},
+	{
+		question: "Do you ship internationally?",
+		answer: "We currently ship to addresses within the United States only. We're looking into international shipping options for the future."
+	},
+	{
+		question: "How long does shipping take?",
+		answer: "Orders are typically processed within 1–3 business days. After shipment, delivery usually takes 3–7 business days via USPS, depending on your location."
+	},
+	{
+		question: "What is your return policy?",
+		answer: "We accept returns of unopened, factory-sealed items within 14 days of delivery. The buyer is responsible for return shipping costs. Please contact us to initiate a return."
+	},
+	{
+		question: "Are all products sealed and authentic?",
+		answer: "Yes. All products are factory-sealed and sourced from authorized distributors. We never sell repackaged or tampered products."
+	},
+	{
+		question: "How do I track my order?",
+		answer: "You'll receive a shipping confirmation email with tracking information once your order has shipped. You can use the tracking number to check your order status on the USPS website."
+	},
+	{
+		question: "What if my order arrives damaged?",
+		answer: "If your order arrives damaged or you receive the wrong item, please contact us within 7 days of delivery at contact@simic.systems. Include photos of the issue and your order number, and we'll make it right."
+	},
+	{
+		question: "Do you offer bulk or wholesale pricing?",
+		answer: "We don't currently offer bulk pricing through the website. If you're interested in a larger order, please contact us at contact@simic.systems and we can discuss options."
+	}
+];
+
+const faqSchema = {
+	"@context": "https://schema.org",
+	"@type": "FAQPage",
+	mainEntity: faqs.map((faq) => ({
+		"@type": "Question",
+		name: faq.question,
+		acceptedAnswer: {
+			"@type": "Answer",
+			text: faq.answer,
+		},
+	})),
+};
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`FAQ - ${SITE_TITLE}`} description="Frequently asked questions about Simic Systems — shipping, returns, payment methods, and more." />
+		<script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<article>
+				<h1>Frequently Asked Questions</h1>
+				<div class="faq-list">
+					{faqs.map((faq) => (
+						<details class="faq-item">
+							<summary>{faq.question}</summary>
+							<p>{faq.answer}</p>
+						</details>
+					))}
+				</div>
+				<p class="cta">
+					Still have questions? <a href="/contact/">Contact us</a> and we'll be happy to help.
+				</p>
+			</article>
+		</main>
+		<Footer />
+	</body>
+</html>
+<style>
+	main {
+		max-width: 720px;
+		margin: 0 auto;
+		padding: 1rem 1.5rem;
+	}
+	article h1 {
+		margin-bottom: 1.5rem;
+	}
+	.faq-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	.faq-item {
+		border: 1px solid rgba(var(--gray-light), 0.4);
+		border-radius: 6px;
+		overflow: hidden;
+	}
+	.faq-item summary {
+		padding: 1rem 1.25rem;
+		cursor: pointer;
+		font-weight: 600;
+		font-size: 1rem;
+		list-style: none;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+	.faq-item summary::after {
+		content: "+";
+		font-size: 1.2rem;
+		font-weight: 400;
+		flex-shrink: 0;
+		margin-left: 1rem;
+	}
+	.faq-item[open] summary::after {
+		content: "−";
+	}
+	.faq-item summary::-webkit-details-marker {
+		display: none;
+	}
+	.faq-item p {
+		padding: 0 1.25rem 1rem;
+		margin: 0;
+		line-height: 1.6;
+		color: rgb(var(--gray));
+	}
+	.cta {
+		margin-top: 2rem;
+		text-align: center;
+	}
+</style>
