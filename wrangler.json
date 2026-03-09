@@ -26,5 +26,11 @@
 			"binding": "simic_systems_tfstate",
 			"remote": true
 		}
+	],
+	"send_email": [
+		{
+			"name": "CONTACT_EMAIL",
+			"destination_address": "contact@simic.systems"
+		}
 	]
 }

@@ -5,4 +5,5 @@ interface Env {
 	PRODUCT_CACHE: KVNamespace;
 	STRIPE_SECRET_KEY: string;
 	STRIPE_WEBHOOK_SECRET: string;
+	CONTACT_EMAIL: SendEmail;
 }
