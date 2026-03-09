@@ -14,7 +14,7 @@
     "dash": true
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^12.6.12",
+    "@astrojs/cloudflare": "^12.6.5",
     "@astrojs/mdx": "4.3.13",
     "@astrojs/react": "^4.4.2",
     "@astrojs/rss": "4.0.15",
@@ -45,5 +45,9 @@
     "preview": "astro build && wrangler dev",
     "types": "wrangler types"
   },
-  "type": "module"
+  "type": "module",
+  "overrides": {
+    "undici": "^7.18.2",
+    "wrangler": "$wrangler"
+  }
 }

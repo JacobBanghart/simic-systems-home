@@ -4,7 +4,7 @@ import { fetchStoreProducts } from "../../lib/stripeProducts";
 export const prerender = false;
 
 export const GET: APIRoute = async ({ locals }) => {
-  const { env } = (locals as any).runtime;
+  const { env } = locals.runtime;
 
   try {
     const products = await fetchStoreProducts(env);

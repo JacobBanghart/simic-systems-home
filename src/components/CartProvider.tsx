@@ -15,19 +15,44 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 const STORAGE_KEY = "simic-cart";
 
+function isValidCartItem(item: unknown): item is CartItem {
+  if (typeof item !== "object" || item === null) return false;
+  const record = item as Record<string, unknown>;
+  return (
+    typeof record.productId === "string" &&
+    typeof record.priceId === "string" &&
+    typeof record.name === "string" &&
+    typeof record.price === "number" &&
+    typeof record.image === "string" &&
+    typeof record.quantity === "number" &&
+    record.quantity > 0
+  );
+}
+
+function loadCart(): CartItem[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return [];
+    const parsed: unknown = JSON.parse(stored);
+    if (!Array.isArray(parsed)) return [];
+    const valid = parsed.filter(isValidCartItem);
+    if (valid.length !== parsed.length) {
+      console.warn("Cleared invalid items from cart");
+    }
+    return valid;
+  } catch {
+    console.warn("Failed to parse cart from localStorage, resetting");
+    localStorage.removeItem(STORAGE_KEY);
+    return [];
+  }
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setCartItems(JSON.parse(stored));
-      }
-    } catch {
-      // ignore parse errors
-    }
+    setCartItems(loadCart());
     setInitialized(true);
   }, []);
 

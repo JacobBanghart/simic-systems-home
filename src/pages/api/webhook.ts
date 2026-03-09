@@ -15,7 +15,7 @@ const productCacheInvalidationEvents = new Set([
 ]);
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const { env } = (locals as any).runtime;
+  const { env } = locals.runtime;
   const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
     httpClient: Stripe.createFetchHttpClient(),
   });
@@ -73,6 +73,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     } catch (err) {
       console.error("Error processing checkout.session.completed:", err);
+      return new Response(JSON.stringify({ error: "Inventory update failed" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
     }
   }
 
