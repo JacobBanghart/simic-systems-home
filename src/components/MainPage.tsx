@@ -148,43 +148,22 @@ function StoreContent({ products }: MainPageProps) {
 
       {/* Product Grid */}
       <Container maxWidth="lg" sx={{ py: 3 }}>
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={2}
-          sx={{ mb: 4, alignItems: { xs: "stretch", md: "flex-end" } }}
-        >
-          <Stack spacing={1.5} sx={{ flex: 1, maxWidth: 820 }}>
-            <Typography component="h1" variant="h3">
-              Magic: The Gathering Booster Boxes and Sealed MTG Products
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Shop sealed Magic: The Gathering booster boxes, collector boxes,
-              play boosters, and other MTG products with secure checkout and
-              United States shipping.
-            </Typography>
-          </Stack>
-          <FormControl size="small" sx={{ minWidth: { xs: "100%", md: 240 } }}>
-            <InputLabel id="sort-products-label">Sort Products</InputLabel>
-            <Select
-              labelId="sort-products-label"
-              value={sortBy}
-              label="Sort Products"
-              onChange={(event) => setSortBy(event.target.value as SortOption)}
-            >
-              <MenuItem value="featured">Featured</MenuItem>
-              <MenuItem value="price-asc">Price: Low to High</MenuItem>
-              <MenuItem value="price-desc">Price: High to Low</MenuItem>
-              <MenuItem value="name-asc">Name: A to Z</MenuItem>
-              <MenuItem value="stock-desc">Stock: High to Low</MenuItem>
-            </Select>
-          </FormControl>
+        <Stack spacing={1.5} sx={{ mb: 3, maxWidth: 820 }}>
+          <Typography component="h1" variant="h3">
+            Magic: The Gathering Booster Boxes and Sealed MTG Products
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Shop sealed Magic: The Gathering booster boxes, collector boxes,
+            play boosters, and other MTG products with secure checkout and
+            United States shipping.
+          </Typography>
         </Stack>
 
-        {/* Search and Category Filters */}
+        {/* Controls: Category Filters, Sort, Search */}
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={2}
-          sx={{ mb: 3, alignItems: { sm: "center" }, justifyContent: "flex-end" }}
+          sx={{ mb: 3, alignItems: { sm: "center" } }}
         >
           {hasMultipleCategories && (
             <ToggleButtonGroup
@@ -197,7 +176,6 @@ function StoreContent({ products }: MainPageProps) {
               aria-label="Filter by category"
               sx={{
                 flexWrap: "wrap",
-                mr: "auto",
                 "& .MuiToggleButton-root": {
                   textTransform: "none",
                   px: 2,
@@ -211,12 +189,28 @@ function StoreContent({ products }: MainPageProps) {
               ))}
             </ToggleButtonGroup>
           )}
+          <Box sx={{ flex: 1 }} />
+          <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 200 } }}>
+            <InputLabel id="sort-products-label">Sort</InputLabel>
+            <Select
+              labelId="sort-products-label"
+              value={sortBy}
+              label="Sort"
+              onChange={(event) => setSortBy(event.target.value as SortOption)}
+            >
+              <MenuItem value="featured">Featured</MenuItem>
+              <MenuItem value="price-asc">Price: Low to High</MenuItem>
+              <MenuItem value="price-desc">Price: High to Low</MenuItem>
+              <MenuItem value="name-asc">Name: A to Z</MenuItem>
+              <MenuItem value="stock-desc">Stock: High to Low</MenuItem>
+            </Select>
+          </FormControl>
           <TextField
             size="small"
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{ minWidth: { xs: "100%", sm: 280 } }}
+            sx={{ minWidth: { xs: "100%", sm: 250 } }}
             slotProps={{
               input: {
                 startAdornment: (
