@@ -1,25 +1,160 @@
 ---
 import BaseHead from "../../components/BaseHead.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
 import { SITE_TITLE } from "../../consts";
+import Stripe from "stripe";
+
+export const prerender = false;
+
+const sessionId = Astro.url.searchParams.get("session_id");
+
+let session: Stripe.Checkout.Session | null = null;
+let lineItems: Stripe.LineItem[] = [];
+
+if (sessionId) {
+  try {
+    const env = Astro.locals.runtime.env;
+    const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+      httpClient: Stripe.createFetchHttpClient(),
+    });
+
+    session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ["line_items.data.price"],
+    });
+    lineItems = session.line_items?.data || [];
+  } catch (err) {
+    console.error("Failed to retrieve checkout session:", err);
+  }
+}
+
+const email = session?.customer_details?.email;
+const shipping = session?.shipping_details;
 ---
 
 <!doctype html>
 <html lang="en">
-    <head>
-        <BaseHead title={`Order Confirmed - ${SITE_TITLE}`} description="Thank you for your purchase" />
-        <meta name="robots" content="noindex, nofollow" />
-    </head>
-    <body>
-        <main style="max-width: 600px; margin: 0 auto; padding: 2rem; text-align: center;">
-            <h1>Thank you for your order!</h1>
-            <p>Your payment was successful. We'll ship your items soon.</p>
-            <p>You'll receive a confirmation email from Stripe with your receipt.</p>
-            <a href="/" style="display: inline-block; margin-top: 1rem; padding: 0.75rem 1.5rem; background: #279214; color: white; text-decoration: none; border-radius: 4px;">
-                Back to Store
-            </a>
-        </main>
-        <script>
-            localStorage.removeItem("simic-cart");
-        </script>
-    </body>
+  <head>
+    <BaseHead title={`Order Confirmed - ${SITE_TITLE}`} description="Thank you for your purchase" />
+    <meta name="robots" content="noindex, nofollow" />
+    <style>
+      main {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+      .order-header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+      .order-header h1 {
+        font-size: 1.8em;
+        margin-bottom: 0.5rem;
+      }
+      .order-section {
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+      }
+      .order-section h2 {
+        font-size: 1.1em;
+        margin-bottom: 0.75rem;
+      }
+      .line-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.4rem 0;
+      }
+      .line-item + .line-item {
+        border-top: 1px solid rgb(var(--gray-light));
+      }
+      .order-total {
+        display: flex;
+        justify-content: space-between;
+        font-weight: 700;
+        font-size: 1.1em;
+        padding-top: 0.75rem;
+        border-top: 2px solid rgb(var(--gray-light));
+        margin-top: 0.5rem;
+      }
+      .back-link {
+        display: inline-block;
+        margin-top: 1.5rem;
+        padding: 0.75rem 1.5rem;
+        background: #279214;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        text-align: center;
+      }
+      .back-link:hover {
+        background: #1f7a0f;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <Header />
+    <main>
+      <div class="order-header">
+        <h1>Thank you for your order!</h1>
+        {email && <p>A confirmation receipt has been sent to <strong>{email}</strong>.</p>}
+        {!session && <p>Your payment was successful. You'll receive a confirmation email from Stripe.</p>}
+      </div>
+
+      {lineItems.length > 0 && (
+        <div class="order-section">
+          <h2>Items Ordered</h2>
+          {lineItems.map((item) => (
+            <div class="line-item">
+              <span>{item.description} &times; {item.quantity}</span>
+              <span>${((item.amount_total || 0) / 100).toFixed(2)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {session && (
+        <div class="order-section">
+          {session.shipping_cost && session.shipping_cost.amount_total > 0 && (
+            <div class="line-item">
+              <span>Shipping</span>
+              <span>${(session.shipping_cost.amount_total / 100).toFixed(2)}</span>
+            </div>
+          )}
+          {session.total_details?.amount_tax != null && session.total_details.amount_tax > 0 && (
+            <div class="line-item">
+              <span>Tax</span>
+              <span>${(session.total_details.amount_tax / 100).toFixed(2)}</span>
+            </div>
+          )}
+          <div class="order-total">
+            <span>Total</span>
+            <span>${((session.amount_total || 0) / 100).toFixed(2)}</span>
+          </div>
+        </div>
+      )}
+
+      {shipping?.address && (
+        <div class="order-section">
+          <h2>Shipping To</h2>
+          <p style="margin: 0; line-height: 1.6;">
+            {shipping.name && <>{shipping.name}<br /></>}
+            {shipping.address.line1}<br />
+            {shipping.address.line2 && <>{shipping.address.line2}<br /></>}
+            {shipping.address.city}, {shipping.address.state} {shipping.address.postal_code}
+          </p>
+        </div>
+      )}
+
+      <div style="text-align: center;">
+        <a href="/" class="back-link">Back to Store</a>
+      </div>
+    </main>
+    <Footer />
+    <script>
+      localStorage.removeItem("simic-cart");
+    </script>
+  </body>
 </html>

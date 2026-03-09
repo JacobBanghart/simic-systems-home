@@ -131,6 +131,7 @@ function StoreContent({ products }: MainPageProps) {
         />
         <IconButton
           onClick={() => setCartOpen(true)}
+          aria-label="Open shopping cart"
           sx={{
             position: "absolute",
             top: 12,
@@ -200,7 +201,7 @@ function StoreContent({ products }: MainPageProps) {
                 ),
                 endAdornment: searchQuery ? (
                   <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => setSearchQuery("")}>
+                    <IconButton size="small" onClick={() => setSearchQuery("")} aria-label="Clear search">
                       <Clear fontSize="small" />
                     </IconButton>
                   </InputAdornment>
@@ -215,6 +216,7 @@ function StoreContent({ products }: MainPageProps) {
               if (value !== null) setCategory(value);
             }}
             size="small"
+            aria-label="Filter by category"
             sx={{
               flexWrap: "wrap",
               "& .MuiToggleButton-root": {
