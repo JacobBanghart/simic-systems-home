@@ -31,7 +31,7 @@ const productListSchema = {
     itemListElement: products.map((product, index) => ({
       "@type": "ListItem",
       position: index + 1,
-      url: Astro.url.href,
+      url: new URL(`/product/${product.id}/`, Astro.site).href,
       item: {
         "@type": "Product",
         name: product.name,
@@ -46,7 +46,7 @@ const productListSchema = {
             product.quantity > 0
               ? "https://schema.org/InStock"
               : "https://schema.org/OutOfStock",
-          url: Astro.url.href,
+          url: new URL(`/product/${product.id}/`, Astro.site).href,
         },
       },
     })),
