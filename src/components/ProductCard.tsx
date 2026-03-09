@@ -14,6 +14,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const outOfStock = product.quantity <= 0;
+  const productUrl = `/product/${product.id}/`;
 
   return (
     <Card
@@ -30,20 +31,30 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
       }}
     >
       <Box
-        component="img"
-        src={product.image}
-        alt={product.name}
+        component="a"
+        href={productUrl}
         sx={{
           width: { xs: "40%", sm: "100%" },
-          height: { xs: "auto", sm: "14rem" },
           flexShrink: 0,
-          objectFit: "contain",
-          objectPosition: "center",
-          padding: "12px",
-          boxSizing: "border-box",
           display: "block",
+          textDecoration: "none",
         }}
-      />
+      >
+        <Box
+          component="img"
+          src={product.image}
+          alt={product.name}
+          sx={{
+            width: "100%",
+            height: { xs: "auto", sm: "14rem" },
+            objectFit: "contain",
+            objectPosition: "center",
+            padding: "12px",
+            boxSizing: "border-box",
+            display: "block",
+          }}
+        />
+      </Box>
       <Box
         sx={{
           display: "flex",
@@ -54,16 +65,36 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         }}
       >
         <Typography
+          component="a"
+          href={productUrl}
           sx={{
             fontSize: "0.9rem",
             fontWeight: 600,
             lineHeight: 1.3,
             wordBreak: "break-word",
             textAlign: "center",
+            textDecoration: "none",
+            color: "text.primary",
+            "&:hover": { textDecoration: "underline" },
           }}
         >
           {product.name}
         </Typography>
+        {product.description && (
+          <Typography
+            sx={{
+              fontSize: "0.78rem",
+              color: "text.secondary",
+              lineHeight: 1.4,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {product.description}
+          </Typography>
+        )}
         <Box
           sx={{
             display: "flex",

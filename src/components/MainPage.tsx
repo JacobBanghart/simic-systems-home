@@ -11,11 +11,15 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  TextField,
+  InputAdornment,
+  ToggleButtonGroup,
+  ToggleButton,
 } from "@mui/material";
 import { useState } from "react";
 import { themeOptions } from "./theme";
 import banner from "/banner.webp?url";
-import { ShoppingCartCheckout } from "@mui/icons-material";
+import { ShoppingCartCheckout, Search, Clear } from "@mui/icons-material";
 import type { ProductData } from "../types";
 import { ProductCard } from "./ProductCard";
 import { CartProvider, useCart } from "./CartProvider";
@@ -27,36 +31,60 @@ interface MainPageProps {
 
 type SortOption = "featured" | "price-asc" | "price-desc" | "name-asc" | "stock-desc";
 
+const CATEGORY_LABELS: Record<string, string> = {
+  all: "All",
+  magic: "Magic",
+  onepiece: "One Piece",
+  unionarena: "Union Arena",
+};
+
 function StoreContent({ products }: MainPageProps) {
   const [cartOpen, setCartOpen] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("featured");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [category, setCategory] = useState("all");
   const { addToCart, cartCount } = useCart();
 
-  const sortedProducts = [...products].sort((left, right) => {
-    switch (sortBy) {
-      case "price-asc":
-        return left.price - right.price;
-      case "price-desc":
-        return right.price - left.price;
-      case "name-asc":
-        return left.name.localeCompare(right.name);
-      case "stock-desc":
-        return right.quantity - left.quantity;
-      case "featured":
-      default:
-        if (left.sortOrder !== right.sortOrder) {
-          return left.sortOrder - right.sortOrder;
-        }
+  const categories = ["all", ...new Set(products.map((p) => p.category))];
 
-        return left.name.localeCompare(right.name);
-    }
-  });
+  const filteredProducts = products
+    .filter((product) => {
+      if (category !== "all" && product.category !== category) return false;
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        return (
+          product.name.toLowerCase().includes(query) ||
+          product.description.toLowerCase().includes(query)
+        );
+      }
+      return true;
+    })
+    .sort((left, right) => {
+      switch (sortBy) {
+        case "price-asc":
+          return left.price - right.price;
+        case "price-desc":
+          return right.price - left.price;
+        case "name-asc":
+          return left.name.localeCompare(right.name);
+        case "stock-desc":
+          return right.quantity - left.quantity;
+        case "featured":
+        default:
+          if (left.sortOrder !== right.sortOrder) {
+            return left.sortOrder - right.sortOrder;
+          }
+          return left.name.localeCompare(right.name);
+      }
+    });
 
   const renderProductGrid = (items: ProductData[]) => {
     if (items.length === 0) {
       return (
         <Typography sx={{ py: 4, textAlign: "center", color: "text.secondary" }}>
-          No products available
+          {searchQuery || category !== "all"
+            ? "No products found"
+            : "No products available"}
         </Typography>
       );
     }
@@ -149,7 +177,60 @@ function StoreContent({ products }: MainPageProps) {
             </Select>
           </FormControl>
         </Stack>
-        {renderProductGrid(sortedProducts)}
+
+        {/* Search and Category Filters */}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          sx={{ mb: 3, alignItems: { sm: "center" } }}
+        >
+          <TextField
+            size="small"
+            placeholder="Search products..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            sx={{ minWidth: { xs: "100%", sm: 280 } }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search fontSize="small" />
+                  </InputAdornment>
+                ),
+                endAdornment: searchQuery ? (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => setSearchQuery("")}>
+                      <Clear fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                ) : null,
+              },
+            }}
+          />
+          <ToggleButtonGroup
+            value={category}
+            exclusive
+            onChange={(_e, value) => {
+              if (value !== null) setCategory(value);
+            }}
+            size="small"
+            sx={{
+              flexWrap: "wrap",
+              "& .MuiToggleButton-root": {
+                textTransform: "none",
+                px: 2,
+              },
+            }}
+          >
+            {categories.map((cat) => (
+              <ToggleButton key={cat} value={cat}>
+                {CATEGORY_LABELS[cat] || cat}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        </Stack>
+
+        {renderProductGrid(filteredProducts)}
       </Container>
 
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
