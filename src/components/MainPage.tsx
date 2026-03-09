@@ -24,6 +24,7 @@ import type { ProductData } from "../types";
 import { ProductCard } from "./ProductCard";
 import { CartProvider, useCart } from "./CartProvider";
 import { CartDrawer } from "./CartDrawer";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 interface MainPageProps {
   products: ProductData[];
@@ -241,9 +242,11 @@ function StoreContent({ products }: MainPageProps) {
 export function MainPage({ products }: MainPageProps) {
   return (
     <ThemeProvider theme={themeOptions}>
-      <CartProvider>
-        <StoreContent products={products} />
-      </CartProvider>
+      <ErrorBoundary>
+        <CartProvider>
+          <StoreContent products={products} />
+        </CartProvider>
+      </ErrorBoundary>
     </ThemeProvider>
   );
 }

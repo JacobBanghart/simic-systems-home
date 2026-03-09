@@ -4,8 +4,29 @@ import { validateContact, buildRawEmail, type ContactPayload } from "../../lib/c
 
 export const prerender = false;
 
+const RATE_LIMIT_WINDOW_SECONDS = 300; // 5 minutes
+const RATE_LIMIT_MAX = 3; // max submissions per window per IP
+
 export const POST: APIRoute = async ({ request, locals }) => {
   const { env } = locals.runtime;
+
+  // Rate limiting via KV
+  const ip = request.headers.get("cf-connecting-ip") || "unknown";
+  const rateLimitKey = `ratelimit:contact:${ip}`;
+  try {
+    const current = parseInt((await env.PRODUCT_CACHE.get(rateLimitKey)) || "0", 10);
+    if (current >= RATE_LIMIT_MAX) {
+      return new Response(
+        JSON.stringify({ error: "Too many submissions. Please try again later." }),
+        { status: 429, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    await env.PRODUCT_CACHE.put(rateLimitKey, String(current + 1), {
+      expirationTtl: RATE_LIMIT_WINDOW_SECONDS,
+    });
+  } catch {
+    // If rate limiting fails, allow the request through
+  }
 
   let body: ContactPayload;
   try {

@@ -108,6 +108,21 @@ describe("mapStripeProduct", () => {
     expect(result?.image).toBe("");
   });
 
+  it("falls back to magic for invalid category", () => {
+    const product = fakeStripeProduct();
+    product.metadata = { ...product.metadata, category: "pokemon" };
+    const result = mapStripeProduct(product);
+    expect(result?.category).toBe("magic");
+  });
+
+  it("accepts valid categories", () => {
+    for (const cat of ["magic", "onepiece", "unionarena"]) {
+      const product = fakeStripeProduct();
+      product.metadata = { ...product.metadata, category: cat };
+      expect(mapStripeProduct(product)?.category).toBe(cat);
+    }
+  });
+
   it("defaults price to 0 when unit_amount is null", () => {
     const result = mapStripeProduct(
       fakeStripeProduct({
