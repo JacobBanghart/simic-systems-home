@@ -14,18 +14,28 @@ export function parseInteger(value: string | undefined, fallback: number): numbe
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+const VALID_CATEGORIES: ReadonlySet<string> = new Set<ProductData["category"]>([
+  "magic",
+  "onepiece",
+  "unionarena",
+]);
+
 export function mapStripeProduct(product: Stripe.Product): ProductData | null {
   if (!product.default_price || typeof product.default_price === "string") {
     return null;
   }
 
-  const price = product.default_price as Stripe.Price;
+  const price = product.default_price;
+  const rawCategory = product.metadata.category || "magic";
+  const category: ProductData["category"] = VALID_CATEGORIES.has(rawCategory)
+    ? (rawCategory as ProductData["category"])
+    : "magic";
 
   return {
     id: product.id,
     name: product.name,
     description: product.description || "",
-    category: (product.metadata.category as ProductData["category"]) || "magic",
+    category,
     price: price.unit_amount || 0,
     priceId: price.id,
     quantity: parseInteger(product.metadata.quantity, 0),

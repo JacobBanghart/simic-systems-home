@@ -15,6 +15,7 @@ import type { ProductData } from "../types";
 import { formatPrice } from "../lib/format";
 import { CartProvider, useCart } from "./CartProvider";
 import { CartDrawer } from "./CartDrawer";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 interface ProductDetailProps {
   product: ProductData;
@@ -126,9 +127,11 @@ function ProductDetailContent({ product }: ProductDetailProps) {
 export function ProductDetail({ product }: ProductDetailProps) {
   return (
     <ThemeProvider theme={themeOptions}>
-      <CartProvider>
-        <ProductDetailContent product={product} />
-      </CartProvider>
+      <ErrorBoundary>
+        <CartProvider>
+          <ProductDetailContent product={product} />
+        </CartProvider>
+      </ErrorBoundary>
     </ThemeProvider>
   );
 }
