@@ -12,14 +12,11 @@ import {
 } from "@mui/material";
 import { Add, Remove, Delete, Close } from "@mui/icons-material";
 import { useCart } from "./CartProvider";
+import { formatPrice } from "../lib/format";
 
 interface CartDrawerProps {
   open: boolean;
   onClose: () => void;
-}
-
-function formatPrice(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
 }
 
 export function CartDrawer({ open, onClose }: CartDrawerProps) {

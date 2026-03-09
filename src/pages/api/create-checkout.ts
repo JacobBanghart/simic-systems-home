@@ -4,7 +4,7 @@ import Stripe from "stripe";
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const { env } = (locals as any).runtime;
+  const { env } = locals.runtime;
 
   let body: { items: { priceId: string; quantity: number }[] };
   try {

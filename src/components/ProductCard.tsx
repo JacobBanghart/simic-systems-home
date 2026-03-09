@@ -5,14 +5,11 @@ import {
   Box,
 } from "@mui/material";
 import type { ProductData } from "../types";
+import { formatPrice } from "../lib/format";
 
 interface ProductCardProps {
   product: ProductData;
   onAddToCart: (product: ProductData) => void;
-}
-
-function formatPrice(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
 }
 
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
