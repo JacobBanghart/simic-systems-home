@@ -3,8 +3,29 @@ import Stripe from "stripe";
 
 export const prerender = false;
 
+const RATE_LIMIT_WINDOW_SECONDS = 60;
+const RATE_LIMIT_MAX = 10; // max checkout attempts per minute per IP
+
 export const POST: APIRoute = async ({ request, locals }) => {
   const { env } = locals.runtime;
+
+  // Rate limiting via KV
+  const ip = request.headers.get("cf-connecting-ip") || "unknown";
+  const rateLimitKey = `ratelimit:checkout:${ip}`;
+  try {
+    const current = parseInt((await env.PRODUCT_CACHE.get(rateLimitKey)) || "0", 10);
+    if (current >= RATE_LIMIT_MAX) {
+      return new Response(
+        JSON.stringify({ error: "Too many requests. Please try again shortly." }),
+        { status: 429, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    await env.PRODUCT_CACHE.put(rateLimitKey, String(current + 1), {
+      expirationTtl: RATE_LIMIT_WINDOW_SECONDS,
+    });
+  } catch {
+    // If rate limiting fails, allow the request through
+  }
 
   let body: { items: { priceId: string; quantity: number }[] };
   try {
@@ -94,12 +115,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
   } catch (error) {
     console.error("Failed to create checkout session:", error);
-    const message =
-      error instanceof Stripe.errors.StripeError
+    const isStripeError = error instanceof Stripe.errors.StripeError;
+    const message = isStripeError
+      ? error.message
+      : error instanceof Error
         ? error.message
         : "Failed to create checkout session";
+    const status = isStripeError ? 500 : 400;
     return new Response(JSON.stringify({ error: message }), {
-      status: 500,
+      status,
       headers: { "Content-Type": "application/json" },
     });
   }

@@ -64,7 +64,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
           }}
         >
           <Typography variant="h6">Cart</Typography>
-          <IconButton onClick={onClose}>
+          <IconButton onClick={onClose} aria-label="Close cart">
             <Close />
           </IconButton>
         </Box>
@@ -117,6 +117,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                       <IconButton
                         size="small"
                         onClick={() => removeFromCart(item.productId)}
+                        aria-label={`Decrease quantity of ${item.name}`}
                       >
                         <Remove fontSize="small" />
                       </IconButton>
@@ -126,6 +127,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                         onClick={() =>
                           updateQuantity(item.productId, item.quantity + 1)
                         }
+                        aria-label={`Increase quantity of ${item.name}`}
                       >
                         <Add fontSize="small" />
                       </IconButton>
@@ -138,6 +140,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                     <IconButton
                       size="small"
                       onClick={() => updateQuantity(item.productId, 0)}
+                      aria-label={`Remove ${item.name} from cart`}
                     >
                       <Delete fontSize="small" />
                     </IconButton>

@@ -37,6 +37,7 @@ function ProductDetailContent({ product }: ProductDetailProps) {
       <Box sx={{ display: "flex", justifyContent: "flex-end", p: 1 }}>
         <IconButton
           onClick={() => setCartOpen(true)}
+          aria-label="Open shopping cart"
           sx={{
             backgroundColor: "background.paper",
             "&:hover": { backgroundColor: "background.default" },
