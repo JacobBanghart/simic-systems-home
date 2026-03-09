@@ -1,94 +1,103 @@
-# Astro Starter Kit: Blog
+# Simic Systems
 
-![Astro Template Preview](https://github.com/withastro/astro/assets/2244813/ff10799f-a816-4703-b967-c78997e8323d)
+Trading card storefront at [simic.systems](https://simic.systems), built with Astro 5 and deployed to Cloudflare Workers.
 
-<!-- dash-content-start -->
+Sells sealed products for Magic: The Gathering, One Piece, and Union Arena. Products are managed in Stripe and cached via Cloudflare KV. Checkout is handled by Stripe Checkout sessions.
 
-Create a blog with Astro and deploy it on Cloudflare Workers as a [static website](https://developers.cloudflare.com/workers/static-assets/).
+## Stack
 
-Features:
+- **Framework**: Astro 5 (SSR) with React islands
+- **UI**: Material UI 7 with a custom dark theme
+- **Hosting**: Cloudflare Workers
+- **Payments**: Stripe (products, prices, checkout, webhooks)
+- **Caching**: Cloudflare KV (`PRODUCT_CACHE`) with webhook-driven invalidation
+- **Email**: Cloudflare `send_email` binding for contact form submissions
+- **Testing**: Vitest (66 unit tests)
+- **Linting**: ESLint flat config with TypeScript, React, and Astro plugins
 
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and OpenGraph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
+## Project Structure
 
-<!-- dash-content-end -->
-
-## Getting Started
-
-Outside of this repo, you can start a new project with this template using [C3](https://developers.cloudflare.com/pages/get-started/c3/) (the `create-cloudflare` CLI):
-
-```bash
-npm create cloudflare@latest -- --template=cloudflare/templates/simic-systems-home
+```
+src/
+  pages/
+    index.astro              # Store homepage (product grid, search, filters)
+    product/[id].astro       # Individual product detail pages
+    api/
+      products.ts            # Product listing endpoint (KV-cached)
+      create-checkout.ts     # Stripe Checkout session creation
+      webhook.ts             # Stripe webhook (cache invalidation)
+      contact.ts             # Contact form handler (rate-limited)
+    checkout/                # Success and cancel pages
+    about.astro, contact.astro, faq.astro, shipping.astro,
+    privacy.astro, terms.astro, 404.astro
+  components/
+    MainPage.tsx             # Product grid with search + category filters
+    ProductCard.tsx          # Product card in grid
+    ProductDetail.tsx        # Full product detail view
+    CartProvider.tsx         # React context for shopping cart
+    CartDrawer.tsx           # Slide-out cart drawer
+    ContactForm.tsx          # Contact form with honeypot + rate limiting
+    ErrorBoundary.tsx        # React error boundary
+    Header.astro, Footer.astro, BaseHead.astro
+    theme.tsx                # MUI dark theme config
+  lib/
+    cart.ts                  # Pure cart operations (add, remove, totals)
+    contact.ts               # Contact validation + email builder
+    stripeProducts.ts        # Stripe product mapping + category validation
+    format.ts                # Price formatting
+  types.ts                   # Shared types (ProductData, CartItem)
+catalog/
+  products.mjs               # Declarative product catalog (syncs to Stripe)
+scripts/
+  catalog-sync.mjs           # Stripe catalog sync tooling
+tests/                       # Vitest unit tests
 ```
 
-A live public deployment of this template is available at [https://simic-systems-home.templates.workers.dev](https://simic-systems-home.templates.workers.dev)
+## Commands
 
-## 🚀 Project Structure
+| Command | Action |
+|:--|:--|
+| `npm install` | Install dependencies |
+| `npm run dev` | Start dev server at `localhost:4321` |
+| `npm run build` | Production build to `./dist/` |
+| `npm run deploy` | Deploy to Cloudflare Workers |
+| `npm run catalog:pull` | Pull current Stripe products into `catalog/products.mjs` |
+| `npm run catalog:plan` | Preview catalog changes (diff against Stripe) |
+| `npm run catalog:sync` | Apply catalog changes to Stripe |
+| `npm test` | Run Vitest unit tests |
+| `npm run lint` | Run ESLint |
+| `npm run typecheck` | Run TypeScript type checking |
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Cloudflare Bindings
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+Configured in `wrangler.json`:
 
-The `src/content/` directory contains "collections" of related Markdown and MDX documents. Use `getCollection()` to retrieve posts from `src/content/blog/`, and type-check your frontmatter using an optional schema. See [Astro's Content Collections docs](https://docs.astro.build/en/guides/content-collections/) to learn more.
+| Binding | Type | Purpose |
+|:--|:--|:--|
+| `ASSETS` | Fetcher | Static asset serving |
+| `PRODUCT_CACHE` | KV | Cached product data from Stripe |
+| `STRIPE_SECRET_KEY` | Secret | Stripe API key |
+| `STRIPE_WEBHOOK_SECRET` | Secret | Stripe webhook signature verification |
+| `CONTACT_EMAIL` | SendEmail | Forwards contact form submissions |
 
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run catalog:plan`    | Preview Stripe catalog changes from `catalog/products.mjs` |
-| `npm run catalog:pull`    | Pull current Stripe products into `catalog/products.mjs` |
-| `npm run catalog:sync`    | Apply catalog changes to Stripe                  |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-| `npm run deploy`          | Deploy your production site to Cloudflare        |
+Secrets are set via `wrangler secret put` or `.dev.vars` for local development.
 
 ## Stripe Catalog Management
 
-This project can manage storefront products from a single repo file instead of editing each product manually in Stripe.
-
-Edit [catalog/products.mjs](catalog/products.mjs) to control:
-
-- product name and description
-- price in cents
-- product image URL
-- category metadata
-- display order in the storefront
-- active or hidden status
-- optional stock quantity
-
-Then run:
+Products can be managed declaratively from `catalog/products.mjs` instead of editing each product in the Stripe dashboard.
 
 ```bash
+# Bootstrap from existing Stripe products
 npm run catalog:pull
+
+# Preview what would change
 npm run catalog:plan
+
+# Apply changes to Stripe
 npm run catalog:sync
 ```
 
-Notes:
-
-- `npm run catalog:pull` is the easiest bootstrap path if you already have products in Stripe.
-- The sync script uses `STRIPE_SECRET_KEY` from your shell or `.dev.vars`.
-- Price changes create a new Stripe price and swap the product's default price, which is the correct Stripe workflow.
-- If `quantity` is omitted for a product, the current Stripe stock metadata is preserved.
-- Managed products removed from the catalog file are archived in Stripe the next time you sync.
-- Storefront cache now refreshes within about 60 seconds after Stripe changes.
-
-## 👀 Want to learn more?
-
-Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
-
-## Credit
-
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
+- Price changes create a new Stripe price and swap the default (correct Stripe workflow).
+- Omitting `quantity` preserves the current Stripe stock metadata.
+- Products removed from the catalog file are archived in Stripe on next sync.
+- The storefront cache refreshes within ~60 seconds after Stripe changes via webhook.
