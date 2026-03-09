@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { EmailMessage } from "cloudflare:email";
 
 export const prerender = false;
 
@@ -21,6 +22,30 @@ const VALID_SUBJECTS = [
   "Other",
 ];
 
+function buildRawEmail(submission: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}): string {
+  const lines = [
+    `From: noreply@simic.systems`,
+    `To: contact@simic.systems`,
+    `Reply-To: ${submission.email}`,
+    `Subject: [Contact Form] ${submission.subject}`,
+    `Content-Type: text/plain; charset=utf-8`,
+    ``,
+    `New contact form submission:`,
+    ``,
+    `Name: ${submission.name}`,
+    `Email: ${submission.email}`,
+    `Subject: ${submission.subject}`,
+    ``,
+    submission.message,
+  ];
+  return lines.join("\r\n");
+}
+
 export const POST: APIRoute = async ({ request, locals }) => {
   const { env } = locals.runtime;
 
@@ -36,7 +61,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   // Honeypot check
   if (body._honey) {
-    // Silently accept to not tip off bots
     return new Response(JSON.stringify({ success: true }), {
       headers: { "Content-Type": "application/json" },
     });
@@ -64,17 +88,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
     email: body.email.trim(),
     subject: body.subject.trim(),
     message: body.message.trim(),
-    submittedAt: new Date().toISOString(),
   };
 
-  const key = `contact:${Date.now()}:${crypto.randomUUID()}`;
-
   try {
-    await env.PRODUCT_CACHE.put(key, JSON.stringify(submission), {
-      expirationTtl: 60 * 60 * 24 * 90, // 90 days
-    });
+    const rawEmail = buildRawEmail(submission);
+    const msg = new EmailMessage(
+      "noreply@simic.systems",
+      "contact@simic.systems",
+      new Blob([rawEmail]).stream()
+    );
+    await env.CONTACT_EMAIL.send(msg);
   } catch (err) {
-    console.error("Failed to store contact submission:", err);
+    console.error("Failed to send contact email:", err);
     return new Response(
       JSON.stringify({ error: "Failed to submit. Please try again." }),
       { status: 500, headers: { "Content-Type": "application/json" } }
