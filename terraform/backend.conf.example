@@ -1,0 +1,4 @@
+# R2 S3-compatible credentials (from Cloudflare R2 API token)
+# These are NOT actual AWS credentials -- R2 just uses the S3 protocol
+access_key = "YOUR_R2_ACCESS_KEY"
+secret_key = "YOUR_R2_SECRET_KEY"
