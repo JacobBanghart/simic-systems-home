@@ -4,22 +4,6 @@ const today = new Date();
 
 <footer>
 	<div class="footer-content">
-		<div class="trust-badges">
-			<div class="trust-item">
-				<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-				<span>Secure Checkout</span>
-			</div>
-			<div class="payment-icons">
-				<span class="payment-label">Visa</span>
-				<span class="payment-label">Mastercard</span>
-				<span class="payment-label">Amex</span>
-				<span class="payment-label">Apple Pay</span>
-				<span class="payment-label">Google Pay</span>
-			</div>
-			<a href="https://stripe.com" target="_blank" rel="noopener noreferrer" class="stripe-badge">
-				Powered by <strong>Stripe</strong>
-			</a>
-		</div>
 		<div class="footer-links">
 			<a href="/about/">About</a>
 			<a href="/contact/">Contact</a>
@@ -28,6 +12,7 @@ const today = new Date();
 			<a href="/privacy/">Privacy Policy</a>
 			<a href="/terms/">Terms of Service</a>
 		</div>
+		<p class="nap">5115 Lankershim Blvd Apt 210, North Hollywood, CA 91601 &middot; <a href="tel:+16055534735">(605) 553-4735</a></p>
 		<p>&copy; {today.getFullYear()} Simic Systems. All rights reserved.</p>
 	</div>
 </footer>
@@ -41,46 +26,6 @@ const today = new Date();
 	.footer-content {
 		max-width: 720px;
 		margin: 0 auto;
-	}
-	.trust-badges {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
-		align-items: center;
-		gap: 1.5em;
-		margin-bottom: 1.5em;
-		padding-bottom: 1.5em;
-		border-bottom: 1px solid rgba(var(--gray-light), 0.3);
-	}
-	.trust-item {
-		display: flex;
-		align-items: center;
-		gap: 0.4em;
-		font-size: 0.85em;
-		font-weight: 500;
-	}
-	.payment-icons {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
-		gap: 0.5em;
-	}
-	.payment-label {
-		display: inline-block;
-		padding: 0.15em 0.5em;
-		border: 1px solid rgba(var(--gray), 0.4);
-		border-radius: 3px;
-		font-size: 0.7em;
-		font-weight: 600;
-		letter-spacing: 0.02em;
-	}
-	.stripe-badge {
-		font-size: 0.8em;
-		color: rgb(var(--gray));
-		text-decoration: none;
-	}
-	.stripe-badge:hover {
-		text-decoration: underline;
 	}
 	.footer-links {
 		display: flex;
@@ -96,6 +41,18 @@ const today = new Date();
 	}
 	.footer-links a:hover {
 		color: rgb(var(--gray-dark));
+		text-decoration: underline;
+	}
+	.nap {
+		font-size: 0.8em;
+		margin: 0 0 0.5em 0;
+		opacity: 0.7;
+	}
+	.nap a {
+		color: inherit;
+		text-decoration: none;
+	}
+	.nap a:hover {
 		text-decoration: underline;
 	}
 	p {

@@ -9,7 +9,28 @@ import { SITE_TITLE } from '../consts';
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title={`Contact - ${SITE_TITLE}`} description="Contact Simic Systems" />
+		<BaseHead title={`Contact - ${SITE_TITLE}`} description="Contact Simic Systems with questions about orders, products, or returns. Email contact@simic.systems or use the contact form." />
+		<script type="application/ld+json" set:html={JSON.stringify({
+			"@context": "https://schema.org",
+			"@type": "ContactPage",
+			"name": "Contact Simic Systems",
+			"url": "https://simic.systems/contact/",
+			"description": "Contact Simic Systems for order questions, product inquiries, or return requests.",
+			"mainEntity": {
+				"@type": "Organization",
+				"name": "Simic Systems LLC",
+				"email": "contact@simic.systems",
+				"telephone": "+16055534735",
+				"address": {
+					"@type": "PostalAddress",
+					"streetAddress": "5115 Lankershim Blvd Apt 210",
+					"addressLocality": "North Hollywood",
+					"addressRegion": "CA",
+					"postalCode": "91601",
+					"addressCountry": "US"
+				}
+			}
+		})}></script>
 	</head>
 	<body>
 		<Header />

@@ -8,7 +8,25 @@ import { SITE_TITLE } from '../consts';
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title={`About - ${SITE_TITLE}`} description="About Simic Systems - your source for trading card products" />
+		<BaseHead title={`About - ${SITE_TITLE}`} description="Simic Systems is an online retailer selling factory-sealed Magic: The Gathering products. Based in North Hollywood, CA. Ships across the US via USPS." />
+		<script type="application/ld+json" set:html={JSON.stringify({
+			"@context": "https://schema.org",
+			"@type": "Organization",
+			"name": "Simic Systems LLC",
+			"url": "https://simic.systems",
+			"email": "contact@simic.systems",
+			"address": {
+				"@type": "PostalAddress",
+				"streetAddress": "5115 Lankershim Blvd Apt 210",
+				"addressLocality": "North Hollywood",
+				"addressRegion": "CA",
+				"postalCode": "91601",
+				"addressCountry": "US"
+			},
+			"telephone": "+16055534735",
+			"description": "Online retailer specializing in factory-sealed Magic: The Gathering products including booster boxes and collector sets.",
+			"areaServed": "US"
+		})}></script>
 	</head>
 	<body>
 		<Header />

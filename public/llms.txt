@@ -1,0 +1,28 @@
+# Simic Systems
+
+> Online retailer selling factory-sealed Magic: The Gathering products — booster boxes, collector boxes, play boosters, draft boosters, bundles, and commander decks. Secure checkout via Stripe. Ships within the United States via USPS.
+
+Simic Systems LLC is based in North Hollywood, CA. All products are sourced from authorized distributors and shipped factory-sealed. The store is intended for MTG players and collectors looking to buy sealed product at competitive prices.
+
+## Store
+
+- [Shop — Booster Boxes & Sealed MTG Products](https://simic.systems/): Browse current in-stock inventory. Products include draft boosters, set boosters, collector boosters, play boosters, bundles, and commander decks. Prices in USD. Add to cart and check out via Stripe.
+
+## Company
+
+- [About Simic Systems](https://simic.systems/about/): Who we are, what we sell, and how the ordering process works. Covers product sourcing (authorized distributors, factory-sealed only) and shipping carrier (USPS, US only).
+- [Contact](https://simic.systems/contact/): Email contact@simic.systems or use the contact form. For order issues include your order number or Stripe receipt email, a description of the issue, and photos if applicable.
+
+## Policies
+
+- [Shipping & Returns](https://simic.systems/shipping/): Ships via USPS within the US. Orders processed in 1–3 business days; delivery 3–7 business days after shipment. Returns accepted within 14 days of delivery for unopened, factory-sealed items. Buyer pays return shipping. Refunds issued within 5–10 business days of receiving the return.
+- [FAQ](https://simic.systems/faq/): Answers to common questions — payment methods (Visa, Mastercard, Amex, Apple Pay, Google Pay via Stripe), shipping timeline, return eligibility, product authenticity, order tracking, damaged orders, and bulk pricing inquiries.
+- [Terms of Service](https://simic.systems/terms/): Governs use of simic.systems and purchases. Covers product availability, payment via Stripe, US-only shipping, 14-day return window, and liability limitations.
+- [Privacy Policy](https://simic.systems/privacy/): Data collected (name, email, shipping address, order info). Third-party services: Stripe (payments), Cloudflare (hosting), USPS (shipping), Ahrefs Analytics (cookieless, no personal data). No data sold to third parties.
+
+## Contact & Location
+
+- **Email**: contact@simic.systems
+- **Phone**: (605) 553-4735
+- **Address**: 5115 Lankershim Blvd Apt 210, North Hollywood, CA 91601
+- **Business hours**: Not specified — email response time not guaranteed
