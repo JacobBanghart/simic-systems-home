@@ -8,7 +8,46 @@ import { SITE_TITLE } from '../consts';
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title={`Shipping & Returns - ${SITE_TITLE}`} description="Shipping and return policy for Simic Systems" />
+		<BaseHead title={`Shipping & Returns - ${SITE_TITLE}`} description="Simic Systems ships via USPS within the US. Orders processed in 1–3 business days. Returns accepted within 14 days for unopened, factory-sealed items." />
+		<script type="application/ld+json" set:html={JSON.stringify({
+			"@context": "https://schema.org",
+			"@type": "WebPage",
+			"name": "Shipping & Returns",
+			"url": "https://simic.systems/shipping/",
+			"description": "Shipping and return policy for Simic Systems.",
+			"mainEntity": [
+				{
+					"@type": "MerchantReturnPolicy",
+					"name": "Simic Systems Return Policy",
+					"returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+					"merchantReturnDays": 14,
+					"returnMethod": "https://schema.org/ReturnByMail",
+					"returnFees": "https://schema.org/ReturnShippingFees",
+					"applicableCountry": "US",
+					"itemCondition": "https://schema.org/NewCondition",
+					"description": "Returns accepted within 14 days of delivery for unopened, factory-sealed items. Buyer pays return shipping. Refund issued to original payment method within 5–10 business days of receiving the return."
+				},
+				{
+					"@type": "ShippingDeliveryTime",
+					"businessDays": {
+						"@type": "OpeningHoursSpecification",
+						"dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"]
+					},
+					"handlingTime": {
+						"@type": "QuantitativeValue",
+						"minValue": 1,
+						"maxValue": 3,
+						"unitCode": "DAY"
+					},
+					"transitTime": {
+						"@type": "QuantitativeValue",
+						"minValue": 3,
+						"maxValue": 7,
+						"unitCode": "DAY"
+					}
+				}
+			]
+		})}></script>
 	</head>
 	<body>
 		<Header />
