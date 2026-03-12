@@ -1,15 +1,17 @@
 ---
 import HeaderLink from './HeaderLink.astro';
 import { SITE_TITLE } from '../consts';
+
+interface Props {
+	showCart?: boolean;
+}
+
+const { showCart = false } = Astro.props;
 ---
 
 <header>
 	<nav>
 		<h2><a href="/">{SITE_TITLE}</a></h2>
-		<button id="menu-toggle" type="button" aria-label="Toggle menu" class="menu-toggle">
-			<svg class="icon-menu" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-			<svg class="icon-close" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-		</button>
 		<div class="internal-links">
 			<HeaderLink href="/">Home</HeaderLink>
 			<HeaderLink href="/about/">About</HeaderLink>
@@ -20,6 +22,17 @@ import { SITE_TITLE } from '../consts';
 				<svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M10 7a7 7 0 0 0 12 4.9v.1c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2h.1A6.98 6.98 0 0 0 10 7zm-6 5a8 8 0 0 0 15.062 3.762A9 9 0 0 1 8.238 4.938 7.999 7.999 0 0 0 4 12z"/></svg>
 			</button>
 		</div>
+		<div id="cart-button-portal">
+			{showCart && (
+				<button type="button" class="cart-placeholder" aria-label="Shopping cart" disabled>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2m10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2m-8.9-5h7.45c.75 0 1.41-.41 1.75-1.03L21 4.96 19.25 4l-3.7 7H8.53L4.27 2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7zM12 2l4 4-4 4-1.41-1.41L12.17 7H8V5h4.17l-1.59-1.59z"/></svg>
+				</button>
+			)}
+		</div>
+		<button id="menu-toggle" type="button" aria-label="Toggle menu" class="menu-toggle">
+			<svg class="icon-menu" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+			<svg class="icon-close" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+		</button>
 	</nav>
 </header>
 
@@ -63,12 +76,37 @@ import { SITE_TITLE } from '../consts';
 	nav {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
 		flex-wrap: wrap;
 	}
 	.internal-links {
 		display: flex;
 		align-items: center;
+		margin-left: auto;
+	}
+	#cart-button-portal {
+		display: flex;
+		align-items: center;
+	}
+	#cart-button-portal :global(.MuiIconButton-root) {
+		background: linear-gradient(135deg, #008fff, #279214);
+		color: #fff !important;
+		border-radius: 8px;
+		padding: 6px;
+		transition: opacity 0.15s;
+	}
+	#cart-button-portal :global(.MuiIconButton-root:hover) {
+		opacity: 0.85;
+	}
+	.cart-placeholder {
+		background: linear-gradient(135deg, #008fff, #279214);
+		border: none;
+		padding: 6px;
+		color: #fff;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: default;
+		border-radius: 8px;
 	}
 	nav a {
 		padding: 1em 0.5em;
@@ -132,6 +170,9 @@ import { SITE_TITLE } from '../consts';
 
 	/* Mobile: collapse nav into hamburger */
 	@media (max-width: 600px) {
+		header {
+			padding: 0.5em 1em;
+		}
 		.menu-toggle {
 			display: flex;
 		}
@@ -141,6 +182,8 @@ import { SITE_TITLE } from '../consts';
 			flex-direction: column;
 			align-items: stretch;
 			border-top: 1px solid rgb(var(--gray-light));
+			order: 99;
+			margin-left: 0;
 		}
 		nav.open .internal-links {
 			display: flex;
@@ -152,6 +195,9 @@ import { SITE_TITLE } from '../consts';
 		.internal-links #theme-toggle {
 			padding: 0.75em 0;
 			justify-content: flex-start;
+		}
+		#cart-button-portal {
+			margin-left: auto;
 		}
 	}
 </style>

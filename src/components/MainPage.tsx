@@ -5,7 +5,6 @@ import {
   Container,
   ThemeProvider,
   IconButton,
-  Badge,
   Stack,
   FormControl,
   InputLabel,
@@ -19,11 +18,11 @@ import {
 import { useState } from "react";
 import { themeOptions } from "./theme";
 import banner from "/banner.webp?url";
-import { ShoppingCartCheckout, Search, Clear } from "@mui/icons-material";
+import { Search, Clear } from "@mui/icons-material";
 import type { ProductData } from "../types";
 import { ProductCard } from "./ProductCard";
 import { CartProvider, useCart } from "./CartProvider";
-import { CartDrawer } from "./CartDrawer";
+import { CartButton } from "./CartButton";
 import { ErrorBoundary } from "./ErrorBoundary";
 
 interface MainPageProps {
@@ -40,11 +39,10 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 function StoreContent({ products }: MainPageProps) {
-  const [cartOpen, setCartOpen] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("featured");
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState("all");
-  const { addToCart, cartCount } = useCart();
+  const { addToCart } = useCart();
 
   const uniqueCategories = [...new Set(products.map((p) => p.category))];
   const hasMultipleCategories = uniqueCategories.length > 1;
@@ -85,23 +83,14 @@ function StoreContent({ products }: MainPageProps) {
     if (items.length === 0) {
       return (
         <Typography sx={{ py: 4, textAlign: "center", color: "text.secondary" }}>
-          {searchQuery || category !== "all"
-            ? "No products found"
-            : "No products available"}
+          {searchQuery || category !== "all" ? "No products found" : "No products available"}
         </Typography>
       );
     }
     return (
-      <Grid
-        container
-        spacing={{ xs: 2, md: 3 }}
-      >
+      <Grid container spacing={{ xs: 2, md: 3 }}>
         {items.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            onAddToCart={addToCart}
-          />
+          <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
         ))}
       </Grid>
     );
@@ -109,36 +98,22 @@ function StoreContent({ products }: MainPageProps) {
 
   return (
     <>
-      {/* Banner with cart overlay */}
-      <div style={{ position: "relative" }}>
-        <Box
-          component="img"
-          src={banner}
-          alt="Simic Systems — Trading Card Products"
-          sx={{
-            width: "100%",
-            maxHeight: "220px",
-            objectFit: "cover",
-            objectPosition: "center 20%",
-            display: "block",
-          }}
-        />
-        <IconButton
-          onClick={() => setCartOpen(true)}
-          aria-label="Open shopping cart"
-          sx={{
-            position: "absolute",
-            top: 12,
-            right: 12,
-            backgroundColor: "background.paper",
-            "&:hover": { backgroundColor: "background.default" },
-          }}
-        >
-          <Badge badgeContent={cartCount} color="primary">
-            <ShoppingCartCheckout />
-          </Badge>
-        </IconButton>
-      </div>
+      {/* Cart button (portaled into header) */}
+      <CartButton />
+
+      {/* Banner */}
+      <Box
+        component="img"
+        src={banner}
+        alt="Simic Systems — Trading Card Products"
+        sx={{
+          width: "100%",
+          maxHeight: "220px",
+          objectFit: "cover",
+          objectPosition: "center 20%",
+          display: "block",
+        }}
+      />
 
       {/* Product Grid */}
       <Container maxWidth="lg" sx={{ py: 3 }}>
@@ -202,7 +177,11 @@ function StoreContent({ products }: MainPageProps) {
                 ),
                 endAdornment: searchQuery ? (
                   <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => setSearchQuery("")} aria-label="Clear search">
+                    <IconButton
+                      size="small"
+                      onClick={() => setSearchQuery("")}
+                      aria-label="Clear search"
+                    >
                       <Clear fontSize="small" />
                     </IconButton>
                   </InputAdornment>
@@ -216,30 +195,29 @@ function StoreContent({ products }: MainPageProps) {
 
         {/* SEO content — visible but below the fold */}
         <Box sx={{ mt: 6, pt: 4, borderTop: "1px solid", borderColor: "divider" }}>
-          <Typography component="h1" variant="h5" sx={{ mb: 1, fontSize: { xs: "1.1rem", sm: "1.3rem" } }}>
+          <Typography
+            component="h1"
+            variant="h5"
+            sx={{ mb: 1, fontSize: { xs: "1.1rem", sm: "1.3rem" } }}
+          >
             Buy Sealed Magic: The Gathering Products Online
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Simic Systems is an online trading card game store specializing in
-            factory sealed MTG products. Browse our selection of Magic: The
-            Gathering booster boxes, collector boxes, play boosters, draft
-            boosters, bundles, and commander decks — all authentic and officially
-            licensed.
+            Simic Systems is an online trading card game store specializing in factory sealed MTG
+            products. Browse our selection of Magic: The Gathering booster boxes, collector boxes,
+            play boosters, draft boosters, bundles, and commander decks — all authentic and
+            officially licensed.
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Every order ships with secure checkout powered by Stripe, with
-            shipping available across the United States. Check back regularly
-            for new set releases, restocks, and pre-orders.
+            Every order ships with secure checkout powered by Stripe, with shipping available across
+            the United States. Check back regularly for new set releases, restocks, and pre-orders.
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Looking for booster packs, set boosters, or collector boxes at
-            competitive prices? Shop our full catalog above and add items to your
-            cart for fast, reliable shipping.
+            Looking for booster packs, set boosters, or collector boxes at competitive prices? Shop
+            our full catalog above and add items to your cart for fast, reliable shipping.
           </Typography>
         </Box>
       </Container>
-
-      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
     </>
   );
 }
