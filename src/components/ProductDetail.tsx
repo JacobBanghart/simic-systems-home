@@ -1,20 +1,10 @@
-import {
-  Box,
-  Typography,
-  Button,
-  Container,
-  ThemeProvider,
-  IconButton,
-  Badge,
-  Chip,
-} from "@mui/material";
-import { ShoppingCartCheckout, ArrowBack } from "@mui/icons-material";
-import { useState } from "react";
+import { Box, Typography, Button, Container, ThemeProvider, Chip } from "@mui/material";
+import { ArrowBack } from "@mui/icons-material";
 import { themeOptions } from "./theme";
 import type { ProductData } from "../types";
 import { formatPrice } from "../lib/format";
 import { CartProvider, useCart } from "./CartProvider";
-import { CartDrawer } from "./CartDrawer";
+import { CartButton } from "./CartButton";
 import { ErrorBoundary } from "./ErrorBoundary";
 
 interface ProductDetailProps {
@@ -28,33 +18,16 @@ const CATEGORY_LABELS: Record<ProductData["category"], string> = {
 };
 
 function ProductDetailContent({ product }: ProductDetailProps) {
-  const [cartOpen, setCartOpen] = useState(false);
-  const { addToCart, cartCount } = useCart();
+  const { addToCart } = useCart();
   const outOfStock = product.quantity <= 0;
 
   return (
     <>
-      <Box sx={{ display: "flex", justifyContent: "flex-end", p: 1 }}>
-        <IconButton
-          onClick={() => setCartOpen(true)}
-          aria-label="Open shopping cart"
-          sx={{
-            backgroundColor: "background.paper",
-            "&:hover": { backgroundColor: "background.default" },
-          }}
-        >
-          <Badge badgeContent={cartCount} color="primary">
-            <ShoppingCartCheckout />
-          </Badge>
-        </IconButton>
-      </Box>
+      {/* Cart button (portaled into header) */}
+      <CartButton />
 
       <Container maxWidth="md" sx={{ py: 2 }}>
-        <Button
-          href="/"
-          startIcon={<ArrowBack />}
-          sx={{ mb: 3, textTransform: "none" }}
-        >
+        <Button href="/" startIcon={<ArrowBack />} sx={{ mb: 3, textTransform: "none" }}>
           Back to Store
         </Button>
 
@@ -119,8 +92,6 @@ function ProductDetailContent({ product }: ProductDetailProps) {
           </Box>
         </Box>
       </Container>
-
-      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
     </>
   );
 }

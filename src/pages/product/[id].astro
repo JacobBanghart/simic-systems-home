@@ -52,7 +52,7 @@ const productSchema = {
     <script type="application/ld+json" set:html={JSON.stringify(productSchema)} />
   </head>
   <body>
-    <Header />
+    <Header showCart />
     <main>
       <ProductDetail client:load product={product} />
     </main>
