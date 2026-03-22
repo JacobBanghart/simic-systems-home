@@ -48,7 +48,10 @@
   },
   "type": "module",
   "overrides": {
-    "undici": "^7.18.2",
+    "undici": "^7.24.0",
+    "devalue": "^5.6.4",
+    "flatted": "^3.4.2",
+    "h3": "^1.15.9",
     "wrangler": "$wrangler"
   }
 }
