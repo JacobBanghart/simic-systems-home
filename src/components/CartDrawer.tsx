@@ -91,6 +91,9 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                     component="img"
                     src={item.image}
                     alt={item.name}
+                    loading="lazy"
+                    width={60}
+                    height={60}
                     sx={{
                       width: 60,
                       height: 60,

@@ -46,6 +46,9 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           component="img"
           src={product.image}
           alt={product.name}
+          loading="lazy"
+          width={400}
+          height={400}
           sx={{
             width: "100%",
             height: { xs: "auto", sm: "14rem" },

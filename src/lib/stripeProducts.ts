@@ -41,6 +41,7 @@ export function mapStripeProduct(product: Stripe.Product): ProductData | null {
     quantity: parseInteger(product.metadata.quantity, 0),
     image: product.images[0] || "",
     sortOrder: parseInteger(product.metadata.sortOrder, 999),
+    gtin: product.metadata.gtin || undefined,
   };
 }
 

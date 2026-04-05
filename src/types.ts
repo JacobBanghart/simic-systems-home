@@ -8,6 +8,7 @@ export interface ProductData {
   quantity: number;
   image: string;
   sortOrder: number;
+  gtin?: string;
 }
 
 export interface CartItem {

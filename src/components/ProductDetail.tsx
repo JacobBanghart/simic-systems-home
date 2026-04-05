@@ -11,10 +11,8 @@ interface ProductDetailProps {
   product: ProductData;
 }
 
-const CATEGORY_LABELS: Record<ProductData["category"], string> = {
+const CATEGORY_LABELS: Record<string, string> = {
   magic: "Magic: The Gathering",
-  onepiece: "One Piece",
-  unionarena: "Union Arena",
 };
 
 function ProductDetailContent({ product }: ProductDetailProps) {
@@ -42,6 +40,9 @@ function ProductDetailContent({ product }: ProductDetailProps) {
             component="img"
             src={product.image}
             alt={product.name}
+            loading="eager"
+            width={500}
+            height={500}
             sx={{
               width: { xs: "100%", md: "50%" },
               maxHeight: 500,
