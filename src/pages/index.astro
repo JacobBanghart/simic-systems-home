@@ -52,6 +52,13 @@ const productListSchema = {
     })),
   },
 };
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Simic Systems",
+  url: "https://simic.systems/",
+};
 ---
 
 <!doctype html>
@@ -61,6 +68,10 @@ const productListSchema = {
         <script
             type="application/ld+json"
             set:html={JSON.stringify(productListSchema)}
+        />
+        <script
+            type="application/ld+json"
+            set:html={JSON.stringify(websiteSchema)}
         />
     </head>
     <body>

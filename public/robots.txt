@@ -1,17 +1,27 @@
 User-agent: Googlebot
 Allow: /
+Disallow: /checkout/
+Disallow: /api/
 
 User-agent: Bingbot
 Allow: /
+Disallow: /checkout/
+Disallow: /api/
 
 User-agent: DuckDuckBot
 Allow: /
+Disallow: /checkout/
+Disallow: /api/
 
 User-agent: Slurp
 Allow: /
+Disallow: /checkout/
+Disallow: /api/
 
 User-agent: Applebot
 Allow: /
+Disallow: /checkout/
+Disallow: /api/
 
 User-agent: GPTBot
 Allow: /
@@ -37,4 +47,4 @@ Allow: /
 User-agent: *
 Disallow: /
 
-Sitemap: https://simic.systems/sitemap.xml
+Sitemap: https://simic.systems/sitemap-index.xml

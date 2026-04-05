@@ -8,7 +8,7 @@ import react from "@astrojs/react"
 // https://astro.build/config
 export default defineConfig({
   site: "https://simic.systems",
-  trailingSlash: "ignore",
+  trailingSlash: "always",
   integrations: [sitemap({
     filter: (page) =>
       !page.includes('/checkout/') &&
