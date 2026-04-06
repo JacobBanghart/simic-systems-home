@@ -8,11 +8,21 @@ import { ProductDetail } from "../../components/ProductDetail";
 import { SITE_TITLE } from "../../consts";
 import { fetchStoreProducts } from "../../lib/stripeProducts";
 
-const { id } = Astro.params;
+const { slug } = Astro.params;
 const { env } = Astro.locals.runtime;
 
-let products = await fetchStoreProducts(env);
-const product = products.find((p) => p.id === id);
+const products = await fetchStoreProducts(env);
+
+// Legacy support: if the segment looks like a Stripe product ID, 301 to slug URL.
+if (slug && slug.startsWith("prod_")) {
+  const product = products.find((p) => p.id === slug);
+  if (product?.slug) {
+    return Astro.redirect(`/product/${product.slug}/`, 301);
+  }
+  return Astro.redirect("/404/");
+}
+
+const product = products.find((p) => p.slug === slug);
 
 if (!product) {
   return Astro.redirect("/404/");
@@ -32,7 +42,7 @@ const pageDescription = product.description
     ? product.description.slice(0, 137) + "..."
     : product.description
   : `Buy ${displayName} sealed in the US. In-stock, secure checkout, and fast shipping from Simic Systems.`;
-const productUrl = new URL(`/product/${product.id}/`, Astro.site).href;
+const productUrl = new URL(`/product/${product.slug}/`, Astro.site).href;
 const brandName = BRAND_NAMES[product.category] ?? product.category;
 
 const productSchema = {

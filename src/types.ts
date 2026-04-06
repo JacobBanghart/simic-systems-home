@@ -9,6 +9,7 @@ export interface ProductData {
   image: string;
   sortOrder: number;
   gtin?: string;
+  slug?: string;
 }
 
 export interface CartItem {
