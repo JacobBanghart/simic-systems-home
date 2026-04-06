@@ -22,8 +22,16 @@ const BRAND_NAMES: Record<string, string> = {
   magic: "Magic: The Gathering",
 };
 
-const pageTitle = `${product.name} | ${SITE_TITLE}`;
-const pageDescription = product.description || `Buy ${product.name} at ${SITE_TITLE}`;
+// Strip trailing Stripe set name suffix e.g. " - Tarkir: Dragonstorm (TDM)"
+// so titles read "Tarkir: Dragonstorm - Play Booster Display" not the full internal name.
+const displayName = product.name.replace(/ - [^-]+ \([A-Z0-9]{2,5}\)\s*$/u, "").trim();
+
+const pageTitle = `Buy ${displayName} | ${SITE_TITLE}`;
+const pageDescription = product.description
+  ? product.description.length > 140
+    ? product.description.slice(0, 137) + "..."
+    : product.description
+  : `Buy ${displayName} sealed in the US. In-stock, secure checkout, and fast shipping from Simic Systems.`;
 const productUrl = new URL(`/product/${product.id}/`, Astro.site).href;
 const brandName = BRAND_NAMES[product.category] ?? product.category;
 
