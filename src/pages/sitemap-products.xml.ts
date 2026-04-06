@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { fetchStoreProducts } from "../../lib/stripeProducts";
+import { fetchStoreProducts } from "../lib/stripeProducts";
 
 export const prerender = false;
 
