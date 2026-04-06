@@ -15,12 +15,13 @@ export const GET: APIRoute = async ({ locals, site }) => {
   }
 
   const urls = products
-    .map(
-      (product) => `
+    .map((product) => {
+      const path = product.slug ?? product.id;
+      return `
   <url>
-    <loc>${baseUrl}/product/${product.id}/</loc>
-  </url>`
-    )
+    <loc>${baseUrl}/product/${path}/</loc>
+  </url>`;
+    })
     .join("");
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
