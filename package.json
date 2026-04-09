@@ -46,6 +46,8 @@
     "slugs:plan": "node scripts/set-slugs.mjs",
     "slugs:sync": "node scripts/set-slugs.mjs slugs.json",
     "test": "vitest run",
+    "webhook:resend": "node scripts/resend-failed-webhooks.mjs",
+    "webhook:resend:dry": "node scripts/resend-failed-webhooks.mjs --dry-run",
     "types": "wrangler types"
   },
   "type": "module",
