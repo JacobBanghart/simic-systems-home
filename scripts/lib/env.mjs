@@ -31,10 +31,13 @@ export function loadDotEnv(rawText) {
 }
 
 export async function loadLocalEnv(baseUrl) {
-  try {
-    const envText = await fs.readFile(new URL(".dev.vars", baseUrl), "utf8");
-    return loadDotEnv(envText);
-  } catch {
-    return {};
+  for (const filename of [".dev.vars", ".env"]) {
+    try {
+      const envText = await fs.readFile(new URL(filename, baseUrl), "utf8");
+      return loadDotEnv(envText);
+    } catch {
+      // try next
+    }
   }
+  return {};
 }
