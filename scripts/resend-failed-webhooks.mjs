@@ -69,7 +69,7 @@ async function main() {
     }
 
     try {
-      await stripe.events.sendWebhookTestRequest(event.id);
+      await stripe.rawRequest("POST", `/v1/events/${event.id}/retry`);
       console.log(`  resent ${event.id} (${date})`);
       resent++;
     } catch (err) {
