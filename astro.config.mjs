@@ -3,19 +3,20 @@ import { defineConfig } from "astro/config";
 import sitemap from "@astrojs/sitemap";
 
 import cloudflare from "@astrojs/cloudflare";
-import react from "@astrojs/react"
+import react from "@astrojs/react";
 
 // https://astro.build/config
 export default defineConfig({
   site: "https://simic.systems",
-  trailingSlash: "always",
-  integrations: [sitemap({
-    filter: (page) =>
-      !page.includes('/checkout/') &&
-      !page.includes('/api/'),
-  }), react({
-    experimentalReactChildren: true
-  })],
+  trailingSlash: "ignore",
+  integrations: [
+    sitemap({
+      filter: (page) => !page.includes("/checkout/") && !page.includes("/api/"),
+    }),
+    react({
+      experimentalReactChildren: true,
+    }),
+  ],
   adapter: cloudflare({
     platformProxy: {
       enabled: true,
