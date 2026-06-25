@@ -53,7 +53,7 @@
   "type": "module",
   "overrides": {
     "undici": "^7.24.0",
-    "devalue": "^5.6.4",
+    "devalue": "^5.8.1",
     "flatted": "^3.4.2",
     "h3": "^1.15.9",
     "wrangler": "$wrangler"
