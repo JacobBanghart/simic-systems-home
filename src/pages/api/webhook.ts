@@ -2,6 +2,22 @@ import type { APIRoute } from "astro";
 import Stripe from "stripe";
 import { invalidateProductCache } from "../../lib/stripeProducts";
 
+const INDEXNOW_KEY = "simic2026seo9x7y5z3w";
+const SITE = "https://simic.systems";
+
+async function pingIndexNow(urls: string[]): Promise<void> {
+  await fetch("https://api.indexnow.org/indexnow", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      host: "simic.systems",
+      key: INDEXNOW_KEY,
+      keyLocation: `${SITE}/${INDEXNOW_KEY}.txt`,
+      urlList: urls,
+    }),
+  });
+}
+
 export const prerender = false;
 
 const productCacheInvalidationEvents = new Set([
@@ -82,6 +98,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   if (productCacheInvalidationEvents.has(event.type)) {
     await invalidateProductCache(env);
+
+    const urls = [`${SITE}/`];
+    if (event.type === "product.created" || event.type === "product.updated") {
+      const prod = event.data.object as Stripe.Product;
+      if (prod.metadata?.slug) {
+        urls.push(`${SITE}/product/${prod.metadata.slug}/`);
+      }
+    }
+    pingIndexNow(urls).catch((err) =>
+      console.error("IndexNow ping failed:", err)
+    );
   }
 
   return new Response(JSON.stringify({ received: true }), {
