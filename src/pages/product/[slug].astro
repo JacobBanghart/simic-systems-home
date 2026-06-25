@@ -48,7 +48,7 @@ const brandName = BRAND_NAMES[product.category] ?? product.category;
 const productSchema = {
   "@context": "https://schema.org",
   "@type": "Product",
-  name: product.name,
+  name: displayName,
   description: product.description,
   image: product.image ? [product.image] : undefined,
   category: product.category,
@@ -79,10 +79,6 @@ const productSchema = {
     },
     shippingDetails: {
       "@type": "OfferShippingDetails",
-      shippingRate: {
-        "@type": "MonetaryAmount",
-        currency: "USD",
-      },
       shippingDestination: {
         "@type": "DefinedRegion",
         addressCountry: "US",
@@ -123,7 +119,7 @@ const breadcrumbSchema = {
     {
       "@type": "ListItem",
       position: 2,
-      name: product.name,
+      name: displayName,
       item: productUrl,
     },
   ],
@@ -133,7 +129,7 @@ const breadcrumbSchema = {
 <!doctype html>
 <html lang="en">
   <head>
-    <BaseHead title={pageTitle} description={pageDescription} image={product.image} />
+    <BaseHead title={pageTitle} description={pageDescription} image={product.image} ogType="product" />
     <script type="application/ld+json" set:html={JSON.stringify(productSchema)} />
     <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
   </head>
