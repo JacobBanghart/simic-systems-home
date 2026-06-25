@@ -4,9 +4,8 @@
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
-	"main": "./dist/_worker.js/index.js",
 	"assets": {
-		"directory": "./dist",
+		"directory": "./dist/client",
 		"binding": "ASSETS"
 	},
 	"observability": {
