@@ -9,7 +9,7 @@ interface Props {
 const { showCart = false } = Astro.props;
 ---
 
-<header>
+<header transition:persist>
 	<nav>
 		<h2><a href="/">{SITE_TITLE}</a></h2>
 		<div class="internal-links">
@@ -55,6 +55,18 @@ const { showCart = false } = Astro.props;
 			nav.classList.toggle('open');
 		});
 	}
+
+	function updateActiveLink() {
+		const pathname = window.location.pathname;
+		document.querySelectorAll('header nav a').forEach(function(link) {
+			const href = link.getAttribute('href');
+			const isActive = href === pathname || (href !== '/' && pathname.startsWith(href));
+			link.classList.toggle('active', isActive);
+		});
+	}
+
+	updateActiveLink();
+	document.addEventListener('astro:after-swap', updateActiveLink);
 })();
 </script>
 
