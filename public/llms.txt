@@ -8,6 +8,23 @@ Simic Systems LLC is based in North Hollywood, CA. All products are sourced from
 
 - [Shop — Booster Boxes & Sealed MTG Products](https://simic.systems/): Browse current in-stock inventory. Products include draft boosters, set boosters, collector boosters, play boosters, bundles, and commander decks. Prices in USD. Add to cart and check out via Stripe.
 
+## Products
+
+- [Avatar: The Last Airbender Jumpstart Booster Display](https://simic.systems/product/avatar-the-last-airbender-jumpstart-booster-display/)
+- [Avatar: The Last Airbender Play Booster Display](https://simic.systems/product/avatar-the-last-airbender-play-booster-display/)
+- [FINAL FANTASY Play Booster Display](https://simic.systems/product/final-fantasy-play-booster-display/)
+- [Innistrad: Crimson Vow Collector Booster Display](https://simic.systems/product/innistrad-crimson-vow-collector-booster-display/)
+- [Kamigawa: Neon Dynasty Collector Booster Display](https://simic.systems/product/kamigawa-neon-dynasty-collector-booster-display/)
+- [Lorwyn Eclipsed Collector Booster Display](https://simic.systems/product/lorwyn-eclipsed-collector-booster-display/)
+- [Lorwyn Eclipsed Play Booster Display](https://simic.systems/product/lorwyn-eclipsed-play-booster-display/)
+- [Magic: The Gathering Foundations Play Booster Display](https://simic.systems/product/magic-the-gathering-foundations-play-booster-display/)
+- [Marvel's Spider-Man Collector Booster Display](https://simic.systems/product/marvels-spider-man-collector-booster-display/)
+- [Marvel's Spider-Man Play Booster Display](https://simic.systems/product/marvels-spider-man-play-booster-display/)
+- [Secrets of Strixhaven Play Booster Display](https://simic.systems/product/secrets-of-strixhaven-play-booster-display/)
+- [Tarkir: Dragonstorm Play Booster Display](https://simic.systems/product/tarkir-dragonstorm-play-booster-display/)
+- [Teenage Mutant Ninja Turtles Play Booster Display](https://simic.systems/product/teenage-mutant-ninja-turtles-play-booster-display/)
+- [Wilds of Eldraine Collector Booster Display](https://simic.systems/product/wilds-of-eldraine-collector-booster-display/)
+
 ## Company
 
 - [About Simic Systems](https://simic.systems/about/): Who we are, what we sell, and how the ordering process works. Covers product sourcing (authorized distributors, factory-sealed only) and shipping carrier (USPS, US only).
@@ -17,7 +34,7 @@ Simic Systems LLC is based in North Hollywood, CA. All products are sourced from
 
 - [Shipping & Returns](https://simic.systems/shipping/): Ships via USPS within the US. Orders processed in 1–3 business days; delivery 3–7 business days after shipment. All sales are final; damaged or incorrect orders resolved by contacting us within 7 days.
 - [FAQ](https://simic.systems/faq/): Answers to common questions — payment methods (Visa, Mastercard, Amex, Apple Pay, Google Pay via Stripe), shipping timeline, return eligibility, product authenticity, order tracking, damaged orders, and bulk pricing inquiries.
-- [Terms of Service](https://simic.systems/terms/): Governs use of simic.systems and purchases. Covers product availability, payment via Stripe, US-only shipping, 14-day return window, and liability limitations.
+- [Terms of Service](https://simic.systems/terms/): Governs use of simic.systems and purchases. Covers product availability, payment via Stripe, US-only shipping, all-sales-final policy, and liability limitations.
 - [Privacy Policy](https://simic.systems/privacy/): Data collected (name, email, shipping address, order info). Third-party services: Stripe (payments), Cloudflare (hosting), USPS (shipping), Ahrefs Analytics (cookieless, no personal data). No data sold to third parties.
 
 ## Contact & Location

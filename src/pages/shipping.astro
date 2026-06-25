@@ -15,34 +15,13 @@ import { SITE_TITLE } from '../consts';
 			"name": "Shipping Policy",
 			"url": "https://simic.systems/shipping/",
 			"description": "Shipping policy for Simic Systems. US shipping only. All sales final.",
-			"mainEntity": [
-				{
-					"@type": "MerchantReturnPolicy",
-					"name": "Simic Systems Return Policy",
-					"returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted",
-					"applicableCountry": "US",
-					"description": "All sales are final. We do not accept returns except in the case of damaged or incorrect orders."
-				},
-				{
-					"@type": "ShippingDeliveryTime",
-					"businessDays": {
-						"@type": "OpeningHoursSpecification",
-						"dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"]
-					},
-					"handlingTime": {
-						"@type": "QuantitativeValue",
-						"minValue": 1,
-						"maxValue": 3,
-						"unitCode": "DAY"
-					},
-					"transitTime": {
-						"@type": "QuantitativeValue",
-						"minValue": 3,
-						"maxValue": 7,
-						"unitCode": "DAY"
-					}
-				}
-			]
+			"mainEntity": {
+				"@type": "MerchantReturnPolicy",
+				"name": "Simic Systems Return Policy",
+				"returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted",
+				"applicableCountry": "US",
+				"description": "All sales are final. We do not accept returns except in the case of damaged or incorrect orders."
+			}
 		})}></script>
 	</head>
 	<body>
