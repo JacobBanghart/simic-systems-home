@@ -9,6 +9,7 @@ import { SITE_TITLE, SITE_DESCRIPTION } from "../consts";
 import { fetchStoreProducts } from "../lib/stripeProducts";
 import type { ProductData } from "../types";
 import { env } from "cloudflare:workers";
+import { storeReviews, aggregateRating } from "../data/reviews";
 
 const homeTitle = `Buy Sealed MTG Booster Boxes & Packs | ${SITE_TITLE}`;
 
@@ -60,21 +61,8 @@ const websiteSchema = {
   url: "https://simic.systems/",
 };
 
-interface Review {
-  author: string;
-  rating: number; // 1–5
-  date: string;   // "Month YYYY"
-  text: string;
-}
-
-// Add reviews here as they come in. Schema is auto-generated when count >= 1.
-const reviews: Review[] = [
-  // { author: "Jane D.", rating: 5, date: "June 2026", text: "Fast shipping, product was exactly as described." },
-];
-
-const avgRating = reviews.length
-  ? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) * 10) / 10
-  : null;
+const reviews = storeReviews;
+const rating = aggregateRating(reviews);
 
 const organizationSchema = {
   "@context": "https://schema.org",
@@ -93,15 +81,7 @@ const organizationSchema = {
     postalCode: "91601",
     addressCountry: "US",
   },
-  ...(avgRating !== null ? {
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: avgRating.toFixed(1),
-      reviewCount: reviews.length,
-      bestRating: 5,
-      worstRating: 1,
-    },
-  } : {}),
+  ...(rating ? { aggregateRating: rating } : {}),
 };
 ---
 
@@ -157,15 +137,15 @@ const organizationSchema = {
                 <div class="reviews-section">
                     <div class="reviews-header">
                         <h2 class="reviews-heading">Customer Reviews</h2>
-                        {avgRating !== null && (
+                        {rating && (
                             <div class="reviews-summary">
-                                <span class="reviews-stars" aria-label={`${avgRating} out of 5 stars`}>
+                                <span class="reviews-stars" aria-label={`${rating.ratingValue} out of 5 stars`}>
                                     {[1,2,3,4,5].map(n => (
-                                        <span class={n <= Math.round(avgRating) ? "star filled" : "star"}>★</span>
+                                        <span class={n <= Math.round(Number(rating.ratingValue)) ? "star filled" : "star"}>★</span>
                                     ))}
                                 </span>
-                                <span class="reviews-avg">{avgRating.toFixed(1)}</span>
-                                <span class="reviews-count">({reviews.length} review{reviews.length !== 1 ? "s" : ""})</span>
+                                <span class="reviews-avg">{rating.ratingValue}</span>
+                                <span class="reviews-count">({rating.reviewCount} review{Number(rating.reviewCount) !== 1 ? "s" : ""})</span>
                             </div>
                         )}
                     </div>
