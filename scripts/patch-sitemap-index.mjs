@@ -15,7 +15,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(fileURLToPath(import.meta.url), "../../");
-const SITEMAP_INDEX = path.join(ROOT, "dist", "sitemap-index.xml");
+const SITEMAP_INDEX = path.join(ROOT, "dist", "client", "sitemap-index.xml");
 const SITE = "https://simic.systems";
 
 async function main() {
