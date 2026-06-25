@@ -164,7 +164,7 @@ const breadcrumbSchema = {
           <span>{displayName}</span>
         </nav>
 
-        <a href="/" class="back-link">← Back to Store</a>
+        <a href="/" class="back-link" data-astro-reload>← Back to Store</a>
 
         <div class="product-layout">
           <div class="product-image-col">
@@ -247,7 +247,7 @@ const breadcrumbSchema = {
                   ? (() => { const base = rel.name.slice(0, relM.index); const sep = base.lastIndexOf(' - '); return sep >= 0 ? base.slice(0, sep).trim() : rel.name.trim(); })()
                   : rel.name.trim();
                 return (
-                  <a href={`/product/${rel.slug ?? rel.id}/`} class="related-card">
+                  <a href={`/product/${rel.slug ?? rel.id}/`} class="related-card" data-astro-reload>
                     {rel.image && (
                       <img src={rel.image} alt={relDisplayName} width={180} height={180} loading="lazy" />
                     )}
