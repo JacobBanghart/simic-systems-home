@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { EmailMessage } from "cloudflare:email";
+import { env } from "cloudflare:workers";
 import { validateContact, buildRawEmail, type ContactPayload } from "../../lib/contact";
 
 export const prerender = false;
@@ -7,8 +8,7 @@ export const prerender = false;
 const RATE_LIMIT_WINDOW_SECONDS = 300; // 5 minutes
 const RATE_LIMIT_MAX = 3; // max submissions per window per IP
 
-export const POST: APIRoute = async ({ request, locals }) => {
-  const { env } = locals.runtime;
+export const POST: APIRoute = async ({ request }) => {
 
   // Rate limiting via KV
   const ip = request.headers.get("cf-connecting-ip") || "unknown";

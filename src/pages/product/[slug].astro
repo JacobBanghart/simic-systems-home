@@ -8,9 +8,9 @@ import { AddToCartSection } from "../../components/AddToCartSection";
 import { SITE_TITLE } from "../../consts";
 import { fetchStoreProducts } from "../../lib/stripeProducts";
 import { formatPrice } from "../../lib/format";
+import { env } from "cloudflare:workers";
 
 const { slug } = Astro.params;
-const { env } = Astro.locals.runtime;
 
 const products = await fetchStoreProducts(env);
 

@@ -1,13 +1,13 @@
 import type { APIRoute } from "astro";
 import Stripe from "stripe";
+import { env } from "cloudflare:workers";
 
 export const prerender = false;
 
 const RATE_LIMIT_WINDOW_SECONDS = 60;
 const RATE_LIMIT_MAX = 10; // max checkout attempts per minute per IP
 
-export const POST: APIRoute = async ({ request, locals }) => {
-  const { env } = locals.runtime;
+export const POST: APIRoute = async ({ request }) => {
 
   // Rate limiting via KV
   const ip = request.headers.get("cf-connecting-ip") || "unknown";
