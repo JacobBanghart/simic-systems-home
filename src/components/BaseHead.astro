@@ -11,9 +11,10 @@ interface Props {
 	title: string;
 	description: string;
 	image?: string;
+	ogType?: string;
 }
 
-const { title, description, image = "/banner.webp" } = Astro.props;
+const { title, description, image = "/banner.webp", ogType = "website" } = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const ogImageURL = new URL(image, Astro.site);
@@ -48,7 +49,7 @@ const ogImageURL = new URL(image, Astro.site);
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
 
 <!-- Open Graph / Facebook -->
-<meta property="og:type" content="website" />
+<meta property="og:type" content={ogType} />
 <meta property="og:url" content={canonicalURL} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
