@@ -46,7 +46,8 @@ const displayName = (() => {
   return sep >= 0 ? base.slice(0, sep).trim() : product.name.trim();
 })();
 
-const pageTitle = `Buy ${displayName} | ${SITE_TITLE}`;
+const titleName = displayName.replace(/ Booster Display$/, " Boosters").replace(/ - /, " ");
+const pageTitle = `Buy ${titleName} – ${SITE_TITLE}`;
 const _descCut = product.description ? product.description.lastIndexOf(' ', 153) : -1;
 const pageDescription = product.description
   ? product.description.length > 157

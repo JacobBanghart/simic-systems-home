@@ -106,6 +106,8 @@ function StoreContent({ products }: MainPageProps) {
         component="img"
         src={banner}
         alt="Simic Systems — Trading Card Products"
+        width={1536}
+        height={1024}
         sx={{
           width: "100%",
           maxHeight: "220px",

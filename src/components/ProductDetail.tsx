@@ -1,4 +1,4 @@
-import { Box, Typography, Button, Container, ThemeProvider, Chip } from "@mui/material";
+import { Box, Typography, Button, Container, ThemeProvider, Chip, Breadcrumbs, Divider } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
 import { themeOptions } from "./theme";
 import type { ProductData } from "../types";
@@ -30,6 +30,17 @@ function ProductDetailContent({ product, relatedProducts = [] }: ProductDetailPr
       <CartButton />
 
       <Container maxWidth="md" sx={{ py: 2 }}>
+        <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 1 }}>
+          <Box
+            component="a"
+            href="/"
+            sx={{ color: "text.secondary", textDecoration: "none", fontSize: "0.85rem", "&:hover": { color: "primary.main" } }}
+          >
+            Store
+          </Box>
+          <Typography color="text.primary" sx={{ fontSize: "0.85rem" }}>{displayName}</Typography>
+        </Breadcrumbs>
+
         <Button href="/" startIcon={<ArrowBack />} sx={{ mb: 3, textTransform: "none" }}>
           Back to Store
         </Button>
@@ -84,6 +95,14 @@ function ProductDetailContent({ product, relatedProducts = [] }: ProductDetailPr
                 {product.description}
               </Typography>
             )}
+
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+              Ships 1–3 business days · USPS · United States only
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Secure checkout · Visa · Mastercard · Amex · Apple Pay · Google Pay
+            </Typography>
 
             <Button
               variant="contained"
