@@ -31,5 +31,22 @@ export const onRequest = defineMiddleware(async (context, next) => {
     );
   }
 
+  // In workerd dev mode, astro-island component-url gets an absolute filesystem
+  // path instead of a /@fs/-prefixed URL that Vite can serve. Fix it in the HTML.
+  if (import.meta.env.DEV) {
+    const ct = response.headers.get("content-type") ?? "";
+    if (ct.includes("text/html")) {
+      let html = await response.text();
+      html = html.replace(
+        /component-url="(\/(?:home|usr|opt|root|var)\/[^"]+)"/g,
+        'component-url="/@fs$1"'
+      );
+      return new Response(html, {
+        status: response.status,
+        headers: response.headers,
+      });
+    }
+  }
+
   return response;
 });
