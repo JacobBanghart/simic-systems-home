@@ -18,7 +18,10 @@ const CATEGORY_LABELS: Record<string, string> = {
 function ProductDetailContent({ product }: ProductDetailProps) {
   const { addToCart } = useCart();
   const outOfStock = product.quantity <= 0;
-  const displayName = product.name.replace(/ - [^-]+ \([A-Z0-9]{2,5}\)\s*$/u, "").trim();
+  const m = product.name.match(/ \([A-Z0-9]{2,5}\)\s*$/u);
+  const displayName = m
+    ? (() => { const base = product.name.slice(0, m.index); const sep = base.lastIndexOf(' - '); return sep >= 0 ? base.slice(0, sep).trim() : product.name.trim(); })()
+    : product.name.trim();
 
   return (
     <>
