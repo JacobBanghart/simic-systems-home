@@ -35,7 +35,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
       <Box
         component="a"
         href={productUrl}
-        data-astro-reload
+
         sx={{
           width: { xs: "40%", sm: "100%" },
           flexShrink: 0,
@@ -73,7 +73,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         <Typography
           component="a"
           href={productUrl}
-          data-astro-reload
+  
           sx={{
             fontSize: "0.9rem",
             fontWeight: 600,

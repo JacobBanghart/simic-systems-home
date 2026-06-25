@@ -51,6 +51,8 @@ User-agent: Storebot-Google
 Allow: /
 
 User-agent: *
-Disallow: /
+Allow: /
+Disallow: /checkout/
+Disallow: /api/
 
 Sitemap: https://simic.systems/sitemap-index.xml

@@ -18,9 +18,13 @@ import { SITE_TITLE } from '../consts';
 			"description": "Contact Simic Systems for order questions and product inquiries.",
 			"mainEntity": {
 				"@type": "Organization",
+				"@id": "https://simic.systems/#organization",
 				"name": "Simic Systems LLC",
 				"url": "https://simic.systems",
-				"logo": "https://simic.systems/favicon.svg",
+				"logo": {
+					"@type": "ImageObject",
+					"url": "https://simic.systems/logo.png"
+				},
 				"email": "contact@simic.systems",
 				"telephone": "+16055534735",
 				"address": {
@@ -30,6 +34,13 @@ import { SITE_TITLE } from '../consts';
 					"addressRegion": "CA",
 					"postalCode": "91601",
 					"addressCountry": "US"
+				},
+				"contactPoint": {
+					"@type": "ContactPoint",
+					"email": "contact@simic.systems",
+					"telephone": "+16055534735",
+					"contactType": "customer service",
+					"areaServed": "US"
 				}
 			}
 		})}></script>

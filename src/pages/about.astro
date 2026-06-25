@@ -12,9 +12,13 @@ import { SITE_TITLE } from '../consts';
 		<script type="application/ld+json" set:html={JSON.stringify({
 			"@context": "https://schema.org",
 			"@type": "Organization",
+			"@id": "https://simic.systems/#organization",
 			"name": "Simic Systems LLC",
 			"url": "https://simic.systems",
-			"logo": "https://simic.systems/logo.png",
+			"logo": {
+				"@type": "ImageObject",
+				"url": "https://simic.systems/logo.png"
+			},
 			"email": "contact@simic.systems",
 			"address": {
 				"@type": "PostalAddress",
