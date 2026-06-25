@@ -100,8 +100,57 @@ const organizationSchema = {
     <body>
         <Header showCart />
         <main>
+            <img
+                src="/banner.webp"
+                alt="Simic Systems — Trading Card Products"
+                width={1536}
+                height={1024}
+                fetchpriority="high"
+                class="store-banner"
+            />
+            <h1 class="store-title">Buy Sealed Magic: The Gathering Products Online</h1>
             <MainPage client:load products={products} />
+            <div class="seo-copy">
+                <p>Simic Systems is an online trading card game store specializing in factory sealed MTG products. Browse our selection of Magic: The Gathering booster boxes, collector boxes, play boosters, draft boosters, bundles, and commander decks — all authentic and officially licensed.</p>
+                <p>Every order ships with secure checkout powered by Stripe, with shipping available across the United States. Check back regularly for new set releases, restocks, and pre-orders.</p>
+                <p>Looking for booster packs, set boosters, or collector boxes at competitive prices? Shop our full catalog above and add items to your cart for fast, reliable shipping.</p>
+            </div>
         </main>
         <Footer />
     </body>
 </html>
+
+<style>
+    .store-banner {
+        width: 100%;
+        max-height: 220px;
+        object-fit: cover;
+        object-position: center 20%;
+        display: block;
+        border-radius: 0;
+    }
+
+    .store-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: rgb(var(--gray));
+        padding: 0.6rem 1.5rem;
+        margin: 0;
+        max-width: 1200px;
+        margin-inline: auto;
+    }
+
+    .seo-copy {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 2.5rem;
+        border-top: 1px solid rgb(var(--gray-light));
+    }
+    .seo-copy p {
+        font-size: 0.875rem;
+        color: rgb(var(--gray));
+        line-height: 1.6;
+        margin-bottom: 0.75rem;
+    }
+    .seo-copy p:last-child { margin-bottom: 0; }
+</style>

@@ -17,7 +17,6 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { themeOptions } from "./theme";
-import banner from "/banner.webp?url";
 import { Search, Clear } from "@mui/icons-material";
 import type { ProductData } from "../types";
 import { ProductCard } from "./ProductCard";
@@ -101,22 +100,6 @@ function StoreContent({ products }: MainPageProps) {
       {/* Cart button (portaled into header) */}
       <CartButton />
 
-      {/* Banner */}
-      <Box
-        component="img"
-        src={banner}
-        alt="Simic Systems — Trading Card Products"
-        width={1536}
-        height={1024}
-        sx={{
-          width: "100%",
-          maxHeight: "220px",
-          objectFit: "cover",
-          objectPosition: "center 20%",
-          display: "block",
-        }}
-      />
-
       {/* Product Grid */}
       <Container maxWidth="lg" sx={{ py: 3 }}>
         {/* Controls: Category Filters, Sort, Search */}
@@ -194,31 +177,6 @@ function StoreContent({ products }: MainPageProps) {
         </Stack>
 
         {renderProductGrid(filteredProducts)}
-
-        {/* SEO content — visible but below the fold */}
-        <Box sx={{ mt: 6, pt: 4, borderTop: "1px solid", borderColor: "divider" }}>
-          <Typography
-            component="h1"
-            variant="h5"
-            sx={{ mb: 1, fontSize: { xs: "1.1rem", sm: "1.3rem" } }}
-          >
-            Buy Sealed Magic: The Gathering Products Online
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Simic Systems is an online trading card game store specializing in factory sealed MTG
-            products. Browse our selection of Magic: The Gathering booster boxes, collector boxes,
-            play boosters, draft boosters, bundles, and commander decks — all authentic and
-            officially licensed.
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Every order ships with secure checkout powered by Stripe, with shipping available across
-            the United States. Check back regularly for new set releases, restocks, and pre-orders.
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Looking for booster packs, set boosters, or collector boxes at competitive prices? Shop
-            our full catalog above and add items to your cart for fast, reliable shipping.
-          </Typography>
-        </Box>
       </Container>
     </>
   );
