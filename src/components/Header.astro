@@ -9,11 +9,11 @@ interface Props {
 const { showCart = false } = Astro.props;
 ---
 
-<header transition:persist>
+<header>
 	<nav>
 		<h2><a href="/">{SITE_TITLE}</a></h2>
 		<div class="internal-links">
-			<HeaderLink href="/" data-astro-reload>Home</HeaderLink>
+			<HeaderLink href="/">Home</HeaderLink>
 			<HeaderLink href="/about/">About</HeaderLink>
 			<HeaderLink href="/faq/">FAQ</HeaderLink>
 			<HeaderLink href="/contact/">Contact</HeaderLink>
@@ -56,17 +56,6 @@ const { showCart = false } = Astro.props;
 		});
 	}
 
-	function updateActiveLink() {
-		const pathname = window.location.pathname;
-		document.querySelectorAll('header nav a').forEach(function(link) {
-			const href = link.getAttribute('href');
-			const isActive = href === pathname || (href !== '/' && pathname.startsWith(href));
-			link.classList.toggle('active', isActive);
-		});
-	}
-
-	updateActiveLink();
-	document.addEventListener('astro:after-swap', updateActiveLink);
 })();
 </script>
 
