@@ -35,6 +35,9 @@ Allow: /
 User-agent: PerplexityBot
 Allow: /
 
+User-agent: OAI-SearchBot
+Allow: /
+
 User-agent: Bytespider
 Allow: /
 
@@ -44,8 +47,10 @@ Allow: /
 User-agent: FacebookExternalHit
 Allow: /
 
+User-agent: Storebot-Google
+Allow: /
+
 User-agent: *
 Disallow: /
 
 Sitemap: https://simic.systems/sitemap-index.xml
-Sitemap: https://simic.systems/sitemap-products.xml

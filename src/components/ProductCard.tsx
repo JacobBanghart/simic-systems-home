@@ -15,7 +15,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const outOfStock = product.quantity <= 0;
-  const productUrl = `/product/${product.id}/`;
+  const productUrl = `/product/${product.slug ?? product.id}/`;
 
   return (
     <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>

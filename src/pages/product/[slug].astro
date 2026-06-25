@@ -33,13 +33,20 @@ const BRAND_NAMES: Record<string, string> = {
 };
 
 // Strip trailing Stripe set name suffix e.g. " - Tarkir: Dragonstorm (TDM)"
-// so titles read "Tarkir: Dragonstorm - Play Booster Display" not the full internal name.
-const displayName = product.name.replace(/ - [^-]+ \([A-Z0-9]{2,5}\)\s*$/u, "").trim();
+// Uses lastIndexOf to handle hyphens within set names (e.g. "Spider-Man").
+const displayName = (() => {
+  const m = product.name.match(/ \([A-Z0-9]{2,5}\)\s*$/u);
+  if (!m) return product.name.trim();
+  const base = product.name.slice(0, m.index);
+  const sep = base.lastIndexOf(' - ');
+  return sep >= 0 ? base.slice(0, sep).trim() : product.name.trim();
+})();
 
 const pageTitle = `Buy ${displayName} | ${SITE_TITLE}`;
+const _descCut = product.description ? product.description.lastIndexOf(' ', 153) : -1;
 const pageDescription = product.description
-  ? product.description.length > 140
-    ? product.description.slice(0, 137) + "..."
+  ? product.description.length > 157
+    ? product.description.slice(0, _descCut > 0 ? _descCut : 153) + "..."
     : product.description
   : `Buy ${displayName} sealed in the US. In-stock, secure checkout, and fast shipping from Simic Systems.`;
 const productUrl = new URL(`/product/${product.slug}/`, Astro.site).href;
@@ -77,32 +84,6 @@ const productSchema = {
       applicableCountry: "US",
       returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
     },
-    shippingDetails: {
-      "@type": "OfferShippingDetails",
-      shippingDestination: {
-        "@type": "DefinedRegion",
-        addressCountry: "US",
-      },
-      deliveryTime: {
-        "@type": "ShippingDeliveryTime",
-        businessDays: {
-          "@type": "OpeningHoursSpecification",
-          dayOfWeek: [
-            "https://schema.org/Monday",
-            "https://schema.org/Tuesday",
-            "https://schema.org/Wednesday",
-            "https://schema.org/Thursday",
-            "https://schema.org/Friday",
-          ],
-        },
-        transitTime: {
-          "@type": "QuantitativeValue",
-          minValue: 3,
-          maxValue: 7,
-          unitCode: "DAY",
-        },
-      },
-    },
   },
 };
 
@@ -129,7 +110,7 @@ const breadcrumbSchema = {
 <!doctype html>
 <html lang="en">
   <head>
-    <BaseHead title={pageTitle} description={pageDescription} image={product.image} ogType="product" />
+    <BaseHead title={pageTitle} description={pageDescription} image={product.image} />
     <script type="application/ld+json" set:html={JSON.stringify(productSchema)} />
     <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
   </head>
