@@ -12,6 +12,9 @@ export default defineConfig({
   integrations: [
     sitemap({
       filter: (page) => !page.includes("/checkout/") && !page.includes("/api/"),
+      serialize(item) {
+        return { ...item, lastmod: new Date().toISOString() };
+      },
     }),
     react({
       experimentalReactChildren: true,

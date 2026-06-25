@@ -18,6 +18,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 function ProductDetailContent({ product }: ProductDetailProps) {
   const { addToCart } = useCart();
   const outOfStock = product.quantity <= 0;
+  const displayName = product.name.replace(/ - [^-]+ \([A-Z0-9]{2,5}\)\s*$/u, "").trim();
 
   return (
     <>
@@ -39,7 +40,7 @@ function ProductDetailContent({ product }: ProductDetailProps) {
           <Box
             component="img"
             src={product.image}
-            alt={product.name}
+            alt={displayName}
             loading="eager"
             width={500}
             height={500}
@@ -60,7 +61,7 @@ function ProductDetailContent({ product }: ProductDetailProps) {
               sx={{ mb: 1 }}
             />
             <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 1 }}>
-              {product.name}
+              {displayName}
             </Typography>
             <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
               {formatPrice(product.price)}

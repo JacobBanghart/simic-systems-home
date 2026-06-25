@@ -14,12 +14,14 @@ export const GET: APIRoute = async ({ locals, site }) => {
     console.error("Failed to fetch products for sitemap:", error);
   }
 
+  const today = new Date().toISOString().split("T")[0];
   const urls = products
     .map((product) => {
       const path = product.slug ?? product.id;
       return `
   <url>
     <loc>${baseUrl}/product/${path}/</loc>
+    <lastmod>${today}</lastmod>
   </url>`;
     })
     .join("");
