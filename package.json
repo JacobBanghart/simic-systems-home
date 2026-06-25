@@ -2,7 +2,7 @@
   "name": "simic-systems-home",
   "description": "Trading card storefront at simic.systems",
   "dependencies": {
-    "@astrojs/cloudflare": "^12.6.5",
+    "@astrojs/cloudflare": "^14.0.0",
     "@astrojs/react": "^4.4.2",
     "@astrojs/sitemap": "3.7.0",
     "@emotion/react": "^11.14.0",
@@ -10,7 +10,7 @@
     "@fontsource/roboto": "^5.2.10",
     "@mui/icons-material": "^7.3.9",
     "@mui/material": "^7.3.9",
-    "astro": "^5.18.0",
+    "astro": "^7.0.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "stripe": "^20.4.1",
