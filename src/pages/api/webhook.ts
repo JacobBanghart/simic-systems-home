@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import Stripe from "stripe";
+import { env } from "cloudflare:workers";
 import { invalidateProductCache } from "../../lib/stripeProducts";
 
 const INDEXNOW_KEY = "simic2026seo9x7y5z3w";
@@ -30,8 +31,7 @@ const productCacheInvalidationEvents = new Set([
   "price.deleted",
 ]);
 
-export const POST: APIRoute = async ({ request, locals }) => {
-  const { env } = locals.runtime;
+export const POST: APIRoute = async ({ request }) => {
   const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
     httpClient: Stripe.createFetchHttpClient(),
   });

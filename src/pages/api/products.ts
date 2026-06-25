@@ -1,10 +1,10 @@
 import type { APIRoute } from "astro";
 import { fetchStoreProducts } from "../../lib/stripeProducts";
+import { env } from "cloudflare:workers";
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ locals }) => {
-  const { env } = locals.runtime;
+export const GET: APIRoute = async () => {
 
   try {
     const products = await fetchStoreProducts(env);

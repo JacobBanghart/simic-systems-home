@@ -4,6 +4,7 @@ import Header from "../../components/Header.astro";
 import Footer from "../../components/Footer.astro";
 import { SITE_TITLE } from "../../consts";
 import Stripe from "stripe";
+import { env } from "cloudflare:workers";
 
 export const prerender = false;
 
@@ -14,7 +15,6 @@ let lineItems: Stripe.LineItem[] = [];
 
 if (sessionId) {
   try {
-    const env = Astro.locals.runtime.env;
     const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
       httpClient: Stripe.createFetchHttpClient(),
     });

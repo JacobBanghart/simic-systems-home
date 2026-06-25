@@ -8,8 +8,8 @@ import { MainPage } from "../components/MainPage";
 import { SITE_TITLE, SITE_DESCRIPTION } from "../consts";
 import { fetchStoreProducts } from "../lib/stripeProducts";
 import type { ProductData } from "../types";
+import { env } from "cloudflare:workers";
 
-const { env } = Astro.locals.runtime;
 const homeTitle = `Buy Sealed MTG Booster Boxes & Packs | ${SITE_TITLE}`;
 
 let products: ProductData[] = [];
