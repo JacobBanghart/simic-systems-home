@@ -59,6 +59,25 @@ const websiteSchema = {
   name: "Simic Systems",
   url: "https://simic.systems/",
 };
+
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Simic Systems",
+  legalName: "Simic Systems LLC",
+  url: "https://simic.systems/",
+  logo: "https://simic.systems/favicon.svg",
+  email: "contact@simic.systems",
+  telephone: "+16055534735",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "5115 Lankershim Blvd Apt 210",
+    addressLocality: "North Hollywood",
+    addressRegion: "CA",
+    postalCode: "91601",
+    addressCountry: "US",
+  },
+};
 ---
 
 <!doctype html>
@@ -72,6 +91,10 @@ const websiteSchema = {
         <script
             type="application/ld+json"
             set:html={JSON.stringify(websiteSchema)}
+        />
+        <script
+            type="application/ld+json"
+            set:html={JSON.stringify(organizationSchema)}
         />
     </head>
     <body>

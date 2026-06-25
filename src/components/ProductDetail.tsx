@@ -9,13 +9,14 @@ import { ErrorBoundary } from "./ErrorBoundary";
 
 interface ProductDetailProps {
   product: ProductData;
+  relatedProducts?: ProductData[];
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
   magic: "Magic: The Gathering",
 };
 
-function ProductDetailContent({ product }: ProductDetailProps) {
+function ProductDetailContent({ product, relatedProducts = [] }: ProductDetailProps) {
   const { addToCart } = useCart();
   const outOfStock = product.quantity <= 0;
   const m = product.name.match(/ \([A-Z0-9]{2,5}\)\s*$/u);
@@ -94,19 +95,79 @@ function ProductDetailContent({ product }: ProductDetailProps) {
             >
               {outOfStock ? "Sold Out" : "Add to Cart"}
             </Button>
+
+            {outOfStock && (
+              <Typography variant="body2" sx={{ mt: 1.5, color: "text.secondary" }}>
+                Want to be notified when this is back in stock?{" "}
+                <Box
+                  component="a"
+                  href={`mailto:contact@simic.systems?subject=Restock+Alert:+${encodeURIComponent(displayName)}`}
+                  sx={{ color: "primary.main" }}
+                >
+                  Email us
+                </Box>
+              </Typography>
+            )}
           </Box>
         </Box>
+
+        {relatedProducts.length > 0 && (
+          <Box sx={{ mt: 6 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+              You might also like
+            </Typography>
+            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+              {relatedProducts.map((rel) => (
+                <Box
+                  key={rel.id}
+                  component="a"
+                  href={`/product/${rel.slug ?? rel.id}/`}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    width: { xs: "calc(50% - 8px)", sm: 180 },
+                    textDecoration: "none",
+                    color: "text.primary",
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 2,
+                    overflow: "hidden",
+                    "&:hover": { borderColor: "primary.main" },
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={rel.image}
+                    alt={rel.name}
+                    loading="lazy"
+                    width={180}
+                    height={180}
+                    sx={{ width: "100%", height: 120, objectFit: "contain", p: 1 }}
+                  />
+                  <Box sx={{ p: 1 }}>
+                    <Typography sx={{ fontSize: "0.78rem", fontWeight: 600, lineHeight: 1.3, mb: 0.5 }}>
+                      {rel.name.replace(/ - [^-]+ \([A-Z0-9]{2,5}\)\s*$/u, "").trim()}
+                    </Typography>
+                    <Typography sx={{ fontSize: "0.78rem", color: "text.secondary" }}>
+                      {(rel.price / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })}
+                    </Typography>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        )}
       </Container>
     </>
   );
 }
 
-export function ProductDetail({ product }: ProductDetailProps) {
+export function ProductDetail({ product, relatedProducts }: ProductDetailProps) {
   return (
     <ThemeProvider theme={themeOptions}>
       <ErrorBoundary>
         <CartProvider>
-          <ProductDetailContent product={product} />
+          <ProductDetailContent product={product} relatedProducts={relatedProducts} />
         </CartProvider>
       </ErrorBoundary>
     </ThemeProvider>

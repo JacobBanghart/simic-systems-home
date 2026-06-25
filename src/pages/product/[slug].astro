@@ -28,6 +28,10 @@ if (!product) {
   return Astro.redirect("/404/");
 }
 
+const relatedProducts = products
+  .filter((p) => p.slug !== slug && p.category === product.category && p.quantity > 0)
+  .slice(0, 3);
+
 const BRAND_NAMES: Record<string, string> = {
   magic: "Magic: The Gathering",
 };
@@ -117,7 +121,7 @@ const breadcrumbSchema = {
   <body>
     <Header showCart />
     <main>
-      <ProductDetail client:load product={product} />
+      <ProductDetail client:load product={product} relatedProducts={relatedProducts} />
     </main>
     <Footer />
   </body>
