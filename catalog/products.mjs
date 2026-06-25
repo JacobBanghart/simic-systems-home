@@ -35,7 +35,7 @@ export default [
     image: "https://files.stripe.com/links/MDB8YWNjdF8xU2JEWWRSM1djdWNhUXFwfGZsX2xpdmVfQXJHdEZ5c2JvODJYaU1oWU1ySFRCUkpY00Yk8eOzGR",
     sortOrder: 999,
     active: true,
-    quantity: 1,
+    quantity: 0,
   },
   {
     key: "innistrad-crimson-vow-collector-booster-display-innistrad-crimson-vow-vow",
@@ -57,7 +57,7 @@ export default [
     image: "https://files.stripe.com/links/MDB8YWNjdF8xU2JEWWRSM1djdWNhUXFwfGZsX2xpdmVfVkdRZGhGNEU5NXRVR2ZocnZvZGNXVnZT007u2d3DEO",
     sortOrder: 999,
     active: true,
-    quantity: 1,
+    quantity: 0,
   },
   {
     key: "lorwyn-eclipsed-collector-booster-display-lorwyn-eclipsed-ecl",
