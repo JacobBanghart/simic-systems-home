@@ -66,7 +66,7 @@ const organizationSchema = {
   name: "Simic Systems",
   legalName: "Simic Systems LLC",
   url: "https://simic.systems/",
-  logo: "https://simic.systems/favicon.svg",
+  logo: "https://simic.systems/logo.png",
   email: "contact@simic.systems",
   telephone: "+16055534735",
   address: {
@@ -110,6 +110,30 @@ const organizationSchema = {
             />
             <h1 class="store-title">Buy Sealed Magic: The Gathering Products Online</h1>
             <MainPage client:load products={products} />
+            <section class="trust-section">
+                <div class="trust-badges">
+                    <div class="trust-badge">
+                        <span class="badge-icon">🔒</span>
+                        <span>Secure checkout via Stripe</span>
+                    </div>
+                    <div class="trust-badge">
+                        <span class="badge-icon">📦</span>
+                        <span>Ships USPS Ground Advantage</span>
+                    </div>
+                    <div class="trust-badge">
+                        <span class="badge-icon">✅</span>
+                        <span>Factory-sealed product only</span>
+                    </div>
+                    <div class="trust-badge">
+                        <span class="badge-icon">🇺🇸</span>
+                        <span>US shipping only</span>
+                    </div>
+                </div>
+                <div class="reviews-placeholder">
+                    <h2 class="reviews-heading">Customer Reviews</h2>
+                    <p class="reviews-empty">Simic Systems is a new store — no reviews yet. If you've ordered from us, we'd love a <a href="https://g.page/r/simic-systems/review" rel="noopener">Google Review</a>.</p>
+                </div>
+            </section>
             <div class="seo-copy">
                 <p>Simic Systems is an online trading card game store specializing in factory sealed MTG products. Browse our selection of Magic: The Gathering booster boxes, collector boxes, play boosters, draft boosters, bundles, and commander decks — all authentic and officially licensed.</p>
                 <p>Every order ships with secure checkout powered by Stripe, with shipping available across the United States. Check back regularly for new set releases, restocks, and pre-orders.</p>
@@ -153,4 +177,35 @@ const organizationSchema = {
         margin-bottom: 0.75rem;
     }
     .seo-copy p:last-child { margin-bottom: 0; }
+
+    .trust-section {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1.5rem 1.5rem 0;
+    }
+    .trust-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .trust-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.875rem;
+        color: rgb(var(--gray-dark));
+    }
+    .badge-icon { font-size: 1rem; }
+
+    .reviews-heading {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    .reviews-empty {
+        font-size: 0.875rem;
+        color: rgb(var(--gray));
+    }
+    .reviews-empty a { color: inherit; }
 </style>

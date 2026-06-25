@@ -8,13 +8,13 @@ import { SITE_TITLE } from '../consts';
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title="About Simic Systems | Authorized MTG Sealed Products Retailer" description="Simic Systems is an online retailer selling factory-sealed Magic: The Gathering products. Based in North Hollywood, CA. Ships across the US via USPS." />
+		<BaseHead title="About Simic Systems | Online MTG Sealed Products Store" description="Simic Systems is run by a lifelong Magic: The Gathering player and collector in North Hollywood, CA. Factory-sealed MTG products shipped across the US via USPS Ground Advantage." />
 		<script type="application/ld+json" set:html={JSON.stringify({
 			"@context": "https://schema.org",
 			"@type": "Organization",
 			"name": "Simic Systems LLC",
 			"url": "https://simic.systems",
-			"logo": "https://simic.systems/favicon.svg",
+			"logo": "https://simic.systems/logo.png",
 			"email": "contact@simic.systems",
 			"address": {
 				"@type": "PostalAddress",
@@ -25,8 +25,13 @@ import { SITE_TITLE } from '../consts';
 				"addressCountry": "US"
 			},
 			"telephone": "+16055534735",
-			"description": "Online retailer specializing in factory-sealed Magic: The Gathering products including booster boxes and collector sets.",
-			"areaServed": "US"
+			"description": "Online retailer run by a lifelong Magic: The Gathering player, specializing in factory-sealed MTG products including booster boxes and collector sets. Ships across the US.",
+			"areaServed": "US",
+			"founder": {
+				"@type": "Person",
+				"name": "Jacob",
+				"jobTitle": "Founder"
+			}
 		})}></script>
 	</head>
 	<body>
@@ -34,28 +39,40 @@ import { SITE_TITLE } from '../consts';
 		<main>
 			<article>
 				<h1>About Simic Systems</h1>
+
 				<p>
-					Simic Systems is an online retailer specializing in sealed Magic: The Gathering products. We carry booster boxes, collector boxes, and other sealed products.
-				</p>
-				<p>
-					We're committed to offering competitive prices on genuine, factory-sealed products shipped directly to you. Every item in our store is sourced from authorized distributors.
+					Simic Systems is an online store built by Jacob, a lifelong Magic: The Gathering player and collector based in North Hollywood, California. What started as a deep love for the game turned into a mission: make it easier to buy sealed MTG product from someone who actually knows what they're selling.
 				</p>
 
-				<h2>What We Sell</h2>
+				<p>
+					The trading card market can be a rough place to navigate. Inflated prices, mystery condition items, sellers who've never shuffled a deck — it gets old fast. Simic Systems exists to be the opposite of that: straightforward pricing, factory-sealed product only, and a seller who cares about the game as much as you do.
+				</p>
+
+				<h2>What We Carry</h2>
+				<p>
+					We stock factory-sealed Magic: The Gathering products with a focus on current and recent sets. Everything in the catalog is sealed in its original packaging, exactly as it left the manufacturer.
+				</p>
 				<ul>
-					<li><strong>Booster boxes</strong> — Draft, set, collector, and play boosters</li>
-					<li><strong>Collector products</strong> — Bundle packs, special edition sets, and more</li>
+					<li><strong>Play Booster Displays</strong> — the current standard booster format for drafting and opening</li>
+					<li><strong>Collector Booster Displays</strong> — premium boxes loaded with foils, extended arts, and special treatments</li>
+					<li><strong>Bundles</strong> — the ideal entry point for a new set, with boosters, land cards, and accessories</li>
+					<li><strong>Commander Decks</strong> — ready-to-play 100-card preconstructed decks</li>
 				</ul>
-
-				<h2>How It Works</h2>
-				<ol>
-					<li>Browse our store and add items to your cart</li>
-					<li>Check out securely through Stripe</li>
-					<li>We ship your order via USPS within the United States</li>
-				</ol>
-
 				<p>
-					Have a question? Visit our <a href="/contact/">contact page</a> to get in touch.
+					The catalog is intentionally focused. We carry what we know, and we keep quantities accurate in real time — no phantom stock, no orders that ship weeks late because something was already gone.
+				</p>
+
+				<h2>Shipping & Orders</h2>
+				<p>
+					All orders ship within the United States via <strong>USPS Ground Advantage</strong>. Orders are typically packed and handed off within 1–3 business days. You'll get a tracking number the moment your order ships. Orders over $250 require a signature on delivery — sealed MTG product is valuable, and we want to make sure it reaches you safely.
+				</p>
+				<p>
+					We don't accept returns on sealed product — once a box is in someone else's hands, its seal integrity can't be guaranteed. If something arrives damaged or we made a mistake on the order, reach out within 7 days and we'll make it right.
+				</p>
+
+				<h2>Get in Touch</h2>
+				<p>
+					Questions about an order, a product, or just want to talk MTG? Use the <a href="/contact/">contact page</a> or email <a href="mailto:contact@simic.systems">contact@simic.systems</a>. Response time is typically within one business day.
 				</p>
 			</article>
 		</main>

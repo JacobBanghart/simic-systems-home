@@ -29,6 +29,7 @@ pnpm-debug.log*
 
 # internal docs
 docs/
+seo-plan.md
 
 # terraform
 terraform/.terraform/
