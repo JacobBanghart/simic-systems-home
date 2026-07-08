@@ -85,7 +85,35 @@ const organizationSchema = {
     postalCode: "91601",
     addressCountry: "US",
   },
+  description: "Online retailer specializing in factory-sealed Magic: The Gathering products including booster boxes and collector sets. Ships across the US.",
+  areaServed: "US",
+  founder: {
+    "@type": "Person",
+    name: "Jacob",
+    jobTitle: "Founder",
+  },
   ...(rating ? { aggregateRating: rating } : {}),
+};
+
+const localBusinessSchema = {
+  "@context": "https://schema.org",
+  "@type": ["Store", "LocalBusiness"],
+  "@id": "https://simic.systems/#localbusiness",
+  name: "Simic Systems",
+  url: "https://simic.systems/",
+  telephone: "+16055534735",
+  email: "contact@simic.systems",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "5115 Lankershim Blvd Apt 210",
+    addressLocality: "North Hollywood",
+    addressRegion: "CA",
+    postalCode: "91601",
+    addressCountry: "US",
+  },
+  areaServed: "US",
+  priceRange: "$$",
+  sameAs: "https://simic.systems/#organization",
 };
 ---
 
@@ -104,6 +132,10 @@ const organizationSchema = {
         <script
             type="application/ld+json"
             set:html={JSON.stringify(organizationSchema)}
+        />
+        <script
+            type="application/ld+json"
+            set:html={JSON.stringify(localBusinessSchema)}
         />
     </head>
     <body>
@@ -178,7 +210,8 @@ const organizationSchema = {
             </section>
             <section class="about-store">
                 <h2 class="about-heading">About the Store</h2>
-                <p>Simic Systems is an online sealed Magic: The Gathering store run by Jacob, a lifelong MTG player based in North Hollywood, CA. Every product in the catalog is factory-sealed in its original manufacturer packaging — booster boxes, collector boxes, play boosters, draft boosters, bundles, and commander decks.</p>
+                <p>Simic Systems is an online sealed Magic: The Gathering store run by Jacob, a lifelong MTG player based in North Hollywood, CA. Every product in the catalog is factory-sealed in its original manufacturer packaging — booster boxes, collector boxes, play boosters, draft boosters, bundles, and commander decks. <a href="/about/">Learn more about Simic Systems →</a></p>
+                <p>Browse by product type: <a href="/collector-boosters/">Collector Booster Displays</a> for premium foils and special treatments, or <a href="/play-boosters/">Play Booster Displays</a> for drafting and set opening.</p>
                 <p>Checkout is powered by Stripe with support for Visa, Mastercard, Amex, Apple Pay, and Google Pay. All orders ship within the United States via USPS Ground Advantage. Orders over $250 require a signature upon delivery. Most orders are packed and shipped within 1–3 business days.</p>
                 <p>Have a question before buying? See the <a href="/faq/">FAQ</a> for answers on payments, shipping timelines, returns, and product authenticity, or <a href="/contact/">contact us</a> directly.</p>
             </section>
@@ -198,9 +231,9 @@ const organizationSchema = {
     }
 
     .store-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: rgb(var(--gray));
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: rgb(var(--gray-dark));
         padding: 0.6rem 1.5rem;
         margin: 0;
         max-width: 1200px;

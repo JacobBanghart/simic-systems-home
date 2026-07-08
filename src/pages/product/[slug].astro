@@ -30,9 +30,21 @@ if (!product) {
   return Astro.redirect("/404/");
 }
 
-const relatedProducts = products
-  .filter((p) => p.slug !== slug && p.category === product.category && p.quantity > 0)
-  .slice(0, 3);
+// Extract set name as the portion before the first " - " (e.g. "Tarkir: Dragonstorm")
+const getSetName = (name: string) => {
+  const sep = name.indexOf(" - ");
+  return sep >= 0 ? name.slice(0, sep).trim() : name.trim();
+};
+const productSetName = getSetName(product.name);
+
+// Prefer same-set (different product type), then same-category, capped at 3
+const sameSet = products.filter(
+  (p) => p.slug !== slug && p.quantity > 0 && getSetName(p.name) === productSetName
+);
+const sameCategory = products.filter(
+  (p) => p.slug !== slug && p.quantity > 0 && p.category === product.category && getSetName(p.name) !== productSetName
+);
+const relatedProducts = [...sameSet, ...sameCategory].slice(0, 3);
 
 const BRAND_NAMES: Record<string, string> = {
   magic: "Magic: The Gathering",
@@ -151,7 +163,7 @@ const breadcrumbSchema = {
 <!doctype html>
 <html lang="en">
   <head>
-    <BaseHead title={pageTitle} description={pageDescription} image={product.image} ogType="product" />
+    <BaseHead title={pageTitle} description={pageDescription} image={product.image} ogType="product" robots={product.noindex ? "noindex, nofollow" : undefined} />
     <script type="application/ld+json" set:html={JSON.stringify(productSchema)} />
     <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
   </head>
@@ -186,8 +198,8 @@ const breadcrumbSchema = {
             <span class="category-chip">{categoryLabel}</span>
             <h1>{displayName}</h1>
             <p class="product-price">{formatPrice(product.price)}</p>
-            <p class={`availability${outOfStock ? " out-of-stock" : ""}`}>
-              {outOfStock ? "Out of stock" : `${product.quantity} available`}
+            <p class={`availability${outOfStock ? " out-of-stock" : product.quantity <= 3 ? " low-stock" : ""}`}>
+              {outOfStock ? "Out of stock" : product.quantity <= 3 ? `Only ${product.quantity} left — order soon` : `${product.quantity} available`}
             </p>
 
             {product.description && (
@@ -346,6 +358,7 @@ const breadcrumbSchema = {
     margin-bottom: 1rem;
   }
   .availability.out-of-stock { color: #d32f2f; }
+  .availability.low-stock { color: #e65100; font-weight: 600; }
 
   .product-description {
     font-size: 1rem;

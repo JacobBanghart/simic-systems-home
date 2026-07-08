@@ -6,6 +6,16 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  "Content-Security-Policy":
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline' https://analytics.ahrefs.com; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "font-src 'self' data:; " +
+    "img-src 'self' https://files.stripe.com data: blob:; " +
+    "connect-src 'self' https://analytics.ahrefs.com https://api.stripe.com; " +
+    "frame-src https://js.stripe.com https://hooks.stripe.com; " +
+    "object-src 'none'; " +
+    "base-uri 'self'",
 };
 
 const CACHEABLE_PATHS = new Set([
