@@ -1,149 +1,169 @@
-import {
-  Card,
-  Typography,
-  Button,
-  Box,
-  Grid,
-} from "@mui/material";
+import { Typography, Button, Box, Grid } from "@mui/material";
+import { useEffect, useState } from "react";
 import type { ProductData } from "../types";
 import { formatPrice } from "../lib/format";
+import { removeWhiteBackground } from "../lib/removeWhiteBackground";
 
 interface ProductCardProps {
   product: ProductData;
   onAddToCart: (product: ProductData) => void;
 }
 
+function useCutoutImage(src: string) {
+  const [resolvedSrc, setResolvedSrc] = useState(src);
+
+  useEffect(() => {
+    let cancelled = false;
+    setResolvedSrc(src);
+    if (!src) return;
+    removeWhiteBackground(src)
+      .then((dataUrl) => {
+        if (!cancelled) setResolvedSrc(dataUrl);
+      })
+      .catch(() => {
+        // Leave the original image in place if cutout processing fails.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [src]);
+
+  return resolvedSrc;
+}
+
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const outOfStock = product.quantity <= 0;
+  const lowStock = !outOfStock && product.quantity <= 3;
   const productUrl = `/product/${product.slug ?? product.id}/`;
+  const imageSrc = useCutoutImage(product.image);
 
   return (
-    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-      <Card
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "row", sm: "column" },
-          height: "100%",
-          boxShadow: 3,
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: "8px",
-          opacity: outOfStock ? 0.6 : 1,
-          overflow: "hidden",
-        }}
-      >
-      <Box
-        component="a"
-        href={productUrl}
-
-        sx={{
-          width: { xs: "40%", sm: "100%" },
-          flexShrink: 0,
-          display: "block",
-          textDecoration: "none",
-        }}
-      >
-        <Box
-          component="img"
-          src={product.image}
-          alt={product.name}
-          loading="lazy"
-          width={400}
-          height={400}
-          sx={{
-            width: "100%",
-            height: { xs: "auto", sm: "14rem" },
-            objectFit: "contain",
-            objectPosition: "center",
-            padding: "12px",
-            boxSizing: "border-box",
-            display: "block",
-          }}
-        />
-      </Box>
+    <Grid size={{ xs: 6, sm: 6, md: 4, lg: 3 }}>
       <Box
         sx={{
           display: "flex",
           flexDirection: "column",
-          padding: "12px",
-          flex: 1,
-          gap: "4px",
+          height: "100%",
+          opacity: outOfStock ? 0.55 : 1,
         }}
       >
-        <Typography
+        <Box
           component="a"
           href={productUrl}
-  
+          className="editorial-border biolume-glow-subtle"
           sx={{
-            fontSize: "0.9rem",
-            fontWeight: 600,
-            lineHeight: 1.3,
-            wordBreak: "break-word",
-            textAlign: "center",
+            position: "relative",
+            aspectRatio: "1 / 1",
+            mb: 1.5,
+            overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+            paddingTop: "40px",
             textDecoration: "none",
-            color: "text.primary",
-            "&:hover": { textDecoration: "underline" },
+            backgroundColor: "background.paper",
+            borderRadius: "4px",
           }}
         >
-          {product.name}
-        </Typography>
-        {product.description && (
-          <Typography
+          <Box
+            component="img"
+            src={imageSrc}
+            alt={product.name}
+            loading="lazy"
+            width={400}
+            height={400}
             sx={{
-              fontSize: "0.78rem",
-              color: "text.secondary",
-              lineHeight: 1.4,
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+              objectPosition: "center",
+              transition: "transform 0.5s",
+              "a:hover &": { transform: "scale(1.05)" },
+            }}
+          />
+          {(outOfStock || lowStock) && (
+            <Box
+              sx={{
+                position: "absolute",
+                top: 10,
+                left: 10,
+                px: "8px",
+                py: "4px",
+                borderRadius: "2px",
+                backgroundColor: "color-mix(in srgb, var(--md-error-container) 25%, transparent)",
+                backdropFilter: "blur(4px)",
+                WebkitBackdropFilter: "blur(4px)",
+                color: "var(--md-error)",
+                border: "1px solid",
+                borderColor: "color-mix(in srgb, var(--md-error) 35%, transparent)",
+                fontFamily: '"JetBrains Mono", monospace',
+                fontSize: "9px",
+                fontWeight: 500,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                lineHeight: 1,
+              }}
+            >
+              {outOfStock ? "Sold Out" : "Low Stock"}
+            </Box>
+          )}
+        </Box>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1 }}>
+          {product.category && (
+            <Typography className="label-caps" sx={{ color: "text.secondary", opacity: 0.7 }}>
+              {product.category}
+            </Typography>
+          )}
+          <Typography
+            component="a"
+            href={productUrl}
+            sx={{
+              fontFamily: '"Hanken Grotesk", sans-serif',
+              fontSize: "0.95rem",
+              lineHeight: 1.3,
+              wordBreak: "break-word",
+              textDecoration: "none",
+              color: "text.primary",
               display: "-webkit-box",
               WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical",
               overflow: "hidden",
+              "&:hover": { color: "primary.main" },
             }}
           >
-            {product.description}
+            {product.name}
           </Typography>
-        )}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "baseline",
-            justifyContent: "space-between",
-            mt: "auto",
-            pt: "8px",
-          }}
-        >
-          <Typography
+          <Box
             sx={{
-              fontSize: "1.1rem",
-              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mt: "auto",
+              pt: "6px",
             }}
           >
-            {formatPrice(product.price)}
-          </Typography>
-          <Typography
-            sx={{
-              color: "text.secondary",
-              fontSize: "0.75rem",
-            }}
+            <Typography className="price-display" sx={{ fontSize: "0.95rem", color: "text.primary" }}>
+              {formatPrice(product.price)}
+            </Typography>
+            {!outOfStock && (
+              <Typography className="label-caps" sx={{ color: "primary.main" }}>
+                {product.quantity} Avail
+              </Typography>
+            )}
+          </Box>
+          <Button
+            variant="outlined"
+            onClick={() => onAddToCart(product)}
+            disabled={outOfStock}
+            fullWidth
+            size="small"
+            sx={{ mt: "10px" }}
           >
-            {outOfStock ? "Out of stock" : `${product.quantity} available`}
-          </Typography>
+            {outOfStock ? "Sold Out" : "Add to Cart"}
+          </Button>
         </Box>
-        <Button
-          variant="contained"
-          onClick={() => onAddToCart(product)}
-          disabled={outOfStock}
-          fullWidth
-          size="small"
-          sx={{
-            mt: "8px",
-            fontSize: "0.8rem",
-            textTransform: "none",
-          }}
-        >
-          {outOfStock ? "Sold Out" : "Add to Cart"}
-        </Button>
       </Box>
-      </Card>
     </Grid>
   );
 }

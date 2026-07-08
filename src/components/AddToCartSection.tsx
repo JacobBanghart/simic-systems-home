@@ -26,7 +26,7 @@ function AddToCartContent({ product }: AddToCartSectionProps) {
         {outOfStock ? "Sold Out" : "Add to Cart"}
       </Button>
       {outOfStock && (
-        <p style={{ marginTop: "0.75rem", fontSize: "0.875rem", color: "rgb(96,115,159)", marginBottom: 0 }}>
+        <p style={{ marginTop: "0.75rem", fontSize: "0.875rem", color: "rgb(var(--gray))", marginBottom: 0 }}>
           Want to be notified when back in stock?{" "}
           <a
             href={`mailto:contact@simic.systems?subject=Restock+Alert:+${encodeURIComponent(product.name)}`}
