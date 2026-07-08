@@ -4,20 +4,18 @@ import {
   Box,
   Container,
   ThemeProvider,
-  IconButton,
+  Chip,
   Stack,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  TextField,
-  InputAdornment,
   ToggleButtonGroup,
   ToggleButton,
 } from "@mui/material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { themeOptions } from "./theme";
-import { Search, Clear } from "@mui/icons-material";
+import { Clear } from "@mui/icons-material";
 import type { ProductData } from "../types";
 import { ProductCard } from "./ProductCard";
 import { CartProvider, useCart } from "./CartProvider";
@@ -42,6 +40,21 @@ function StoreContent({ products }: MainPageProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState("all");
   const { addToCart } = useCart();
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const value = (e as CustomEvent<string>).detail ?? "";
+      setSearchQuery(value);
+    };
+    window.addEventListener("site-search", handler);
+    return () => window.removeEventListener("site-search", handler);
+  }, []);
+
+  const clearSearch = () => {
+    setSearchQuery("");
+    const heroInput = document.getElementById("hero-search-input") as HTMLInputElement | null;
+    if (heroInput) heroInput.value = "";
+  };
 
   const uniqueCategories = [...new Set(products.map((p) => p.category))];
   const hasMultipleCategories = uniqueCategories.length > 1;
@@ -101,14 +114,31 @@ function StoreContent({ products }: MainPageProps) {
       <CartButton />
 
       {/* Product Grid */}
-      <Container maxWidth="lg" sx={{ py: 3 }}>
-        {/* Controls: Category Filters, Sort, Search */}
+      <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
+        {/* Section header: heading + sort, matching editorial layout */}
         <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          sx={{ mb: 3, alignItems: { sm: "center" }, justifyContent: "space-between" }}
+          direction={{ xs: "column", md: "row" }}
+          sx={{
+            mb: 3,
+            pb: 2,
+            alignItems: { md: "flex-end" },
+            justifyContent: "space-between",
+            borderBottom: "1px solid",
+            borderColor: "divider",
+            gap: 2,
+          }}
         >
-          <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 200 } }}>
+          <Typography
+            sx={{
+              fontFamily: '"Libre Caslon Text", serif',
+              fontStyle: "italic",
+              fontSize: { xs: "1.5rem", md: "2rem" },
+              fontWeight: 400,
+            }}
+          >
+            Sealed Collection
+          </Typography>
+          <FormControl size="small" sx={{ minWidth: { xs: "100%", md: 200 } }}>
             <InputLabel id="sort-products-label">Sort</InputLabel>
             <Select
               labelId="sort-products-label"
@@ -123,58 +153,50 @@ function StoreContent({ products }: MainPageProps) {
               <MenuItem value="stock-desc">Stock: High to Low</MenuItem>
             </Select>
           </FormControl>
-          {hasMultipleCategories && (
-            <ToggleButtonGroup
-              value={category}
-              exclusive
-              onChange={(_e, value) => {
-                if (value !== null) setCategory(value);
-              }}
-              size="small"
-              aria-label="Filter by category"
-              sx={{
-                flexWrap: "wrap",
-                "& .MuiToggleButton-root": {
-                  textTransform: "none",
-                  px: 2,
-                },
-              }}
-            >
-              {categories.map((cat) => (
-                <ToggleButton key={cat} value={cat}>
-                  {CATEGORY_LABELS[cat] || cat}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
-          )}
-          <TextField
-            size="small"
-            placeholder="Search products..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{ minWidth: { xs: "100%", sm: 250 } }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search fontSize="small" />
-                  </InputAdornment>
-                ),
-                endAdornment: searchQuery ? (
-                  <InputAdornment position="end">
-                    <IconButton
-                      size="small"
-                      onClick={() => setSearchQuery("")}
-                      aria-label="Clear search"
-                    >
-                      <Clear fontSize="small" />
-                    </IconButton>
-                  </InputAdornment>
-                ) : null,
-              },
-            }}
-          />
         </Stack>
+
+        {/* Category filters + active search indicator */}
+        {(hasMultipleCategories || searchQuery) && (
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            sx={{ mb: 4, alignItems: { sm: "center" }, justifyContent: "space-between" }}
+          >
+            {hasMultipleCategories && (
+              <ToggleButtonGroup
+                value={category}
+                exclusive
+                onChange={(_e, value) => {
+                  if (value !== null) setCategory(value);
+                }}
+                size="small"
+                aria-label="Filter by category"
+                sx={{
+                  flexWrap: "wrap",
+                  "& .MuiToggleButton-root": {
+                    textTransform: "none",
+                    px: 2,
+                  },
+                }}
+              >
+                {categories.map((cat) => (
+                  <ToggleButton key={cat} value={cat}>
+                    {CATEGORY_LABELS[cat] || cat}
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
+            )}
+            {searchQuery && (
+              <Chip
+                label={`Results for "${searchQuery}"`}
+                onDelete={clearSearch}
+                deleteIcon={<Clear fontSize="small" />}
+                variant="outlined"
+                sx={{ ml: { sm: "auto" } }}
+              />
+            )}
+          </Stack>
+        )}
 
         {renderProductGrid(filteredProducts)}
       </Container>

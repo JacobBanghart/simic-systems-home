@@ -2,63 +2,40 @@
 const today = new Date();
 ---
 
-<footer>
-	<div class="footer-content">
-		<div class="footer-links">
-			<a href="/about/">About</a>
-			<a href="/contact/">Contact</a>
-			<a href="/faq/">FAQ</a>
-			<a href="/collector-boosters/">Collector Boosters</a>
-			<a href="/play-boosters/">Play Boosters</a>
-			<a href="/shipping/">Shipping Policy</a>
-			<a href="/privacy/">Privacy Policy</a>
-			<a href="/terms/">Terms of Service</a>
+<footer class="bg-surface-container-lowest pt-16 pb-8 border-t border-outline-variant/40">
+	<div class="max-w-container-max mx-auto px-4 md:px-margin-desktop grid grid-cols-1 md:grid-cols-12 gap-10 mb-12">
+		<div class="md:col-span-6 lg:col-span-4">
+			<div class="font-headline italic text-lg text-on-surface mb-3">Simic Systems</div>
+			<p class="font-body text-sm text-on-surface-variant/70 font-light mb-5 max-w-sm">
+				Factory-sealed Magic: The Gathering booster boxes, collector displays, and bundles — sourced and shipped from North Hollywood, CA.
+			</p>
+			<div class="label-caps text-on-surface/50 leading-relaxed">
+				5115 Lankershim Blvd Apt 210<br />
+				North Hollywood, CA 91601<br />
+				<a href="tel:+16055534735" class="hover:text-on-surface transition-colors">(605) 553-4735</a>
+			</div>
 		</div>
-		<p class="nap">5115 Lankershim Blvd Apt 210, North Hollywood, CA 91601 &middot; <a href="tel:+16055534735">(605) 553-4735</a></p>
-		<p>&copy; {today.getFullYear()} Simic Systems. All rights reserved.</p>
+		<div class="md:col-span-3 lg:col-span-2 lg:col-start-7">
+			<h4 class="label-caps text-primary-fixed-dim mb-5 tracking-[0.2em]">Resources</h4>
+			<ul class="space-y-3 font-body font-light text-on-surface-variant/70 text-sm list-none p-0 m-0">
+				<li><a class="hover:text-on-surface transition-colors" href="/faq/">FAQ</a></li>
+				<li><a class="hover:text-on-surface transition-colors" href="/contact/">Contact</a></li>
+				<li><a class="hover:text-on-surface transition-colors" href="/shipping/">Shipping</a></li>
+				<li><a class="hover:text-on-surface transition-colors" href="/collector-boosters/">Collector Boosters</a></li>
+				<li><a class="hover:text-on-surface transition-colors" href="/play-boosters/">Play Boosters</a></li>
+			</ul>
+		</div>
+		<div class="md:col-span-3 lg:col-span-2">
+			<h4 class="label-caps text-primary-fixed-dim mb-5 tracking-[0.2em]">Legal</h4>
+			<ul class="space-y-3 font-body font-light text-on-surface-variant/70 text-sm list-none p-0 m-0">
+				<li><a class="hover:text-on-surface transition-colors" href="/about/">About</a></li>
+				<li><a class="hover:text-on-surface transition-colors" href="/privacy/">Privacy Policy</a></li>
+				<li><a class="hover:text-on-surface transition-colors" href="/terms/">Terms of Service</a></li>
+			</ul>
+		</div>
+	</div>
+	<div class="max-w-container-max mx-auto px-4 md:px-margin-desktop border-t border-outline-variant/40 pt-6 text-center flex flex-col md:flex-row justify-between items-center gap-3">
+		<p class="label-caps text-on-surface/40 m-0">&copy; {today.getFullYear()} Simic Systems. All rights reserved.</p>
+		<p class="label-caps text-on-surface/40 m-0">Secured by Stripe</p>
 	</div>
 </footer>
-<style>
-	footer {
-		padding: 2em 1em 3em 1em;
-		background: var(--bg-secondary);
-		color: rgb(var(--gray));
-		text-align: center;
-	}
-	.footer-content {
-		max-width: 720px;
-		margin: 0 auto;
-	}
-	.footer-links {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
-		gap: 1em 1.5em;
-		margin-bottom: 1em;
-	}
-	.footer-links a {
-		color: rgb(var(--gray));
-		text-decoration: none;
-		font-size: 0.9em;
-	}
-	.footer-links a:hover {
-		color: rgb(var(--gray-dark));
-		text-decoration: underline;
-	}
-	.nap {
-		font-size: 0.8em;
-		margin: 0 0 0.5em 0;
-		opacity: 0.7;
-	}
-	.nap a {
-		color: inherit;
-		text-decoration: none;
-	}
-	.nap a:hover {
-		text-decoration: underline;
-	}
-	p {
-		font-size: 0.85em;
-		margin: 0;
-	}
-</style>

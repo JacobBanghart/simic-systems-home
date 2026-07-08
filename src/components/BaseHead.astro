@@ -1,9 +1,6 @@
 ---
 // Import the global.css file here so that it is included on
 // all pages through the use of the <BaseHead /> component.
-import "@fontsource/roboto/400.css";
-import "@fontsource/roboto/500.css";
-import "@fontsource/roboto/700.css";
 import "../styles/global.css";
 
 interface Props {
@@ -20,19 +17,18 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const ogImageURL = new URL(image, Astro.site);
 ---
 
-<!-- Theme init (runs before paint to prevent flash) -->
+<!-- Set background inline, synchronously before any stylesheet loads, to prevent a white flash. -->
 <script is:inline>
-(function() {
-	const stored = localStorage.getItem('theme');
-	if (stored === 'dark' || stored === 'light') {
-		document.documentElement.setAttribute('data-theme', stored);
-	} else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-		document.documentElement.setAttribute('data-theme', 'dark');
-	} else {
-		document.documentElement.setAttribute('data-theme', 'light');
-	}
-})();
+document.documentElement.style.backgroundColor = '#08100e';
 </script>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+	href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Hanken+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+	rel="stylesheet"
+/>
 
 <!-- Global Metadata -->
 <meta charset="utf-8" />
