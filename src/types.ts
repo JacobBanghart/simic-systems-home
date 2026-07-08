@@ -10,6 +10,7 @@ export interface ProductData {
   sortOrder: number;
   gtin?: string;
   slug?: string;
+  noindex?: boolean;
 }
 
 export interface CartItem {
