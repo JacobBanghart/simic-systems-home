@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import Stripe from "stripe";
 import { env } from "cloudflare:workers";
+import { getPostHogServer } from "../../lib/posthog-server";
 
 export const prerender = false;
 
@@ -8,7 +9,6 @@ const RATE_LIMIT_WINDOW_SECONDS = 60;
 const RATE_LIMIT_MAX = 10; // max checkout attempts per minute per IP
 
 export const POST: APIRoute = async ({ request }) => {
-
   // Rate limiting via KV
   const ip = request.headers.get("cf-connecting-ip") || "unknown";
   const rateLimitKey = `ratelimit:checkout:${ip}`;
@@ -109,6 +109,22 @@ export const POST: APIRoute = async ({ request }) => {
       },
       ...(shippingOptions.length > 0 ? { shipping_options: shippingOptions } : {}),
     });
+
+    const sessionId = request.headers.get("X-PostHog-Session-Id") || undefined;
+    const distinctId =
+      request.headers.get("X-PostHog-Distinct-Id") || `anonymous-checkout-${session.id}`;
+    const posthog = getPostHogServer();
+    posthog.capture({
+      distinctId,
+      event: "checkout_session_created",
+      properties: {
+        $session_id: sessionId,
+        stripe_session_id: session.id,
+        item_count: checkoutItems.reduce((sum, item) => sum + item.quantity, 0),
+        source: "api",
+      },
+    });
+    await posthog.flush();
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { "Content-Type": "application/json" },

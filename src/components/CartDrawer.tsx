@@ -20,8 +20,7 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
-  const { cartItems, removeFromCart, updateQuantity, clearCart, cartTotal } =
-    useCart();
+  const { cartItems, removeFromCart, updateQuantity, clearCart, cartTotal } = useCart();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,9 +28,34 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
     setCheckoutLoading(true);
     setError(null);
     try {
+      const ph = (
+        window as Window & {
+          posthog?: {
+            capture: (event: string, props?: Record<string, unknown>) => void;
+            get_distinct_id?: () => string;
+            get_session_id?: () => string;
+          };
+        }
+      ).posthog;
+      ph?.capture("cart_checkout_started", {
+        item_count: cartItems.reduce((sum, item) => sum + item.quantity, 0),
+        cart_total_cents: cartTotal,
+        products: cartItems.map((item) => ({
+          slug: item.productId,
+          name: item.name,
+          quantity: item.quantity,
+        })),
+      });
+      const sessionId = ph?.get_session_id?.() || "";
+      const distinctId = ph?.get_distinct_id?.() || "";
+
       const res = await fetch("/api/create-checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-PostHog-Session-Id": sessionId,
+          "X-PostHog-Distinct-Id": distinctId,
+        },
         body: JSON.stringify({
           items: cartItems.map((item) => ({
             priceId: item.priceId,
@@ -45,8 +69,11 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
         return;
       }
       window.location.href = data.url!;
-    } catch {
+    } catch (err) {
       setError("Failed to connect to checkout service");
+      (
+        window as Window & { posthog?: { captureException: (err: unknown) => void } }
+      ).posthog?.captureException(err);
     } finally {
       setCheckoutLoading(false);
     }
@@ -127,9 +154,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                       <Typography variant="body2">{item.quantity}</Typography>
                       <IconButton
                         size="small"
-                        onClick={() =>
-                          updateQuantity(item.productId, item.quantity + 1)
-                        }
+                        onClick={() => updateQuantity(item.productId, item.quantity + 1)}
                         aria-label={`Increase quantity of ${item.name}`}
                       >
                         <Add fontSize="small" />
@@ -176,12 +201,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
             >
               {checkoutLoading ? "Redirecting..." : "Checkout"}
             </Button>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={clearCart}
-              color="secondary"
-            >
+            <Button variant="outlined" fullWidth onClick={clearCart} color="secondary">
               Clear Cart
             </Button>
           </>

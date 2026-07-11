@@ -1,20 +1,8 @@
 import { useState } from "react";
-import {
-  Box,
-  TextField,
-  Button,
-  MenuItem,
-  Alert,
-  ThemeProvider,
-} from "@mui/material";
+import { Box, TextField, Button, MenuItem, Alert, ThemeProvider } from "@mui/material";
 import { themeOptions } from "./theme";
 
-const SUBJECTS = [
-  "Order Question",
-  "Product Inquiry",
-  "Returns/Refunds",
-  "Other",
-];
+const SUBJECTS = ["Order Question", "Product Inquiry", "Returns/Refunds", "Other"];
 
 function ContactFormContent() {
   const [name, setName] = useState("");
@@ -23,19 +11,35 @@ function ContactFormContent() {
   const [message, setMessage] = useState("");
   const [honey, setHoney] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ type: "success" | "error"; text: string } | null>(
-    null
-  );
+  const [result, setResult] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setResult(null);
 
+    const ph = (
+      window as Window & {
+        posthog?: {
+          capture: (event: string, props?: Record<string, unknown>) => void;
+          get_distinct_id?: () => string;
+          get_session_id?: () => string;
+          captureException?: (err: unknown) => void;
+        };
+      }
+    ).posthog;
+
     try {
+      const sessionId = ph?.get_session_id?.() || "";
+      const distinctId = ph?.get_distinct_id?.() || "";
+
       const res = await fetch("/api/contact/", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-PostHog-Session-Id": sessionId,
+          "X-PostHog-Distinct-Id": distinctId,
+        },
         body: JSON.stringify({ name, email, subject, message, _honey: honey }),
       });
       const data: { success?: boolean; error?: string } = await res.json();
@@ -45,20 +49,29 @@ function ContactFormContent() {
         return;
       }
 
-      setResult({ type: "success", text: "Message sent! We'll get back to you within 1-2 business days." });
+      ph?.capture("contact_form_submitted", { subject });
+      setResult({
+        type: "success",
+        text: "Message sent! We'll get back to you within 1-2 business days.",
+      });
       setName("");
       setEmail("");
       setSubject("");
       setMessage("");
-    } catch {
+    } catch (err) {
       setResult({ type: "error", text: "Failed to send. Please try again or email us directly." });
+      ph?.captureException?.(err);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+    >
       {/* Honeypot - hidden from users */}
       <input
         type="text"

@@ -72,6 +72,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addToCart = (product: ProductData) => {
     setCartItems((prev) => addItem(prev, product));
+    try {
+      (
+        window as Window & {
+          posthog?: { capture: (event: string, props?: Record<string, unknown>) => void };
+        }
+      ).posthog?.capture("product_added_to_cart", {
+        product_slug: product.slug,
+        product_name: product.name,
+        price_cents: product.price,
+        category: product.category,
+      });
+    } catch {
+      // PostHog not yet loaded
+    }
   };
 
   const removeFromCart = (productId: string) => {

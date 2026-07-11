@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import Stripe from "stripe";
 import { env } from "cloudflare:workers";
 import { invalidateProductCache } from "../../lib/stripeProducts";
+import { getPostHogServer } from "../../lib/posthog-server";
 
 const INDEXNOW_KEY = "simic2026seo9x7y5z3w";
 const SITE = "https://simic.systems";
@@ -71,8 +72,7 @@ export const POST: APIRoute = async ({ request }) => {
 
       for (const lineItem of lineItems) {
         const price = lineItem.price;
-        if (!price || !price.product || typeof price.product === "string")
-          continue;
+        if (!price || !price.product || typeof price.product === "string") continue;
 
         const product = price.product as Stripe.Product;
         const purchasedQty = lineItem.quantity || 0;
@@ -84,9 +84,21 @@ export const POST: APIRoute = async ({ request }) => {
         });
       }
 
-      console.log(
-        `Sale completed: ${session.id}, amount: ${session.amount_total}`
-      );
+      const posthog = getPostHogServer();
+      posthog.capture({
+        distinctId: `stripe-session-${session.id}`,
+        event: "checkout_completed",
+        properties: {
+          stripe_session_id: session.id,
+          amount_total_cents: session.amount_total,
+          currency: session.currency,
+          item_count: lineItems.reduce((sum, item) => sum + (item.quantity || 0), 0),
+          source: "webhook",
+        },
+      });
+      await posthog.flush();
+
+      console.log(`Sale completed: ${session.id}, amount: ${session.amount_total}`);
     } catch (err) {
       console.error("Error processing checkout.session.completed:", err);
       return new Response(JSON.stringify({ error: "Inventory update failed" }), {
@@ -106,9 +118,7 @@ export const POST: APIRoute = async ({ request }) => {
         urls.push(`${SITE}/product/${prod.metadata.slug}/`);
       }
     }
-    pingIndexNow(urls).catch((err) =>
-      console.error("IndexNow ping failed:", err)
-    );
+    pingIndexNow(urls).catch((err) => console.error("IndexNow ping failed:", err));
   }
 
   return new Response(JSON.stringify({ received: true }), {
