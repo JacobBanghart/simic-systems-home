@@ -297,6 +297,22 @@ const breadcrumbSchema = {
   });
 </script>
 
+<script is:inline define:vars={{ productSlug: product.slug, productName: product.name, productPrice: product.price, productCategory: product.category, productOutOfStock: outOfStock }}>
+  window.addEventListener('load', function () {
+    try {
+      window.posthog?.capture('product_viewed', {
+        product_slug: productSlug,
+        product_name: productName,
+        price_cents: productPrice,
+        category: productCategory,
+        out_of_stock: productOutOfStock,
+      });
+    } catch (err) {
+      window.posthog?.captureException(err);
+    }
+  });
+</script>
+
 <style>
   .product-page {
     max-width: 900px;

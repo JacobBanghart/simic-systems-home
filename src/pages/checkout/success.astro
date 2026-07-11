@@ -161,5 +161,12 @@ const shipping = session?.shipping_details;
     <script>
       localStorage.removeItem("simic-cart");
     </script>
+    <script is:inline define:vars={{ stripeSessionId: sessionId, amountTotal: session?.amount_total ?? null, itemCount: lineItems.reduce((s, i) => s + (i.quantity ?? 0), 0) }}>
+      window.posthog?.capture('order_confirmed', {
+        stripe_session_id: stripeSessionId,
+        amount_total_cents: amountTotal,
+        item_count: itemCount,
+      });
+    </script>
   </body>
 </html>
