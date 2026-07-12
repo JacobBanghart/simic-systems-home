@@ -13,6 +13,7 @@ import {
 import { Add, Remove, Delete, Close } from "@mui/icons-material";
 import { useCart } from "./CartProvider";
 import { formatPrice } from "../lib/format";
+import { getPostHog, getPostHogHeaders } from "../lib/posthog-client";
 
 interface CartDrawerProps {
   open: boolean;
@@ -20,8 +21,7 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
-  const { cartItems, removeFromCart, updateQuantity, clearCart, cartTotal } =
-    useCart();
+  const { cartItems, removeFromCart, updateQuantity, clearCart, cartTotal } = useCart();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,9 +29,22 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
     setCheckoutLoading(true);
     setError(null);
     try {
+      getPostHog()?.capture("cart_checkout_started", {
+        item_count: cartItems.reduce((sum, item) => sum + item.quantity, 0),
+        cart_total_cents: cartTotal,
+        products: cartItems.map((item) => ({
+          slug: item.productId,
+          name: item.name,
+          quantity: item.quantity,
+        })),
+      });
+
       const res = await fetch("/api/create-checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getPostHogHeaders(),
+        },
         body: JSON.stringify({
           items: cartItems.map((item) => ({
             priceId: item.priceId,
@@ -45,8 +58,9 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
         return;
       }
       window.location.href = data.url!;
-    } catch {
+    } catch (err) {
       setError("Failed to connect to checkout service");
+      getPostHog()?.captureException(err);
     } finally {
       setCheckoutLoading(false);
     }
@@ -127,9 +141,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                       <Typography variant="body2">{item.quantity}</Typography>
                       <IconButton
                         size="small"
-                        onClick={() =>
-                          updateQuantity(item.productId, item.quantity + 1)
-                        }
+                        onClick={() => updateQuantity(item.productId, item.quantity + 1)}
                         aria-label={`Increase quantity of ${item.name}`}
                       >
                         <Add fontSize="small" />
@@ -176,12 +188,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
             >
               {checkoutLoading ? "Redirecting..." : "Checkout"}
             </Button>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={clearCart}
-              color="secondary"
-            >
+            <Button variant="outlined" fullWidth onClick={clearCart} color="secondary">
               Clear Cart
             </Button>
           </>

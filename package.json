@@ -10,6 +10,8 @@
     "@mui/icons-material": "^9.1.1",
     "@mui/material": "^9.1.2",
     "astro": "^7.0.2",
+    "posthog-js": "^1.399.2",
+    "posthog-node": "^5.41.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "stripe": "^22.3.0",

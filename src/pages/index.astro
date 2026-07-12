@@ -247,8 +247,12 @@ const localBusinessSchema = {
                 });
                 form.addEventListener('submit', function (e) {
                     e.preventDefault();
-                    window.dispatchEvent(new CustomEvent('site-search', { detail: input.value }));
+                    var query = input.value;
+                    window.dispatchEvent(new CustomEvent('site-search', { detail: query }));
                     document.getElementById('specimens')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    if (query.trim()) {
+                        window.posthog?.capture('product_searched', { query: query.trim() });
+                    }
                 });
             }
         })();

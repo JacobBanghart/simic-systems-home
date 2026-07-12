@@ -17,5 +17,8 @@ import { SITE_TITLE } from "../../consts";
                 Back to Store
             </a>
         </main>
+    <script is:inline>
+      window.posthog?.capture('checkout_cancelled');
+    </script>
     </body>
 </html>
