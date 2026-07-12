@@ -8,11 +8,11 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   "Content-Security-Policy":
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' https://analytics.ahrefs.com; " +
-    "style-src 'self' 'unsafe-inline'; " +
-    "font-src 'self' data:; " +
+    "script-src 'self' 'unsafe-inline' https://analytics.ahrefs.com https://us.i.posthog.com https://static.cloudflareinsights.com; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    "font-src 'self' data: https://fonts.gstatic.com; " +
     "img-src 'self' https://files.stripe.com data: blob:; " +
-    "connect-src 'self' https://analytics.ahrefs.com https://api.stripe.com; " +
+    "connect-src 'self' https://analytics.ahrefs.com https://api.stripe.com https://us.i.posthog.com; " +
     "frame-src https://js.stripe.com https://hooks.stripe.com; " +
     "object-src 'none'; " +
     "base-uri 'self'",
@@ -35,10 +35,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   if (CACHEABLE_PATHS.has(context.url.pathname)) {
-    response.headers.set(
-      "Cache-Control",
-      "public, max-age=3600, stale-while-revalidate=86400"
-    );
+    response.headers.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
   }
 
   // In workerd dev mode, astro-island component-url gets an absolute filesystem
