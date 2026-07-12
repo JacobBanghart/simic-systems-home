@@ -13,6 +13,7 @@ import {
 import { Add, Remove, Delete, Close } from "@mui/icons-material";
 import { useCart } from "./CartProvider";
 import { formatPrice } from "../lib/format";
+import { getPostHog, getPostHogHeaders } from "../lib/posthog-client";
 
 interface CartDrawerProps {
   open: boolean;
@@ -28,16 +29,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
     setCheckoutLoading(true);
     setError(null);
     try {
-      const ph = (
-        window as Window & {
-          posthog?: {
-            capture: (event: string, props?: Record<string, unknown>) => void;
-            get_distinct_id?: () => string;
-            get_session_id?: () => string;
-          };
-        }
-      ).posthog;
-      ph?.capture("cart_checkout_started", {
+      getPostHog()?.capture("cart_checkout_started", {
         item_count: cartItems.reduce((sum, item) => sum + item.quantity, 0),
         cart_total_cents: cartTotal,
         products: cartItems.map((item) => ({
@@ -46,15 +38,12 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
           quantity: item.quantity,
         })),
       });
-      const sessionId = ph?.get_session_id?.() || "";
-      const distinctId = ph?.get_distinct_id?.() || "";
 
       const res = await fetch("/api/create-checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-PostHog-Session-Id": sessionId,
-          "X-PostHog-Distinct-Id": distinctId,
+          ...getPostHogHeaders(),
         },
         body: JSON.stringify({
           items: cartItems.map((item) => ({
@@ -71,9 +60,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
       window.location.href = data.url!;
     } catch (err) {
       setError("Failed to connect to checkout service");
-      (
-        window as Window & { posthog?: { captureException: (err: unknown) => void } }
-      ).posthog?.captureException(err);
+      getPostHog()?.captureException(err);
     } finally {
       setCheckoutLoading(false);
     }

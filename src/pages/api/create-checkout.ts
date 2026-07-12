@@ -8,7 +8,7 @@ export const prerender = false;
 const RATE_LIMIT_WINDOW_SECONDS = 60;
 const RATE_LIMIT_MAX = 10; // max checkout attempts per minute per IP
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   // Rate limiting via KV
   const ip = request.headers.get("cf-connecting-ip") || "unknown";
   const rateLimitKey = `ratelimit:checkout:${ip}`;
@@ -124,7 +124,7 @@ export const POST: APIRoute = async ({ request }) => {
         source: "api",
       },
     });
-    await posthog.flush();
+    locals.cfContext.waitUntil(posthog.flush());
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { "Content-Type": "application/json" },

@@ -32,7 +32,7 @@ const productCacheInvalidationEvents = new Set([
   "price.deleted",
 ]);
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
     httpClient: Stripe.createFetchHttpClient(),
   });
@@ -96,7 +96,7 @@ export const POST: APIRoute = async ({ request }) => {
           source: "webhook",
         },
       });
-      await posthog.flush();
+      locals.cfContext.waitUntil(posthog.flush());
 
       console.log(`Sale completed: ${session.id}, amount: ${session.amount_total}`);
     } catch (err) {
