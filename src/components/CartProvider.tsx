@@ -7,6 +7,7 @@ import {
   cartTotal as calcTotal,
   cartCount as calcCount,
 } from "../lib/cart";
+import { getPostHog } from "../lib/posthog-client";
 
 interface CartContextValue {
   cartItems: CartItem[];
@@ -72,6 +73,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addToCart = (product: ProductData) => {
     setCartItems((prev) => addItem(prev, product));
+    getPostHog()?.capture("product_added_to_cart", {
+      product_slug: product.slug,
+      product_name: product.name,
+      price_cents: product.price,
+      category: product.category,
+    });
   };
 
   const removeFromCart = (productId: string) => {

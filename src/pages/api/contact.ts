@@ -2,14 +2,14 @@ import type { APIRoute } from "astro";
 import { EmailMessage } from "cloudflare:email";
 import { env } from "cloudflare:workers";
 import { validateContact, buildRawEmail, type ContactPayload } from "../../lib/contact";
+import { getPostHogServer } from "../../lib/posthog-server";
 
 export const prerender = false;
 
 const RATE_LIMIT_WINDOW_SECONDS = 300; // 5 minutes
 const RATE_LIMIT_MAX = 3; // max submissions per window per IP
 
-export const POST: APIRoute = async ({ request }) => {
-
+export const POST: APIRoute = async ({ request, locals }) => {
   // Rate limiting via KV
   const ip = request.headers.get("cf-connecting-ip") || "unknown";
   const rateLimitKey = `ratelimit:contact:${ip}`;
@@ -70,11 +70,26 @@ export const POST: APIRoute = async ({ request }) => {
     await env.CONTACT_EMAIL.send(msg);
   } catch (err) {
     console.error("Failed to send contact email:", err);
-    return new Response(
-      JSON.stringify({ error: "Failed to submit. Please try again." }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Failed to submit. Please try again." }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
+
+  const sessionId = request.headers.get("X-PostHog-Session-Id") || undefined;
+  const distinctId =
+    request.headers.get("X-PostHog-Distinct-Id") || `anonymous-contact-${Date.now()}`;
+  const posthog = getPostHogServer();
+  posthog.capture({
+    distinctId,
+    event: "contact_message_sent",
+    properties: {
+      $session_id: sessionId,
+      subject: submission.subject,
+      source: "api",
+    },
+  });
+  locals.cfContext.waitUntil(posthog.flush());
 
   return new Response(JSON.stringify({ success: true }), {
     headers: { "Content-Type": "application/json" },

@@ -2,6 +2,7 @@
 // Import the global.css file here so that it is included on
 // all pages through the use of the <BaseHead /> component.
 import "../styles/global.css";
+import PostHog from "./posthog.astro";
 
 interface Props {
 	title: string;
@@ -61,3 +62,5 @@ document.documentElement.style.backgroundColor = '#08100e';
 <!-- Ahrefs Analytics -->
 <link rel="preconnect" href="https://analytics.ahrefs.com" />
 <script src="https://analytics.ahrefs.com/analytics.js" data-key="HH7C5fKtdzEVU5dAN9p53A" async></script>
+
+<PostHog />
