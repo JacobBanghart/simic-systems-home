@@ -9,7 +9,7 @@ export const prerender = false;
 const RATE_LIMIT_WINDOW_SECONDS = 300; // 5 minutes
 const RATE_LIMIT_MAX = 3; // max submissions per window per IP
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   // Rate limiting via KV
   const ip = request.headers.get("cf-connecting-ip") || "unknown";
   const rateLimitKey = `ratelimit:contact:${ip}`;
@@ -89,7 +89,7 @@ export const POST: APIRoute = async ({ request }) => {
       source: "api",
     },
   });
-  await posthog.flush();
+  locals.cfContext.waitUntil(posthog.flush());
 
   return new Response(JSON.stringify({ success: true }), {
     headers: { "Content-Type": "application/json" },

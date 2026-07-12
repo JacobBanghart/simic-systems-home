@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Box, TextField, Button, MenuItem, Alert, ThemeProvider } from "@mui/material";
 import { themeOptions } from "./theme";
+import { getPostHog, getPostHogHeaders } from "../lib/posthog-client";
 
 const SUBJECTS = ["Order Question", "Product Inquiry", "Returns/Refunds", "Other"];
 
@@ -18,27 +19,14 @@ function ContactFormContent() {
     setLoading(true);
     setResult(null);
 
-    const ph = (
-      window as Window & {
-        posthog?: {
-          capture: (event: string, props?: Record<string, unknown>) => void;
-          get_distinct_id?: () => string;
-          get_session_id?: () => string;
-          captureException?: (err: unknown) => void;
-        };
-      }
-    ).posthog;
+    const ph = getPostHog();
 
     try {
-      const sessionId = ph?.get_session_id?.() || "";
-      const distinctId = ph?.get_distinct_id?.() || "";
-
       const res = await fetch("/api/contact/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-PostHog-Session-Id": sessionId,
-          "X-PostHog-Distinct-Id": distinctId,
+          ...getPostHogHeaders(),
         },
         body: JSON.stringify({ name, email, subject, message, _honey: honey }),
       });
