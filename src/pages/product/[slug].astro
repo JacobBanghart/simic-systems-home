@@ -506,7 +506,10 @@ window.addEventListener('load', function () {
     color: rgb(var(--gray));
     margin-bottom: 1rem;
   }
-  .availability.out-of-stock { color: #d32f2f; }
+  /* #ff6659 rather than the more common Material red #d32f2f — against this
+     theme's dark background (#0d1513) #d32f2f computes to ~3.72:1 contrast,
+     below WCAG AA's 4.5:1 minimum for normal text; #ff6659 clears ~6.4:1. */
+  .availability.out-of-stock { color: #ff6659; }
   .availability.low-stock { color: #e65100; font-weight: 600; }
 
   .product-description {
