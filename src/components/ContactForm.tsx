@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Box, TextField, Button, MenuItem, Alert, ThemeProvider } from "@mui/material";
 import { themeOptions } from "./theme";
 import { getPostHog, getPostHogHeaders } from "../lib/posthog-client";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 const SUBJECTS = ["Order Question", "Product Inquiry", "Returns/Refunds", "Other"];
 
@@ -134,7 +135,9 @@ function ContactFormContent() {
 export function ContactForm() {
   return (
     <ThemeProvider theme={themeOptions}>
-      <ContactFormContent />
+      <ErrorBoundary>
+        <ContactFormContent />
+      </ErrorBoundary>
     </ThemeProvider>
   );
 }

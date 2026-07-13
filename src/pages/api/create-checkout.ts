@@ -102,10 +102,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
         if (item.quantity > availableQuantity) {
           const label = product.name || "This product";
+          // "is out of stock" reads as permanent, but this same metadata
+          // field is also what the reservation above decrements — a 0 here
+          // can just as easily mean someone else's active (uncompleted)
+          // checkout is holding the last unit for up to
+          // CHECKOUT_SESSION_TTL_SECONDS, not that it's genuinely gone.
+          // There's no separate "true stock" vs. "currently held" field to
+          // tell those apart from here, so the message hedges rather than
+          // asserting something that might be wrong in a few minutes.
           throw new Error(
             availableQuantity > 0
               ? `${label} only has ${availableQuantity} available`
-              : `${label} is out of stock`
+              : `${label} is unavailable right now — it may be held in another active checkout. Please try again in a few minutes.`
           );
         }
 

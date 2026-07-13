@@ -112,3 +112,29 @@ export async function adjustProductStock(
     metadata: { quantity: String(Math.max(0, liveQuantity + delta)) },
   });
 }
+
+// Fetches a checkout session with its line items (and each line item's
+// product) expanded — used by every webhook handler that needs to know what
+// was actually purchased (completed/expired/refunded).
+export async function retrieveSessionLineItems(
+  stripe: Stripe,
+  sessionId: string
+): Promise<{ session: Stripe.Checkout.Session; lineItems: Stripe.LineItem[] }> {
+  const session = await stripe.checkout.sessions.retrieve(sessionId, {
+    expand: ["line_items.data.price.product"],
+  });
+  return { session, lineItems: session.line_items?.data || [] };
+}
+
+// Restores (or applies) each line item's quantity as a stock delta — used to
+// release a reservation on checkout.session.expired and to restore stock on
+// a full charge.refunded. Line items with an unexpanded/missing product are
+// skipped rather than erroring, since that shouldn't be possible given the
+// expand above but isn't guaranteed by the type.
+export async function restoreLineItemStock(stripe: Stripe, lineItems: Stripe.LineItem[]): Promise<void> {
+  for (const lineItem of lineItems) {
+    const price = lineItem.price;
+    if (!price || !price.product || typeof price.product === "string") continue;
+    await adjustProductStock(stripe, price.product.id, lineItem.quantity || 0);
+  }
+}

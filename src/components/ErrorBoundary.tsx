@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from "react";
 import { Typography, Box, Button } from "@mui/material";
+import { getPostHog } from "../lib/posthog-client";
 
 interface Props {
   children: ReactNode;
@@ -21,6 +22,13 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
     console.error("React error boundary caught:", error, info.componentStack);
+    // Mirrors the server_error event middleware.ts captures for uncaught
+    // exceptions server-side — without this, a React render crash was only
+    // visible by a user manually opening devtools.
+    getPostHog()?.capture("client_error", {
+      message: error.message,
+      component_stack: info.componentStack ?? undefined,
+    });
   }
 
   render() {
