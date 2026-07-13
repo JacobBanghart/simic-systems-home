@@ -4,6 +4,11 @@
 // define:vars — the Astro compiler silently drops any other dynamic
 // attribute (including nonce={...}) from a <script> tag that also uses
 // define:vars, which broke CSP enforcement for this script in production.
+// nonce is precomputed here rather than referenced as Astro.locals.nonce
+// directly in the template — combined with set:html on the same tag, that
+// direct reference throws "Astro is not defined" in the compiled output
+// (same root cause as the about/faq/contact/shipping outage earlier).
+const nonce = Astro.locals.nonce;
 const apiKey = import.meta.env.PUBLIC_POSTHOG_PROJECT_TOKEN ?? "";
 const apiHost = import.meta.env.PUBLIC_POSTHOG_HOST ?? "";
 const posthogScript = `(function(){
@@ -16,4 +21,4 @@ posthog.init(apiKey || '', {
 })
 })();`;
 ---
-<script is:inline nonce={Astro.locals.nonce} set:html={posthogScript} />
+<script is:inline nonce={nonce} set:html={posthogScript} />
