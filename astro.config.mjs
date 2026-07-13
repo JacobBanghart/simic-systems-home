@@ -26,7 +26,18 @@ export default defineConfig({
       experimentalReactChildren: true,
     }),
   ],
-  adapter: cloudflare(),
+  adapter: cloudflare({
+    // Default is 'cloudflare-binding', which routes every optimized image
+    // through the Cloudflare Images binding — but wrangler.json doesn't
+    // declare an `images` binding (that's a separate paid Cloudflare
+    // product that isn't provisioned on this account), so that binding is
+    // undefined at runtime and every transform request 500s. 'passthrough'
+    // proxies the original remote image with long-lived Cache-Control
+    // headers instead: no resize/format conversion, but it actually works,
+    // and it's what makes Cloudflare's edge cache the image at all. It also
+    // means local `astro dev` no longer needs a remote Cloudflare session.
+    imageService: "passthrough",
+  }),
   vite: {
     resolve: {
       dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
