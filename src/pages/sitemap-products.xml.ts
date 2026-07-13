@@ -1,52 +1,44 @@
 import type { APIRoute } from "astro";
 import { fetchStoreProducts } from "../lib/stripeProducts";
 import { env } from "cloudflare:workers";
+import type { ProductData } from "../types";
 
 export const prerender = false;
+
+const FALLBACK_LASTMOD = new Date().toISOString().split("T")[0];
 
 export const GET: APIRoute = async ({ site }) => {
   const baseUrl = site ? site.href.replace(/\/$/, "") : "https://simic.systems";
 
-  let products = [];
+  let products: ProductData[] = [];
   try {
     products = await fetchStoreProducts(env);
   } catch (error) {
     console.error("Failed to fetch products for sitemap:", error);
   }
 
-  const today = new Date().toISOString().split("T")[0];
-
-  const categoryUrls = [
-    { path: "collector-boosters/", priority: "0.8", changefreq: "daily" },
-    { path: "play-boosters/", priority: "0.8", changefreq: "daily" },
-  ]
-    .map(
-      ({ path, priority, changefreq }) => `
-  <url>
-    <loc>${baseUrl}/${path}</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>${changefreq}</changefreq>
-    <priority>${priority}</priority>
-  </url>`
-    )
-    .join("");
-
+  // Category pages (/collector-boosters/, /play-boosters/) are routed Astro
+  // pages already picked up by @astrojs/sitemap into sitemap-0.xml — don't
+  // duplicate them here.
   const urls = products
+    .filter((product) => !product.noindex)
     .map((product) => {
       const path = product.slug ?? product.id;
+      // Stripe's `updated` is Unix seconds; falls back to today only if missing.
+      const lastmod = product.updated
+        ? new Date(product.updated * 1000).toISOString().split("T")[0]
+        : FALLBACK_LASTMOD;
       return `
   <url>
     <loc>${baseUrl}/product/${path}/</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
+    <lastmod>${lastmod}</lastmod>
   </url>`;
     })
     .join("");
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${categoryUrls}${urls}
+${urls}
 </urlset>`;
 
   return new Response(xml, {

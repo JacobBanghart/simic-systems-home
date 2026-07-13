@@ -58,8 +58,17 @@ const productListSchema = {
 const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
+  "@id": "https://simic.systems/#website",
   name: "Simic Systems",
   url: "https://simic.systems/",
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: "https://simic.systems/?q={search_term_string}",
+    },
+    "query-input": "required name=search_term_string",
+  },
 };
 
 const reviews = storeReviews;
@@ -128,13 +137,13 @@ const organizationSchema = {
                         Sealed Magic<span class="not-italic text-primary-container">, Delivered.</span>
                     </h1>
                     <p class="font-body text-lg text-on-surface-variant/80 mb-8 mx-auto max-w-2xl">
-                        Factory-sealed Magic: The Gathering booster boxes, collector displays, and bundles for the discerning planeswalker.
+                        Factory-sealed Magic: The Gathering play booster boxes and collector booster displays for the discerning planeswalker.
                     </p>
                     <form id="hero-search-form" class="max-w-xl mx-auto relative">
                         <input
                             id="hero-search-input"
                             class="w-full bg-surface border border-outline-variant/50 focus:border-primary-fixed-dim rounded-full py-4 pl-6 pr-12 text-on-surface font-body placeholder-on-surface-variant/50 focus:ring-1 focus:ring-primary-fixed-dim outline-none transition-all duration-300"
-                            placeholder="Search for booster boxes, bundles, or displays..."
+                            placeholder="Search for play boosters or collector displays..."
                             type="text"
                             name="q"
                         />
@@ -210,7 +219,7 @@ const organizationSchema = {
             </section>
             <section class="about-store">
                 <h2 class="about-heading">About the Store</h2>
-                <p>Simic Systems is an online sealed Magic: The Gathering store run by Jacob Banghart, who's been playing and collecting since {FOUNDER_PLAYING_SINCE} ({yearsPlaying} years now) and is based in North Hollywood, CA. Every product in the catalog is factory-sealed in its original manufacturer packaging: booster boxes, collector boxes, play boosters, draft boosters, bundles, and commander decks. <a href="/about/">Learn more about Simic Systems →</a></p>
+                <p>Simic Systems is an online sealed Magic: The Gathering store run by Jacob Banghart, who's been playing and collecting since {FOUNDER_PLAYING_SINCE} ({yearsPlaying} years now) and is based in North Hollywood, CA. Every product in the catalog is factory-sealed in its original manufacturer packaging: play booster boxes and collector booster displays. <a href="/about/">Learn more about Simic Systems →</a></p>
                 <p>Browse by product type: <a href="/collector-boosters/">Collector Booster Displays</a> for premium foils and special treatments, or <a href="/play-boosters/">Play Booster Displays</a> for drafting and set opening.</p>
                 <p>Checkout is powered by Stripe with support for Visa, Mastercard, Amex, Apple Pay, and Google Pay. All orders ship within the United States via USPS Ground Advantage. Orders over $250 require a signature upon delivery. Most orders are packed and shipped within 1–3 business days.</p>
                 <p>Have a question before buying? See the <a href="/faq/">FAQ</a> for answers on payments, shipping timelines, returns, and product authenticity, or <a href="/contact/">contact us</a> directly.</p>
@@ -234,6 +243,15 @@ const organizationSchema = {
                         window.posthog?.capture('product_searched', { query: query.trim() });
                     }
                 });
+
+                // Support the WebSite SearchAction (?q=...) so links generated from
+                // that schema — including from search engines — actually filter results.
+                const initialQuery = new URLSearchParams(window.location.search).get('q');
+                if (initialQuery) {
+                    input.value = initialQuery;
+                    window.dispatchEvent(new CustomEvent('site-search', { detail: initialQuery }));
+                    document.getElementById('specimens')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             }
         })();
         </script>

@@ -67,13 +67,14 @@ const categorySchema = {
       </nav>
 
       <h1>MTG Play Booster Displays</h1>
+      <p class="last-updated"><em>Last updated: July 13, 2026</em></p>
 
       <p class="category-intro">
         Play Booster Displays are the current standard sealed product for Magic: The Gathering,
-        replacing Draft and Set Boosters in 2024. Each display contains 36 packs with 14 cards
+        replacing Draft and Set Boosters in 2024. Most displays contain 30 packs with 14 cards
         each, including at least one rare or mythic rare per pack and a chance at foils, special
-        art variants, and The List cards. Play Boosters work for both drafting and collection
-        building.
+        art variants, and The List cards — Foundations is the one exception, shipping in a
+        36-pack display. Play Boosters work for both drafting and collection building.
       </p>
 
       {playBoosters.length === 0 ? (
@@ -148,12 +149,13 @@ const categorySchema = {
         </p>
         <h2>Factory-sealed and sourced</h2>
         <p>
-          Every display we sell ships factory-sealed in its original manufacturer packaging and
-          is sourced from authorized Wizards of the Coast distributors. We don't sell
-          repackaged, reconstructed, or previously-opened product. If anything arrives damaged
-          or tampered with in transit, <a href="/contact/">contact us</a> within 7 days with
-          photos and your order number and we'll make it right. Full policy details are on our
-          <a href="/faq/">FAQ page</a>.
+          Every Play Booster Display we sell ships factory-sealed in its original manufacturer
+          packaging and is sourced from authorized Wizards of the Coast distributors — never a
+          repackaged, reconstructed, or previously-opened box. That sourcing discipline matters
+          most on high-volume draft product like this, where a single relabeled box can throw
+          off an entire event. If anything arrives damaged or tampered with in transit,
+          <a href="/contact/">contact us</a> within 7 days with photos and your order number and
+          we'll make it right. Full policy details are on our <a href="/faq/">FAQ page</a>.
         </p>
       </div>
 
@@ -184,6 +186,12 @@ const categorySchema = {
   h1 {
     font-size: clamp(1.5rem, 4vw, 2.25rem);
     font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .last-updated {
+    font-size: 0.8rem;
+    color: rgb(var(--gray));
     margin-bottom: 1rem;
   }
 

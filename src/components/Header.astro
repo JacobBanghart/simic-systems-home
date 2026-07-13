@@ -75,6 +75,8 @@ const { showCart = false } = Astro.props;
 		color: rgb(var(--gray-dark) / 0.7) !important;
 		border-radius: 8px;
 		padding: 6px;
+		min-width: 48px;
+		min-height: 48px;
 		transition: color 0.2s;
 	}
 	#cart-button-portal :global(.MuiIconButton-root:hover) {
@@ -84,11 +86,15 @@ const { showCart = false } = Astro.props;
 		background: transparent;
 		border: none;
 		cursor: default;
+		min-width: 48px;
+		min-height: 48px;
 	}
 
 	/* Hamburger menu button — hidden on desktop */
 	.menu-toggle {
 		display: none;
+		min-width: 48px;
+		min-height: 48px;
 	}
 	.menu-toggle .icon-close {
 		display: none;

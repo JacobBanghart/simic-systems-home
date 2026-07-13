@@ -67,6 +67,57 @@ const categoryLabel = BRAND_NAMES[product.category] ?? product.category;
 const reviews = productReviews[product.slug ?? ""] ?? [];
 const rating = aggregateRating(reviews);
 
+// Structural pack facts, not per-set claims (format legality varies by set
+// and isn't safe to state generically — see product description for that).
+// Numbers match the comparison table on /collector-boosters/ and /play-boosters/.
+// Play Booster Displays are 30 packs except Foundations, which ships 36.
+// Jumpstart Boosters are a distinct 24-pack/20-card format grouped under the
+// /play-boosters/ category page alongside regular Play Boosters.
+const nameLower = product.name.toLowerCase();
+const isCollectorBooster = nameLower.includes("collector booster");
+const isJumpstart = nameLower.includes("jumpstart booster");
+const isPlayBoosterFormat = nameLower.includes("play booster");
+const isFoundations = nameLower.includes("foundations");
+const isPlayBoosterCategory = isPlayBoosterFormat || isJumpstart;
+
+const productSpecs = isCollectorBooster
+  ? {
+      label: "Collector Booster Display",
+      packs: 12,
+      cardsPerPack: 15,
+      totalCards: 180,
+      rareGuarantee: "5+ rares or mythic rares guaranteed per pack",
+      foilGuarantee: "Multiple foils guaranteed in every pack",
+    }
+  : isJumpstart
+  ? {
+      label: "Jumpstart Booster Display",
+      packs: 24,
+      cardsPerPack: 20,
+      totalCards: 480,
+      rareGuarantee: "No deck-building needed — pick 2 themed boosters, shuffle, and play",
+      foilGuarantee: "Bonus themed foil/land card in every pack",
+    }
+  : isPlayBoosterFormat && isFoundations
+  ? {
+      label: "Play Booster Display",
+      packs: 36,
+      cardsPerPack: 14,
+      totalCards: 504,
+      rareGuarantee: "1 rare or mythic rare guaranteed per pack",
+      foilGuarantee: "At least 1 traditional foil per pack",
+    }
+  : isPlayBoosterFormat
+  ? {
+      label: "Play Booster Display",
+      packs: 30,
+      cardsPerPack: 14,
+      totalCards: 420,
+      rareGuarantee: "1 rare or mythic rare guaranteed per pack",
+      foilGuarantee: "At least 1 traditional foil per pack",
+    }
+  : null;
+
 // Strip trailing Stripe set name suffix e.g. " - Tarkir: Dragonstorm (TDM)"
 // Uses lastIndexOf to handle hyphens within set names (e.g. "Spider-Man").
 const displayName = (() => {
@@ -152,6 +203,12 @@ const productSchema = {
   },
 };
 
+const categoryCrumb = isCollectorBooster
+  ? { name: "Collector Boosters", href: "/collector-boosters/" }
+  : isPlayBoosterCategory
+  ? { name: "Play Boosters", href: "/play-boosters/" }
+  : null;
+
 const breadcrumbSchema = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
@@ -162,9 +219,19 @@ const breadcrumbSchema = {
       name: "Home",
       item: "https://simic.systems/",
     },
+    ...(categoryCrumb
+      ? [
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: categoryCrumb.name,
+            item: new URL(categoryCrumb.href, Astro.site).href,
+          },
+        ]
+      : []),
     {
       "@type": "ListItem",
-      position: 2,
+      position: categoryCrumb ? 3 : 2,
       name: displayName,
       item: productUrl,
     },
@@ -186,6 +253,12 @@ const breadcrumbSchema = {
 
         <nav class="breadcrumb" aria-label="breadcrumb">
           <a href="/">Store</a>
+          {categoryCrumb && (
+            <>
+              <span aria-hidden="true">›</span>
+              <a href={categoryCrumb.href}>{categoryCrumb.name}</a>
+            </>
+          )}
           <span aria-hidden="true">›</span>
           <span>{displayName}</span>
         </nav>
@@ -216,15 +289,28 @@ const breadcrumbSchema = {
               {outOfStock ? "Out of stock" : product.quantity <= 3 ? `Only ${product.quantity} left — order soon` : `${product.quantity} available`}
             </p>
 
+            <AddToCartSection client:load product={product} />
+
+            <p class="shipping-info">Ships 1–3 business days · <a href="/shipping/">USPS Ground Advantage</a> · United States only</p>
+            <p class="payment-info">Secure checkout · Visa · Mastercard · Amex · Apple Pay · Google Pay · <a href="/faq/">FAQ</a></p>
+            <p class="returns-info">Sealed product only — once a box ships, its seal integrity can't be re-verified, so all sales are final. Arrives damaged or wrong? <a href="/contact/">Contact us</a> within 7 days and we'll make it right.</p>
+
+            <hr class="divider" />
+
+            {productSpecs && (
+              <dl class="product-specs">
+                <div><dt>Format</dt><dd>{productSpecs.label}</dd></div>
+                <div><dt>Packs per display</dt><dd>{productSpecs.packs}</dd></div>
+                <div><dt>Cards per pack</dt><dd>{productSpecs.cardsPerPack}</dd></div>
+                <div><dt>Total cards</dt><dd>{productSpecs.totalCards}</dd></div>
+                <div><dt>Rare/mythic guarantee</dt><dd>{productSpecs.rareGuarantee}</dd></div>
+                <div><dt>Foil guarantee</dt><dd>{productSpecs.foilGuarantee}</dd></div>
+              </dl>
+            )}
+
             {product.description && (
               <p class="product-description">{product.description}</p>
             )}
-
-            <hr class="divider" />
-            <p class="shipping-info">Ships 1–3 business days · <a href="/shipping/">USPS Ground Advantage</a> · United States only</p>
-            <p class="payment-info">Secure checkout · Visa · Mastercard · Amex · Apple Pay · Google Pay · <a href="/faq/">FAQ</a></p>
-
-            <AddToCartSection client:load product={product} />
           </div>
         </div>
 
@@ -415,10 +501,40 @@ const breadcrumbSchema = {
     margin-bottom: 1.5rem;
   }
 
+  .product-specs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem 1.5rem;
+    margin: 0 0 1.5rem;
+    padding: 1rem 1.25rem;
+    background: var(--md-surface-container-low);
+    border: 1px solid var(--color-outline-variant);
+    border-radius: 8px;
+  }
+  .product-specs div {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+  }
+  .product-specs dt {
+    color: rgb(var(--gray));
+  }
+  .product-specs dd {
+    margin: 0;
+    font-weight: 600;
+    color: rgb(var(--gray-dark));
+    text-align: right;
+  }
+  @media (max-width: 480px) {
+    .product-specs { grid-template-columns: 1fr; }
+  }
+
   .divider { margin: 1.25rem 0; }
 
   .shipping-info,
-  .payment-info {
+  .payment-info,
+  .returns-info {
     font-size: 0.875rem;
     color: rgb(var(--gray));
     margin-bottom: 0.35rem;

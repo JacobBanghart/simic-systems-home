@@ -13,6 +13,8 @@ export interface ProductData {
   gtin?: string;
   slug?: string;
   noindex?: boolean;
+  /** Stripe's product.updated, Unix seconds — used for sitemap lastmod. */
+  updated?: number;
 }
 
 export interface CartItem {
