@@ -8,7 +8,7 @@ const INDEXNOW_KEY = "simic2026seo9x7y5z3w";
 const SITE = "https://simic.systems";
 
 async function pingIndexNow(urls: string[]): Promise<void> {
-  await fetch("https://api.indexnow.org/indexnow", {
+  const res = await fetch("https://api.indexnow.org/indexnow", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -18,6 +18,13 @@ async function pingIndexNow(urls: string[]): Promise<void> {
       urlList: urls,
     }),
   });
+  // fetch() only rejects on network failure, not on HTTP error status —
+  // without this check, a bad key or malformed payload fails silently.
+  if (!res.ok) {
+    console.error(`IndexNow ping rejected: ${res.status} ${await res.text()}`);
+  } else {
+    console.log(`IndexNow ping accepted for ${urls.length} URL(s): ${urls.join(", ")}`);
+  }
 }
 
 export const prerender = false;

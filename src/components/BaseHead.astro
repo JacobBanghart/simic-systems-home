@@ -23,13 +23,31 @@ const ogImageURL = new URL(image, Astro.site);
 document.documentElement.style.backgroundColor = '#08100e';
 </script>
 
-<!-- Fonts -->
+<!-- Fonts: loaded non-render-blocking (media="print" swapped to "all" once
+     fetched) since the CSP here is nonce-based and doesn't cover inline
+     onload="" attributes — the swap has to happen from a nonce'd <script>. -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link
+	id="google-fonts-css"
 	href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Hanken+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
 	rel="stylesheet"
+	media="print"
 />
+<script is:inline nonce={Astro.locals.nonce}>
+(function () {
+	var link = document.getElementById('google-fonts-css');
+	if (!link) return;
+	if (link.sheet) { link.media = 'all'; return; }
+	link.addEventListener('load', function () { link.media = 'all'; }, { once: true });
+})();
+</script>
+<noscript>
+	<link
+		href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Hanken+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+		rel="stylesheet"
+	/>
+</noscript>
 
 <!-- Global Metadata -->
 <meta charset="utf-8" />
