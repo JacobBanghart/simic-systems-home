@@ -19,13 +19,6 @@
 			"preview_id": "72732ce961bc4b2d825cfae2befa9d9e"
 		}
 	],
-	"r2_buckets": [
-		{
-			"bucket_name": "simic-systems-tfstate",
-			"binding": "simic_systems_tfstate",
-			"remote": true
-		}
-	],
 	"send_email": [
 		{
 			"name": "CONTACT_EMAIL",

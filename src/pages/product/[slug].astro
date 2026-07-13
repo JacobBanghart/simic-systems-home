@@ -237,14 +237,41 @@ const breadcrumbSchema = {
     },
   ],
 };
+
+const nonce = Astro.locals.nonce;
+
+// Vars are inlined via a template literal (JSON.stringify'd) instead of
+// define:vars — the Astro compiler silently drops any other dynamic
+// attribute (including nonce={...}) from a <script> tag that also uses
+// define:vars.
+const productViewedScript = `(function(){
+var productSlug = ${JSON.stringify(product.slug ?? "")};
+var productName = ${JSON.stringify(product.name)};
+var productPrice = ${JSON.stringify(product.price)};
+var productCategory = ${JSON.stringify(product.category)};
+var productOutOfStock = ${JSON.stringify(outOfStock)};
+window.addEventListener('load', function () {
+  try {
+    window.posthog?.capture('product_viewed', {
+      product_slug: productSlug,
+      product_name: productName,
+      price_cents: productPrice,
+      category: productCategory,
+      out_of_stock: productOutOfStock,
+    });
+  } catch (err) {
+    window.posthog?.captureException(err);
+  }
+});
+})();`;
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
     <BaseHead title={pageTitle} description={pageDescription} image={product.image} ogType="product" robots={product.noindex ? "noindex, nofollow" : undefined} />
-    <script type="application/ld+json" nonce={Astro.locals.nonce} set:html={JSON.stringify(productSchema)} />
-    <script type="application/ld+json" nonce={Astro.locals.nonce} set:html={JSON.stringify(breadcrumbSchema)} />
+    <script type="application/ld+json" nonce={nonce} set:html={JSON.stringify(productSchema)} />
+    <script type="application/ld+json" nonce={nonce} set:html={JSON.stringify(breadcrumbSchema)} />
   </head>
   <body>
     <Header showCart />
@@ -396,21 +423,7 @@ const breadcrumbSchema = {
   });
 </script>
 
-<script nonce={Astro.locals.nonce} define:vars={{ productSlug: product.slug, productName: product.name, productPrice: product.price, productCategory: product.category, productOutOfStock: outOfStock }}>
-  window.addEventListener('load', function () {
-    try {
-      window.posthog?.capture('product_viewed', {
-        product_slug: productSlug,
-        product_name: productName,
-        price_cents: productPrice,
-        category: productCategory,
-        out_of_stock: productOutOfStock,
-      });
-    } catch (err) {
-      window.posthog?.captureException(err);
-    }
-  });
-</script>
+<script is:inline nonce={nonce} set:html={productViewedScript} />
 
 <style>
   .product-page {

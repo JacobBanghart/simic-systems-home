@@ -1,6 +1,10 @@
 ---
+export const prerender = false;
+
 import BaseHead from "../../components/BaseHead.astro";
 import { SITE_TITLE } from "../../consts";
+
+const nonce = Astro.locals.nonce;
 ---
 
 <!doctype html>
@@ -17,7 +21,7 @@ import { SITE_TITLE } from "../../consts";
                 Back to Store
             </a>
         </main>
-    <script nonce={Astro.locals.nonce}>
+    <script nonce={nonce}>
       window.posthog?.capture('checkout_cancelled');
     </script>
     </body>

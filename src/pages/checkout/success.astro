@@ -30,6 +30,23 @@ if (sessionId) {
 
 const email = session?.customer_details?.email;
 const shipping = session?.shipping_details;
+
+const nonce = Astro.locals.nonce;
+
+// Vars are inlined via a template literal (JSON.stringify'd) instead of
+// define:vars — the Astro compiler silently drops any other dynamic
+// attribute (including nonce={...}) from a <script> tag that also uses
+// define:vars.
+const orderConfirmedScript = `(function(){
+var stripeSessionId = ${JSON.stringify(sessionId ?? null)};
+var amountTotal = ${JSON.stringify(session?.amount_total ?? null)};
+var itemCount = ${JSON.stringify(lineItems.reduce((s, i) => s + (i.quantity ?? 0), 0))};
+window.posthog?.capture('order_confirmed', {
+  stripe_session_id: stripeSessionId,
+  amount_total_cents: amountTotal,
+  item_count: itemCount,
+});
+})();`;
 ---
 
 <!doctype html>
@@ -158,15 +175,9 @@ const shipping = session?.shipping_details;
       </div>
     </main>
     <Footer />
-    <script>
+    <script nonce={nonce}>
       localStorage.removeItem("simic-cart");
     </script>
-    <script nonce={Astro.locals.nonce} define:vars={{ stripeSessionId: sessionId, amountTotal: session?.amount_total ?? null, itemCount: lineItems.reduce((s, i) => s + (i.quantity ?? 0), 0) }}>
-      window.posthog?.capture('order_confirmed', {
-        stripe_session_id: stripeSessionId,
-        amount_total_cents: amountTotal,
-        item_count: itemCount,
-      });
-    </script>
+    <script is:inline nonce={nonce} set:html={orderConfirmedScript} />
   </body>
 </html>
