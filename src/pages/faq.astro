@@ -57,13 +57,15 @@ const faqSchema = {
 		},
 	})),
 };
+
+const nonce = Astro.locals.nonce;
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
 		<BaseHead title={`FAQ — Shipping, Payments & Returns | ${SITE_TITLE}`} description="Frequently asked questions about Simic Systems: payment methods, USPS Ground Advantage shipping, 1–3 day processing, all-sales-final policy, and product authenticity for sealed MTG." />
-		<script type="application/ld+json" nonce={Astro.locals.nonce} set:html={JSON.stringify(faqSchema)} />
+		<script type="application/ld+json" nonce={nonce} set:html={JSON.stringify(faqSchema)} />
 	</head>
 	<body>
 		<Header />

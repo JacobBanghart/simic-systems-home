@@ -54,13 +54,15 @@ const categorySchema = {
     })),
   },
 };
+
+const nonce = Astro.locals.nonce;
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
     <BaseHead title={pageTitle} description={pageDescription} />
-    <script type="application/ld+json" nonce={Astro.locals.nonce} set:html={JSON.stringify(categorySchema)} />
+    <script type="application/ld+json" nonce={nonce} set:html={JSON.stringify(categorySchema)} />
   </head>
   <body>
     <Header />
