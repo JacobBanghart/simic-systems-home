@@ -396,7 +396,7 @@ const breadcrumbSchema = {
   });
 </script>
 
-<script is:inline nonce={Astro.locals.nonce} define:vars={{ productSlug: product.slug, productName: product.name, productPrice: product.price, productCategory: product.category, productOutOfStock: outOfStock }}>
+<script nonce={Astro.locals.nonce} define:vars={{ productSlug: product.slug, productName: product.name, productPrice: product.price, productCategory: product.category, productOutOfStock: outOfStock }}>
   window.addEventListener('load', function () {
     try {
       window.posthog?.capture('product_viewed', {

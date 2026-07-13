@@ -19,7 +19,7 @@ const ogImageURL = new URL(image, Astro.site);
 ---
 
 <!-- Set background inline, synchronously before any stylesheet loads, to prevent a white flash. -->
-<script is:inline nonce={Astro.locals.nonce}>
+<script nonce={Astro.locals.nonce}>
 document.documentElement.style.backgroundColor = '#08100e';
 </script>
 
@@ -34,7 +34,7 @@ document.documentElement.style.backgroundColor = '#08100e';
 	rel="stylesheet"
 	media="print"
 />
-<script is:inline nonce={Astro.locals.nonce}>
+<script nonce={Astro.locals.nonce}>
 (function () {
 	var link = document.getElementById('google-fonts-css');
 	if (!link) return;
