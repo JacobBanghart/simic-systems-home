@@ -34,6 +34,17 @@ const CATEGORY_LABELS: Record<string, string> = {
   unionarena: "Union Arena",
 };
 
+// Per-word substring match rather than matching the whole query as one
+// phrase — a single-substring match fails natural queries like "spider man"
+// against "Marvel's Spider-Man" (no literal "spider man" substring exists)
+// or "tarkir dragonstorm" against "Tarkir: Dragonstorm" (colon, not space).
+function productMatchesQuery(product: ProductData, query: string): boolean {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return true;
+  const haystack = `${product.name} ${product.description}`.toLowerCase();
+  return words.every((word) => haystack.includes(word));
+}
+
 function StoreContent({ products }: MainPageProps) {
   const [sortBy, setSortBy] = useState<SortOption>("featured");
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,12 +68,9 @@ function StoreContent({ products }: MainPageProps) {
     const submitHandler = (e: Event) => {
       const query = ((e as CustomEvent<string>).detail ?? "").trim();
       if (!query) return;
-      const q = query.toLowerCase();
       const resultCount = products.filter((product) => {
         if (category !== "all" && product.category !== category) return false;
-        return (
-          product.name.toLowerCase().includes(q) || product.description.toLowerCase().includes(q)
-        );
+        return productMatchesQuery(product, query);
       }).length;
       window.posthog?.capture("product_searched", { query, result_count: resultCount });
     };
@@ -84,11 +92,7 @@ function StoreContent({ products }: MainPageProps) {
     .filter((product) => {
       if (category !== "all" && product.category !== category) return false;
       if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        return (
-          product.name.toLowerCase().includes(query) ||
-          product.description.toLowerCase().includes(query)
-        );
+        return productMatchesQuery(product, searchQuery);
       }
       return true;
     })

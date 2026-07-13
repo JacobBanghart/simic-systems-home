@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { mapStripeProduct, parseInteger } from "../src/lib/stripeProducts";
+import { describe, it, expect, vi } from "vitest";
+import { mapStripeProduct, parseInteger, adjustProductStock } from "../src/lib/stripeProducts";
 import type Stripe from "stripe";
 
 function fakeStripeProduct(
@@ -130,5 +130,57 @@ describe("mapStripeProduct", () => {
       })
     );
     expect(result?.price).toBe(0);
+  });
+});
+
+// adjustProductStock backs the checkout reservation/rollback flow and the
+// refund/expired-session release handlers — this is the logic that prevents
+// overselling, so it's tested even though it needs a Stripe instance, via a
+// stubbed one (the function takes Stripe as a parameter for exactly this).
+function fakeStripeForStock(currentQuantity: string | undefined) {
+  const retrieve = vi.fn().mockResolvedValue({
+    id: "prod_test",
+    metadata: currentQuantity === undefined ? {} : { quantity: currentQuantity },
+  });
+  const update = vi.fn().mockResolvedValue({});
+  const stripe = { products: { retrieve, update } } as unknown as Stripe;
+  return { stripe, retrieve, update };
+}
+
+describe("adjustProductStock", () => {
+  it("increments stock by a positive delta", async () => {
+    const { stripe, update } = fakeStripeForStock("5");
+    await adjustProductStock(stripe, "prod_test", 3);
+    expect(update).toHaveBeenCalledWith("prod_test", { metadata: { quantity: "8" } });
+  });
+
+  it("decrements stock by a negative delta", async () => {
+    const { stripe, update } = fakeStripeForStock("5");
+    await adjustProductStock(stripe, "prod_test", -2);
+    expect(update).toHaveBeenCalledWith("prod_test", { metadata: { quantity: "3" } });
+  });
+
+  it("floors at 0 rather than going negative", async () => {
+    const { stripe, update } = fakeStripeForStock("2");
+    await adjustProductStock(stripe, "prod_test", -5);
+    expect(update).toHaveBeenCalledWith("prod_test", { metadata: { quantity: "0" } });
+  });
+
+  it("treats missing quantity metadata as 0", async () => {
+    const { stripe, update } = fakeStripeForStock(undefined);
+    await adjustProductStock(stripe, "prod_test", 4);
+    expect(update).toHaveBeenCalledWith("prod_test", { metadata: { quantity: "4" } });
+  });
+
+  it("treats non-numeric quantity metadata as 0", async () => {
+    const { stripe, update } = fakeStripeForStock("not-a-number");
+    await adjustProductStock(stripe, "prod_test", 4);
+    expect(update).toHaveBeenCalledWith("prod_test", { metadata: { quantity: "4" } });
+  });
+
+  it("re-reads live stock rather than trusting a caller-supplied value", async () => {
+    const { stripe, retrieve } = fakeStripeForStock("5");
+    await adjustProductStock(stripe, "prod_test", -1);
+    expect(retrieve).toHaveBeenCalledWith("prod_test");
   });
 });

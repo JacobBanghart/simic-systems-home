@@ -182,6 +182,82 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
   }
 
+  if (event.type === "charge.refunded") {
+    const charge = event.data.object as Stripe.Charge;
+
+    // Same dedup as the handlers above — a redelivered refund event would
+    // otherwise restore the same stock twice.
+    const idempotencyKey = `webhook-processed:${event.id}`;
+    const alreadyProcessed = await env.PRODUCT_CACHE.get(idempotencyKey);
+    if (alreadyProcessed) {
+      return new Response(JSON.stringify({ received: true, duplicate: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    try {
+      if (!charge.refunded) {
+        // Partial refund: Stripe's refund object doesn't map back to which
+        // specific line items were returned, so guessing (e.g. splitting
+        // proportionally) risks restoring the wrong quantity. Flagged for
+        // manual reconciliation instead of silently getting it wrong.
+        console.warn(
+          `Partial refund on charge ${charge.id} (amount_refunded: ${charge.amount_refunded}/${charge.amount}) — stock not auto-adjusted, review manually.`
+        );
+      } else if (charge.payment_intent) {
+        const paymentIntentId =
+          typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent.id;
+        const sessions = await stripe.checkout.sessions.list({
+          payment_intent: paymentIntentId,
+          limit: 1,
+        });
+        const session = sessions.data[0];
+
+        if (session) {
+          const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+            expand: ["line_items.data.price.product"],
+          });
+          const lineItems = fullSession.line_items?.data || [];
+
+          for (const lineItem of lineItems) {
+            const price = lineItem.price;
+            if (!price || !price.product || typeof price.product === "string") continue;
+            await adjustProductStock(stripe, price.product.id, lineItem.quantity || 0);
+          }
+
+          await invalidateProductCache(env);
+          console.log(`Full refund processed, stock restored: charge ${charge.id}, session ${session.id}`);
+        } else {
+          console.warn(
+            `Full refund on charge ${charge.id} but no matching checkout session found — stock not auto-adjusted.`
+          );
+        }
+      }
+
+      locals.cfContext.waitUntil(
+        env.PRODUCT_CACHE.put(idempotencyKey, "1", { expirationTtl: 7 * 24 * 60 * 60 })
+      );
+    } catch (err) {
+      console.error("Error processing charge.refunded:", err);
+      return new Response(JSON.stringify({ error: "Refund reconciliation failed" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  if (event.type === "charge.dispute.created") {
+    // Disputed funds aren't confirmed lost yet — the merchant may win the
+    // dispute, so auto-restoring stock here would be premature and could let
+    // a still-disputed item get sold again before the outcome is known.
+    // Log only, for manual review.
+    const dispute = event.data.object as Stripe.Dispute;
+    console.warn(
+      `Dispute created on charge ${dispute.charge} — reason: ${dispute.reason}, amount: ${dispute.amount}. Review manually; stock is not auto-adjusted.`
+    );
+  }
+
   if (productCacheInvalidationEvents.has(event.type)) {
     await invalidateProductCache(env);
 
