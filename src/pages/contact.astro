@@ -6,38 +6,42 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { ContactForm } from '../components/ContactForm';
 import { SITE_TITLE } from '../consts';
+
+const nonce = Astro.locals.nonce;
+
+const contactSchema = {
+	"@context": "https://schema.org",
+	"@type": "ContactPage",
+	"name": "Contact Simic Systems",
+	"url": "https://simic.systems/contact/",
+	"description": "Contact Simic Systems for order questions and product inquiries.",
+	"mainEntity": {
+		"@type": "Organization",
+		"@id": "https://simic.systems/#organization",
+		"name": "Simic Systems LLC",
+		"url": "https://simic.systems",
+		"logo": {
+			"@type": "ImageObject",
+			"url": "https://simic.systems/logo.png"
+		},
+		"email": "contact@simic.systems",
+		"telephone": "+16055534735",
+		"contactPoint": {
+			"@type": "ContactPoint",
+			"email": "contact@simic.systems",
+			"telephone": "+16055534735",
+			"contactType": "customer service",
+			"areaServed": "US"
+		}
+	}
+};
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
 		<BaseHead title={`Contact ${SITE_TITLE} | Orders & Questions`} description="Contact Simic Systems with questions about your order or products. Email contact@simic.systems or use the contact form." />
-		<script type="application/ld+json" nonce={Astro.locals.nonce} set:html={JSON.stringify({
-			"@context": "https://schema.org",
-			"@type": "ContactPage",
-			"name": "Contact Simic Systems",
-			"url": "https://simic.systems/contact/",
-			"description": "Contact Simic Systems for order questions and product inquiries.",
-			"mainEntity": {
-				"@type": "Organization",
-				"@id": "https://simic.systems/#organization",
-				"name": "Simic Systems LLC",
-				"url": "https://simic.systems",
-				"logo": {
-					"@type": "ImageObject",
-					"url": "https://simic.systems/logo.png"
-				},
-				"email": "contact@simic.systems",
-				"telephone": "+16055534735",
-				"contactPoint": {
-					"@type": "ContactPoint",
-					"email": "contact@simic.systems",
-					"telephone": "+16055534735",
-					"contactType": "customer service",
-					"areaServed": "US"
-				}
-			}
-		})}></script>
+		<script type="application/ld+json" nonce={nonce} set:html={JSON.stringify(contactSchema)}></script>
 	</head>
 	<body>
 		<Header />

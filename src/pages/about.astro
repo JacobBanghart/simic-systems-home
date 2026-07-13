@@ -7,33 +7,36 @@ import Footer from '../components/Footer.astro';
 import { SITE_TITLE, FOUNDER_PLAYING_SINCE } from '../consts';
 
 const yearsPlaying = new Date().getFullYear() - FOUNDER_PLAYING_SINCE;
+const nonce = Astro.locals.nonce;
+
+const organizationSchema = {
+	"@context": "https://schema.org",
+	"@type": "Organization",
+	"@id": "https://simic.systems/#organization",
+	"name": "Simic Systems",
+	"legalName": "Simic Systems LLC",
+	"url": "https://simic.systems/",
+	"logo": {
+		"@type": "ImageObject",
+		"url": "https://simic.systems/logo.png"
+	},
+	"email": "contact@simic.systems",
+	"telephone": "+16055534735",
+	"description": "Online retailer specializing in factory-sealed Magic: The Gathering products including booster boxes and collector sets. Ships across the US.",
+	"areaServed": "US",
+	"founder": {
+		"@type": "Person",
+		"name": "Jacob Banghart",
+		"jobTitle": "Founder"
+	}
+};
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
 		<BaseHead title="About Simic Systems | Online MTG Sealed Products Store" description="Simic Systems is run by a lifelong Magic: The Gathering player and collector in North Hollywood, CA. Factory-sealed MTG products shipped across the US via USPS Ground Advantage." />
-		<script type="application/ld+json" nonce={Astro.locals.nonce} set:html={JSON.stringify({
-			"@context": "https://schema.org",
-			"@type": "Organization",
-			"@id": "https://simic.systems/#organization",
-			"name": "Simic Systems",
-			"legalName": "Simic Systems LLC",
-			"url": "https://simic.systems/",
-			"logo": {
-				"@type": "ImageObject",
-				"url": "https://simic.systems/logo.png"
-			},
-			"email": "contact@simic.systems",
-			"telephone": "+16055534735",
-			"description": "Online retailer specializing in factory-sealed Magic: The Gathering products including booster boxes and collector sets. Ships across the US.",
-			"areaServed": "US",
-			"founder": {
-				"@type": "Person",
-				"name": "Jacob Banghart",
-				"jobTitle": "Founder"
-			}
-		})}></script>
+		<script type="application/ld+json" nonce={nonce} set:html={JSON.stringify(organizationSchema)}></script>
 	</head>
 	<body>
 		<Header />
