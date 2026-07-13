@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import Stripe from "stripe";
 import { env } from "cloudflare:workers";
-import { invalidateProductCache } from "../../lib/stripeProducts";
+import { invalidateProductCache, adjustProductStock } from "../../lib/stripeProducts";
 import { getPostHogServer } from "../../lib/posthog-server";
 
 const INDEXNOW_KEY = "simic2026seo9x7y5z3w";
@@ -72,10 +72,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Stripe delivers webhooks at-least-once and retries on any non-2xx
     // response or timeout — the same event.id can arrive more than once.
-    // Without this guard, a duplicate delivery double-decrements inventory
-    // and double-counts revenue in PostHog. TTL covers Stripe's retry window
-    // with margin; keyed on event.id (stable across redeliveries of the same
-    // event, unlike session.id which is the underlying resource, not the delivery).
+    // Without this guard, a duplicate delivery double-counts revenue in
+    // PostHog. TTL covers Stripe's retry window with margin; keyed on
+    // event.id (stable across redeliveries of the same event, unlike
+    // session.id which is the underlying resource, not the delivery).
     const idempotencyKey = `webhook-processed:${event.id}`;
     const alreadyProcessed = await env.PRODUCT_CACHE.get(idempotencyKey);
     if (alreadyProcessed) {
@@ -86,25 +86,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     try {
+      // Stock is no longer decremented here — create-checkout.ts reserves it
+      // at session creation instead, so by the time a session completes the
+      // deduction has already happened. Decrementing again here would
+      // double-count it.
       const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
         expand: ["line_items.data.price.product"],
       });
 
       const lineItems = fullSession.line_items?.data || [];
-
-      for (const lineItem of lineItems) {
-        const price = lineItem.price;
-        if (!price || !price.product || typeof price.product === "string") continue;
-
-        const product = price.product as Stripe.Product;
-        const purchasedQty = lineItem.quantity || 0;
-        const currentQty = parseInt(product.metadata.quantity || "0", 10);
-        const newQty = Math.max(0, currentQty - purchasedQty);
-
-        await stripe.products.update(product.id, {
-          metadata: { quantity: String(newQty) },
-        });
-      }
 
       // client_reference_id carries the browser's PostHog distinct_id, set on
       // session creation in create-checkout.ts — without it, this event (the
@@ -138,7 +128,54 @@ export const POST: APIRoute = async ({ request, locals }) => {
       console.log(`Sale completed: ${session.id}, amount: ${session.amount_total}`);
     } catch (err) {
       console.error("Error processing checkout.session.completed:", err);
-      return new Response(JSON.stringify({ error: "Inventory update failed" }), {
+      return new Response(JSON.stringify({ error: "PostHog capture failed" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  if (event.type === "checkout.session.expired") {
+    const session = event.data.object as Stripe.Checkout.Session;
+
+    // Same dedup as checkout.session.completed above — without it, a
+    // redelivered expiry event would release the same reserved stock twice.
+    const idempotencyKey = `webhook-processed:${event.id}`;
+    const alreadyProcessed = await env.PRODUCT_CACHE.get(idempotencyKey);
+    if (alreadyProcessed) {
+      return new Response(JSON.stringify({ received: true, duplicate: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    try {
+      // A session that expires without completing means create-checkout.ts's
+      // reservation for it was never claimed by a sale — release it back to
+      // the pool, or that stock stays permanently held for a cart that will
+      // never check out.
+      const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+        expand: ["line_items.data.price.product"],
+      });
+
+      const lineItems = fullSession.line_items?.data || [];
+
+      for (const lineItem of lineItems) {
+        const price = lineItem.price;
+        if (!price || !price.product || typeof price.product === "string") continue;
+        await adjustProductStock(stripe, price.product.id, lineItem.quantity || 0);
+      }
+
+      await invalidateProductCache(env);
+
+      locals.cfContext.waitUntil(
+        env.PRODUCT_CACHE.put(idempotencyKey, "1", { expirationTtl: 7 * 24 * 60 * 60 })
+      );
+
+      console.log(`Checkout expired, stock released: ${session.id}`);
+    } catch (err) {
+      console.error("Error processing checkout.session.expired:", err);
+      return new Response(JSON.stringify({ error: "Stock release failed" }), {
         status: 500,
         headers: { "Content-Type": "application/json" },
       });

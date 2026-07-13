@@ -93,3 +93,22 @@ export async function fetchStoreProducts(
 export async function invalidateProductCache(env: StoreEnv): Promise<void> {
   await env.PRODUCT_CACHE.delete(PRODUCT_CACHE_KEY);
 }
+
+// Applies a signed delta (positive to restore/release, negative to reserve)
+// to a product's stock metadata. Re-reads live stock rather than working off
+// a snapshot, so concurrent callers don't clobber each other's adjustments —
+// this still isn't a true atomic increment (there's a small read-then-write
+// window), but that's an acceptable trade-off given how infrequently this
+// runs (checkout creation/rollback and expired-session cleanup only, not
+// high-frequency traffic).
+export async function adjustProductStock(
+  stripe: Stripe,
+  productId: string,
+  delta: number
+): Promise<void> {
+  const product = await stripe.products.retrieve(productId);
+  const liveQuantity = parseInteger(product.metadata.quantity, 0);
+  await stripe.products.update(productId, {
+    metadata: { quantity: String(Math.max(0, liveQuantity + delta)) },
+  });
+}

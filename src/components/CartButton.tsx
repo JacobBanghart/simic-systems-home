@@ -1,5 +1,5 @@
 import { IconButton, Badge } from "@mui/material";
-import { ShoppingCartCheckout } from "@mui/icons-material";
+import ShoppingCartCheckout from "@mui/icons-material/ShoppingCartCheckout";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useCart } from "./CartProvider";

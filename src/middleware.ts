@@ -1,4 +1,5 @@
 import { defineMiddleware } from "astro:middleware";
+import { getPostHogServer } from "./lib/posthog-server";
 
 function buildSecurityHeaders(nonce: string): Record<string, string> {
   return {
@@ -46,7 +47,44 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const nonce = crypto.randomUUID();
   context.locals.nonce = nonce;
 
-  const response = await next();
+  let response: Response;
+  try {
+    response = await next();
+  } catch (err) {
+    // Uncaught exceptions in a page/endpoint (as opposed to errors an API
+    // route already catches and turns into a JSON error response) previously
+    // had nowhere to go except Cloudflare's generic error page — invisible
+    // to us except by manually tailing Workers logs. This is the one place
+    // that sees every request, so it's the only place that can catch these.
+    console.error(`Unhandled error rendering ${context.url.pathname}:`, err);
+    try {
+      const posthog = getPostHogServer();
+      posthog.capture({
+        distinctId: `server-error-${crypto.randomUUID()}`,
+        event: "server_error",
+        properties: {
+          path: context.url.pathname,
+          message: err instanceof Error ? err.message : String(err),
+        },
+      });
+      context.locals.cfContext.waitUntil(posthog.flush());
+    } catch (captureErr) {
+      console.error("Failed to capture server_error to PostHog:", captureErr);
+    }
+
+    try {
+      response = await context.rewrite("/500");
+    } catch (rewriteErr) {
+      // Last-resort fallback if even rendering the branded 500 page throws
+      // (or re-throws through this same middleware) — guarantees a request
+      // never falls through to Cloudflare's raw, unbranded error page.
+      console.error("Failed to render /500 fallback page:", rewriteErr);
+      response = new Response("Internal Server Error", {
+        status: 500,
+        headers: { "Content-Type": "text/plain" },
+      });
+    }
+  }
 
   for (const [key, value] of Object.entries(buildSecurityHeaders(nonce))) {
     response.headers.set(key, value);

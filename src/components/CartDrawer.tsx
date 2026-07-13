@@ -10,7 +10,10 @@ import {
   ListItem,
   Alert,
 } from "@mui/material";
-import { Add, Remove, Delete, Close } from "@mui/icons-material";
+import Add from "@mui/icons-material/Add";
+import Remove from "@mui/icons-material/Remove";
+import Delete from "@mui/icons-material/Delete";
+import Close from "@mui/icons-material/Close";
 import { useCart } from "./CartProvider";
 import { formatPrice } from "../lib/format";
 import { getPostHog, getPostHogHeaders } from "../lib/posthog-client";

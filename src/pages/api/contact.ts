@@ -10,7 +10,8 @@ const RATE_LIMIT_WINDOW_SECONDS = 300; // 5 minutes
 const RATE_LIMIT_MAX = 3; // max submissions per window per IP
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  // Rate limiting via KV
+  // Rate limiting via KV — best-effort, not atomic (see the identical
+  // pattern in create-checkout.ts for why: no compare-and-swap in KV).
   const ip = request.headers.get("cf-connecting-ip") || "unknown";
   const rateLimitKey = `ratelimit:contact:${ip}`;
   try {

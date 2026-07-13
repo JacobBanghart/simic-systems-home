@@ -1,0 +1,55 @@
+---
+export const prerender = false;
+
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE } from '../consts';
+
+// Requires prerender = false: a static/prerendered page can't carry a
+// non-200 status. Reached via context.rewrite("/500") from src/middleware.ts
+// when a request throws an uncaught exception, so this status applies there too.
+Astro.response.status = 500;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`Something Went Wrong - ${SITE_TITLE}`} description="Something went wrong on our end." robots="noindex, nofollow" />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<h1>Something Went Wrong</h1>
+			<p>Sorry, something broke on our end. Please try again in a moment — if it keeps happening, <a href="/contact/">let us know</a>.</p>
+			<a href="/">Back to Store</a>
+		</main>
+		<Footer />
+	</body>
+</html>
+<style>
+	main {
+		max-width: 720px;
+		margin: 0 auto;
+		padding: 4rem 1.5rem;
+		text-align: center;
+	}
+	h1 {
+		margin-bottom: 1rem;
+	}
+	p {
+		margin-bottom: 2rem;
+		color: var(--gray);
+	}
+	a {
+		display: inline-block;
+		padding: 0.75rem 1.5rem;
+		background: var(--accent);
+		color: white;
+		text-decoration: none;
+		border-radius: 4px;
+	}
+	a:hover {
+		opacity: 0.9;
+	}
+</style>
