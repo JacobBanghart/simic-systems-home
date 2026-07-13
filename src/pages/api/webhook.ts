@@ -1,7 +1,11 @@
 import type { APIRoute } from "astro";
 import Stripe from "stripe";
 import { env } from "cloudflare:workers";
-import { invalidateProductCache, adjustProductStock } from "../../lib/stripeProducts";
+import {
+  invalidateProductCache,
+  retrieveSessionLineItems,
+  restoreLineItemStock,
+} from "../../lib/stripeProducts";
 import { getPostHogServer } from "../../lib/posthog-server";
 
 const INDEXNOW_KEY = "simic2026seo9x7y5z3w";
@@ -90,11 +94,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       // at session creation instead, so by the time a session completes the
       // deduction has already happened. Decrementing again here would
       // double-count it.
-      const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
-        expand: ["line_items.data.price.product"],
-      });
-
-      const lineItems = fullSession.line_items?.data || [];
+      const { session: fullSession, lineItems } = await retrieveSessionLineItems(stripe, session.id);
 
       // client_reference_id carries the browser's PostHog distinct_id, set on
       // session creation in create-checkout.ts — without it, this event (the
@@ -154,18 +154,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       // reservation for it was never claimed by a sale — release it back to
       // the pool, or that stock stays permanently held for a cart that will
       // never check out.
-      const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
-        expand: ["line_items.data.price.product"],
-      });
-
-      const lineItems = fullSession.line_items?.data || [];
-
-      for (const lineItem of lineItems) {
-        const price = lineItem.price;
-        if (!price || !price.product || typeof price.product === "string") continue;
-        await adjustProductStock(stripe, price.product.id, lineItem.quantity || 0);
-      }
-
+      const { lineItems } = await retrieveSessionLineItems(stripe, session.id);
+      await restoreLineItemStock(stripe, lineItems);
       await invalidateProductCache(env);
 
       locals.cfContext.waitUntil(
@@ -215,17 +205,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         const session = sessions.data[0];
 
         if (session) {
-          const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
-            expand: ["line_items.data.price.product"],
-          });
-          const lineItems = fullSession.line_items?.data || [];
-
-          for (const lineItem of lineItems) {
-            const price = lineItem.price;
-            if (!price || !price.product || typeof price.product === "string") continue;
-            await adjustProductStock(stripe, price.product.id, lineItem.quantity || 0);
-          }
-
+          const { lineItems } = await retrieveSessionLineItems(stripe, session.id);
+          await restoreLineItemStock(stripe, lineItems);
           await invalidateProductCache(env);
           console.log(`Full refund processed, stock restored: charge ${charge.id}, session ${session.id}`);
         } else {

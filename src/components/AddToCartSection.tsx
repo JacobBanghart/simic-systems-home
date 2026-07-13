@@ -3,6 +3,7 @@ import { themeOptions } from "./theme";
 import type { ProductData } from "../types";
 import { CartProvider, useCart } from "./CartProvider";
 import { CartButton } from "./CartButton";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 interface AddToCartSectionProps {
   product: ProductData;
@@ -43,9 +44,11 @@ function AddToCartContent({ product }: AddToCartSectionProps) {
 export function AddToCartSection({ product }: AddToCartSectionProps) {
   return (
     <ThemeProvider theme={themeOptions}>
-      <CartProvider>
-        <AddToCartContent product={product} />
-      </CartProvider>
+      <ErrorBoundary>
+        <CartProvider>
+          <AddToCartContent product={product} />
+        </CartProvider>
+      </ErrorBoundary>
     </ThemeProvider>
   );
 }
