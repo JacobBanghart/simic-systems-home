@@ -28,6 +28,31 @@ const playBoosters = products.filter((p) =>
   p.name.toLowerCase().includes("jumpstart booster")
 );
 
+// Precomputed here rather than inline in the .map() below — the astro
+// template parser misreads a `<=` comparison sitting in statement position
+// inside a JSX expression's arrow-function block body as the start of a tag,
+// throwing a bogus "Fragment shorthand syntax" parse error (astro-eslint-parser
+// 2.1.0). Plain frontmatter script isn't affected, only the JSX-aware scanner is.
+const playBoosterCards = playBoosters.map((product) => {
+  const outOfStock = product.quantity <= 0;
+  const lowStock = !outOfStock && product.quantity <= 3;
+  const productUrl = `/product/${product.slug ?? product.id}/`;
+  const rawName = (() => {
+    const m = product.name.match(/ \([A-Z0-9]{2,5}\)\s*$/u);
+    return m ? product.name.slice(0, m.index).trim() : product.name.trim();
+  })();
+  const firstDash = rawName.indexOf(" - ");
+  const setName = firstDash >= 0 ? rawName.slice(0, firstDash).trim() : rawName;
+  const displayName = setName + " Play Boosters";
+  const stockText = outOfStock
+    ? "Out of stock"
+    : lowStock
+    ? `Only ${product.quantity} left`
+    : `${product.quantity} available`;
+  const stockClass = outOfStock ? " oos" : lowStock ? " low" : "";
+  return { product, outOfStock, productUrl, displayName, stockText, stockClass };
+});
+
 const pageTitle = `Buy MTG Play Booster Displays | ${SITE_TITLE}`;
 const pageDescription =
   "Shop factory-sealed Magic: The Gathering Play Booster Displays at Simic Systems. The current standard booster for drafting and opening, with a guaranteed rare or better per pack. Secure checkout, US shipping via USPS.";
@@ -88,37 +113,24 @@ const nonce = Astro.locals.nonce;
         <p class="empty-state">No Play Booster Displays currently in stock. <a href="/">View all products</a> or <a href="/contact/">contact us</a> to be notified when stock arrives.</p>
       ) : (
         <div class="product-grid">
-          {playBoosters.map((product) => {
-            const outOfStock = product.quantity <= 0;
-            const productUrl = `/product/${product.slug ?? product.id}/`;
-            const rawName = (() => {
-              const m = product.name.match(/ \([A-Z0-9]{2,5}\)\s*$/u);
-              return m ? product.name.slice(0, m.index).trim() : product.name.trim();
-            })();
-            const firstDash = rawName.indexOf(" - ");
-            const setName = firstDash >= 0 ? rawName.slice(0, firstDash).trim() : rawName;
-            const displayName = setName + " Play Boosters";
-            return (
-              <a href={productUrl} class={`product-card${outOfStock ? " out-of-stock" : ""}`}>
-                {product.image && (
-                  <img
-                    src={product.image}
-                    alt={displayName}
-                    width={300}
-                    height={300}
-                    loading="lazy"
-                  />
-                )}
-                <div class="card-body">
-                  <p class="card-name">{displayName}</p>
-                  <p class="card-price">{formatPrice(product.price)}</p>
-                  <p class={`card-stock${outOfStock ? " oos" : product.quantity <= 3 ? " low" : ""}`}>
-                    {outOfStock ? "Out of stock" : product.quantity <= 3 ? `Only ${product.quantity} left` : `${product.quantity} available`}
-                  </p>
-                </div>
-              </a>
-            );
-          })}
+          {playBoosterCards.map(({ product, outOfStock, productUrl, displayName, stockText, stockClass }) => (
+            <a href={productUrl} class={`product-card${outOfStock ? " out-of-stock" : ""}`}>
+              {product.image && (
+                <img
+                  src={product.image}
+                  alt={displayName}
+                  width={300}
+                  height={300}
+                  loading="lazy"
+                />
+              )}
+              <div class="card-body">
+                <p class="card-name">{displayName}</p>
+                <p class="card-price">{formatPrice(product.price)}</p>
+                <p class={`card-stock${stockClass}`}>{stockText}</p>
+              </div>
+            </a>
+          ))}
         </div>
       )}
 

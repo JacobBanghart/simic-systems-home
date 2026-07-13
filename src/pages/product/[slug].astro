@@ -63,6 +63,18 @@ const BRAND_NAMES: Record<string, string> = {
 };
 
 const outOfStock = product.quantity <= 0;
+const lowStock = !outOfStock && product.quantity <= 3;
+// Precomputed rather than inline in the template below — the astro template
+// parser misreads a `<=` comparison as the leading token of a ternary's
+// false-branch as the start of a tag, throwing a bogus "Fragment shorthand
+// syntax" parse error (astro-eslint-parser 2.1.0). Plain frontmatter script
+// isn't affected, only the JSX-aware scanner is.
+const availabilityClass = outOfStock ? " out-of-stock" : lowStock ? " low-stock" : "";
+const availabilityText = outOfStock
+  ? "Out of stock"
+  : lowStock
+  ? `Only ${product.quantity} left — order soon`
+  : `${product.quantity} available`;
 const categoryLabel = BRAND_NAMES[product.category] ?? product.category;
 const reviews = productReviews[product.slug ?? ""] ?? [];
 const rating = aggregateRating(reviews);
@@ -312,8 +324,8 @@ window.addEventListener('load', function () {
             <span class="category-chip">{categoryLabel}</span>
             <h1>{displayName}</h1>
             <p class="product-price">{formatPrice(product.price)}</p>
-            <p class={`availability${outOfStock ? " out-of-stock" : product.quantity <= 3 ? " low-stock" : ""}`}>
-              {outOfStock ? "Out of stock" : product.quantity <= 3 ? `Only ${product.quantity} left — order soon` : `${product.quantity} available`}
+            <p class={`availability${availabilityClass}`}>
+              {availabilityText}
             </p>
 
             <AddToCartSection client:load product={product} />

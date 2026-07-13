@@ -80,7 +80,7 @@ Configured in `wrangler.json`:
 | `STRIPE_WEBHOOK_SECRET` | Secret | Stripe webhook signature verification |
 | `CONTACT_EMAIL` | SendEmail | Forwards contact form submissions |
 
-Secrets are set via `wrangler secret put` or `.dev.vars` for local development.
+Secrets are set via `wrangler secret put` or `.dev.vars` for local development. Copy `.dev.vars.example` to `.dev.vars` and `.env.example` to `.env` to get started — see those files for what each variable is for.
 
 ## Stripe Catalog Management
 
