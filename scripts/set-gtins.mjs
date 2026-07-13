@@ -7,6 +7,11 @@
  * Usage — apply GTINs from a JSON file:
  *   node scripts/set-gtins.mjs gtins.json
  *
+ * Usage — fail (non-zero exit) if any active product is missing a GTIN.
+ * Intended as a pre-publish/CI guardrail so a newly-added set can't go live
+ * without one:
+ *   node scripts/set-gtins.mjs --check
+ *
  * The JSON file must be an object mapping Stripe product ID to GTIN string:
  *   {
  *     "prod_abc123": "0123456789012",
@@ -41,6 +46,28 @@ async function main() {
   }
 
   products.sort((a, b) => a.name.localeCompare(b.name));
+
+  if (process.argv.includes("--check")) {
+    const missing = products.filter((p) => p.active && !p.metadata.gtin);
+    const activeCount = products.filter((p) => p.active).length;
+
+    if (missing.length > 0) {
+      console.error(
+        `GTIN check failed: ${missing.length} of ${activeCount} active product(s) missing a GTIN:\n`
+      );
+      for (const p of missing) {
+        console.error(`  ${p.id}  ${p.name}`);
+      }
+      console.error(
+        `\nLook up GTINs at https://www.barcodelookup.com or scan the box, then run:\n  node scripts/set-gtins.mjs gtins.json\n`
+      );
+      process.exitCode = 1;
+      return;
+    }
+
+    console.log(`GTIN check passed: all ${activeCount} active product(s) have a GTIN.`);
+    return;
+  }
 
   // No file argument — print current state as a table
   const gtinFile = process.argv[2];

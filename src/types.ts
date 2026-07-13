@@ -7,6 +7,8 @@ export interface ProductData {
   priceId: string;
   quantity: number;
   image: string;
+  /** WebP-optimized rendition of `image` via Cloudflare Images, when available. */
+  imageOptimized?: string;
   sortOrder: number;
   gtin?: string;
   slug?: string;

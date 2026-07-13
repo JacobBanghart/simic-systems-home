@@ -1,8 +1,16 @@
 ---
+export const prerender = false;
+
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE_TITLE } from '../consts';
+
+// Requires prerender = false: a static/prerendered page can't carry a
+// non-200 status. Routes that don't find a resource use Astro.rewrite("/404")
+// (see src/pages/product/[slug].astro) so this status applies to them too,
+// instead of a redirect that would otherwise land on a 200 response.
+Astro.response.status = 404;
 ---
 
 <!doctype html>

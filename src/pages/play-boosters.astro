@@ -6,19 +6,26 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import { SITE_TITLE } from "../consts";
 import { fetchStoreProducts } from "../lib/stripeProducts";
+import { optimizeProductImage } from "../lib/optimizeProductImage";
 import { formatPrice } from "../lib/format";
 import { env } from "cloudflare:workers";
 
 const products = await fetchStoreProducts(env);
 
-const playBoosters = products.filter((p) =>
+const playBoostersRaw = products.filter((p) =>
   p.name.toLowerCase().includes("play booster") ||
   p.name.toLowerCase().includes("jumpstart booster")
+);
+const playBoosters = await Promise.all(
+  playBoostersRaw.map(async (p) => ({
+    ...p,
+    imageOptimized: p.image ? await optimizeProductImage(p.image, 300) : p.image,
+  }))
 );
 
 const pageTitle = `Buy MTG Play Booster Displays | ${SITE_TITLE}`;
 const pageDescription =
-  "Shop factory-sealed Magic: The Gathering Play Booster Displays at Simic Systems. The current standard booster for drafting and opening — guaranteed rare or better per pack. Secure checkout, US shipping via USPS.";
+  "Shop factory-sealed Magic: The Gathering Play Booster Displays at Simic Systems. The current standard booster for drafting and opening, with a guaranteed rare or better per pack. Secure checkout, US shipping via USPS.";
 
 const categorySchema = {
   "@context": "https://schema.org",
@@ -48,7 +55,7 @@ const categorySchema = {
 <html lang="en">
   <head>
     <BaseHead title={pageTitle} description={pageDescription} />
-    <script type="application/ld+json" set:html={JSON.stringify(categorySchema)} />
+    <script type="application/ld+json" nonce={Astro.locals.nonce} set:html={JSON.stringify(categorySchema)} />
   </head>
   <body>
     <Header />
@@ -62,12 +69,11 @@ const categorySchema = {
       <h1>MTG Play Booster Displays</h1>
 
       <p class="category-intro">
-        Play Booster Displays are the current standard sealed product for Magic: The Gathering —
+        Play Booster Displays are the current standard sealed product for Magic: The Gathering,
         replacing Draft and Set Boosters in 2024. Each display contains 36 packs with 14 cards
         each, including at least one rare or mythic rare per pack and a chance at foils, special
         art variants, and The List cards. Play Boosters work for both drafting and collection
-        building. All products are factory-sealed in original manufacturer packaging and ship via
-        USPS Ground Advantage within 1–3 business days.
+        building.
       </p>
 
       {playBoosters.length === 0 ? (
@@ -88,7 +94,7 @@ const categorySchema = {
               <a href={productUrl} class={`product-card${outOfStock ? " out-of-stock" : ""}`}>
                 {product.image && (
                   <img
-                    src={product.image}
+                    src={product.imageOptimized}
                     alt={displayName}
                     width={300}
                     height={300}
@@ -107,6 +113,49 @@ const categorySchema = {
           })}
         </div>
       )}
+
+      <div class="category-guide">
+        <h2>Play Boosters vs. Collector Boosters: which should you buy?</h2>
+        <p>
+          Play Boosters are built for drafting, sealed events, and building a deck out
+          of what you open, at a lower per-pack cost and a lower foil/rare density than the
+          alternative. Collector Boosters drop the "gameplay economy" entirely and load every
+          pack with the best-looking version of every card: guaranteed foils, extended art, and
+          showcase frames. That trade-off, lower cost against lighter treatments, is the whole
+          point of the format.
+        </p>
+        <div class="compare-table-wrap">
+          <table class="compare-table">
+            <thead>
+              <tr><th scope="col"></th><th scope="col">Play Boosters</th><th scope="col">Collector Boosters</th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Best for</th><td>Drafting, sealed play, deck-building</td><td>Collectors, display pieces, gifting</td></tr>
+              <tr><th scope="row">Foils</th><td>At least one per pack</td><td>Guaranteed in every pack, often several</td></tr>
+              <tr><th scope="row">Rares/mythics</th><td>One guaranteed per pack</td><td>Multiple guaranteed per pack</td></tr>
+              <tr><th scope="row">Card treatments</th><td>Standard frame, occasional showcase</td><td>Extended art, borderless, showcase frames</td></tr>
+              <tr><th scope="row">Price per pack</th><td>Lower</td><td>Higher</td></tr>
+              <tr><th scope="row">Good for cracking and playing that night?</th><td>Yes, that's the format's whole design intent</td><td>Built for value and display, not deck-filling commons</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Still not sure which to buy? Reach for Play Boosters if you want a draft night, a
+          Standard deck, or the most cards per dollar. Reach for
+          <a href="/collector-boosters/">Collector Boosters</a> if you want display-quality
+          foils, a specific chase card, or a gift for someone who already has the cards and wants
+          the good-looking version of them.
+        </p>
+        <h2>Factory-sealed and sourced</h2>
+        <p>
+          Every display we sell ships factory-sealed in its original manufacturer packaging and
+          is sourced from authorized Wizards of the Coast distributors. We don't sell
+          repackaged, reconstructed, or previously-opened product. If anything arrives damaged
+          or tampered with in transit, <a href="/contact/">contact us</a> within 7 days with
+          photos and your order number and we'll make it right. Full policy details are on our
+          <a href="/faq/">FAQ page</a>.
+        </p>
+      </div>
 
       <p class="see-all">Looking for premium foils? <a href="/collector-boosters/">Browse Collector Booster Displays →</a></p>
     </main>
@@ -144,6 +193,22 @@ const categorySchema = {
     color: rgb(var(--gray-dark));
     max-width: 760px;
     margin-bottom: 2rem;
+  }
+
+  /* On mobile, an unclamped multi-paragraph intro can push the entire
+     product grid below the fold. Clamp to the first paragraph and let the
+     rest read as supporting detail beneath it. */
+  @media (max-width: 640px) {
+    .category-intro-lead {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 0.75rem;
+    }
+    .category-intro-more {
+      font-size: 0.9rem;
+    }
   }
 
   .product-grid {
@@ -201,6 +266,61 @@ const categorySchema = {
   .empty-state {
     color: rgb(var(--gray));
     margin-bottom: 2rem;
+  }
+
+  .category-guide {
+    max-width: 760px;
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgb(var(--gray-light));
+  }
+  .category-guide h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 1.75rem 0 0.75rem;
+  }
+  .category-guide h2:first-child { margin-top: 0; }
+  .category-guide p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: rgb(var(--gray-dark));
+    margin-bottom: 0.9rem;
+  }
+  .category-guide a { color: var(--accent); }
+
+  .compare-table-wrap {
+    overflow-x: auto;
+    margin-bottom: 1rem;
+    border: 1px solid rgb(var(--gray-light));
+    border-radius: 8px;
+  }
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    min-width: 420px;
+  }
+  .compare-table th,
+  .compare-table td {
+    padding: 0.6rem 0.85rem;
+    text-align: left;
+    border-bottom: 1px solid rgb(var(--gray-light));
+  }
+  .compare-table thead th {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgb(var(--gray));
+    background: var(--bg-secondary);
+  }
+  .compare-table tbody th {
+    font-weight: 600;
+    color: rgb(var(--gray-dark));
+    white-space: nowrap;
+  }
+  .compare-table tr:last-child td,
+  .compare-table tr:last-child th {
+    border-bottom: none;
   }
 
   .see-all {

@@ -1,6 +1,8 @@
 type Runtime = import("@astrojs/cloudflare").Runtime;
 
 declare namespace App {
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  interface Locals extends Runtime {}
+  interface Locals extends Runtime {
+    /** Per-request CSP nonce, set in src/middleware.ts. */
+    nonce: string;
+  }
 }
