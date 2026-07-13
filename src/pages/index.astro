@@ -232,7 +232,11 @@ const organizationSchema = {
                     window.dispatchEvent(new CustomEvent('site-search', { detail: query }));
                     document.getElementById('specimens')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     if (query.trim()) {
-                        window.posthog?.capture('product_searched', { query: query.trim() });
+                        // Result count isn't known here (filtering happens in the
+                        // React product grid) — MainPage listens for this and
+                        // fires the actual product_searched capture once it knows
+                        // how many products matched.
+                        window.dispatchEvent(new CustomEvent('site-search-submit', { detail: query.trim() }));
                     }
                 });
 

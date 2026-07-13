@@ -50,6 +50,27 @@ function StoreContent({ products }: MainPageProps) {
     return () => window.removeEventListener("site-search", handler);
   }, []);
 
+  useEffect(() => {
+    // Computed independently of searchQuery/filteredProducts state (rather
+    // than reacting to their changes) so this fires once per explicit search
+    // submission, not once per keystroke from the live-filter-as-you-type
+    // "site-search" event.
+    const submitHandler = (e: Event) => {
+      const query = ((e as CustomEvent<string>).detail ?? "").trim();
+      if (!query) return;
+      const q = query.toLowerCase();
+      const resultCount = products.filter((product) => {
+        if (category !== "all" && product.category !== category) return false;
+        return (
+          product.name.toLowerCase().includes(q) || product.description.toLowerCase().includes(q)
+        );
+      }).length;
+      window.posthog?.capture("product_searched", { query, result_count: resultCount });
+    };
+    window.addEventListener("site-search-submit", submitHandler);
+    return () => window.removeEventListener("site-search-submit", submitHandler);
+  }, [products, category]);
+
   const clearSearch = () => {
     setSearchQuery("");
     const heroInput = document.getElementById("hero-search-input") as HTMLInputElement | null;

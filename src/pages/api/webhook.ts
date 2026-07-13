@@ -91,9 +91,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
         });
       }
 
+      // client_reference_id carries the browser's PostHog distinct_id, set on
+      // session creation in create-checkout.ts — without it, this event (the
+      // actual sale) gets a distinct_id that never appears anywhere else in
+      // the user's history, so it can't be stitched into the browsing funnel.
+      // Falls back to a session-scoped id for older/manual sessions that
+      // predate this, or when the client didn't send a PostHog id at all.
+      const distinctId = fullSession.client_reference_id || `stripe-session-${session.id}`;
       const posthog = getPostHogServer();
       posthog.capture({
-        distinctId: `stripe-session-${session.id}`,
+        distinctId,
         event: "checkout_completed",
         properties: {
           stripe_session_id: session.id,
@@ -101,6 +108,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           currency: session.currency,
           item_count: lineItems.reduce((sum, item) => sum + (item.quantity || 0), 0),
           source: "webhook",
+          identity_linked: Boolean(fullSession.client_reference_id),
         },
       });
       locals.cfContext.waitUntil(posthog.flush());
