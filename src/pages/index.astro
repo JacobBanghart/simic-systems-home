@@ -228,7 +228,7 @@ const organizationSchema = {
                 });
                 form.addEventListener('submit', function (e) {
                     e.preventDefault();
-                    var query = input.value;
+                    const query = input.value;
                     window.dispatchEvent(new CustomEvent('site-search', { detail: query }));
                     document.getElementById('specimens')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     if (query.trim()) {

@@ -11,11 +11,19 @@ interface ProductCardProps {
 
 function useCutoutImage(src: string) {
   const [resolvedSrc, setResolvedSrc] = useState(src);
+  const [prevSrc, setPrevSrc] = useState(src);
+
+  // Reset synchronously during render when src changes, rather than via an
+  // effect — this is React's documented pattern for "adjusting state when a
+  // prop changes" and avoids an extra committed render each time src changes.
+  if (src !== prevSrc) {
+    setPrevSrc(src);
+    setResolvedSrc(src);
+  }
 
   useEffect(() => {
-    let cancelled = false;
-    setResolvedSrc(src);
     if (!src) return;
+    let cancelled = false;
     removeWhiteBackground(src)
       .then((dataUrl) => {
         if (!cancelled) setResolvedSrc(dataUrl);

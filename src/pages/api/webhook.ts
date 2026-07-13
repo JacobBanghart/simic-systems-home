@@ -70,6 +70,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
 
+    // Stripe delivers webhooks at-least-once and retries on any non-2xx
+    // response or timeout — the same event.id can arrive more than once.
+    // Without this guard, a duplicate delivery double-decrements inventory
+    // and double-counts revenue in PostHog. TTL covers Stripe's retry window
+    // with margin; keyed on event.id (stable across redeliveries of the same
+    // event, unlike session.id which is the underlying resource, not the delivery).
+    const idempotencyKey = `webhook-processed:${event.id}`;
+    const alreadyProcessed = await env.PRODUCT_CACHE.get(idempotencyKey);
+    if (alreadyProcessed) {
+      return new Response(JSON.stringify({ received: true, duplicate: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     try {
       const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
         expand: ["line_items.data.price.product"],
@@ -112,6 +127,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
         },
       });
       locals.cfContext.waitUntil(posthog.flush());
+
+      // Marked only after processing succeeds — if this throws below (or
+      // above), Stripe's retry should actually reprocess, not be swallowed
+      // as a false "duplicate".
+      locals.cfContext.waitUntil(
+        env.PRODUCT_CACHE.put(idempotencyKey, "1", { expirationTtl: 7 * 24 * 60 * 60 })
+      );
 
       console.log(`Sale completed: ${session.id}, amount: ${session.amount_total}`);
     } catch (err) {

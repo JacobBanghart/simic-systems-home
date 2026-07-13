@@ -17,6 +17,7 @@ export function CartButton() {
       if (placeholder) {
         (placeholder as HTMLElement).style.display = "none";
       }
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- portal target is a DOM node, only discoverable post-mount
       setPortalTarget(el);
     }
   }, []);

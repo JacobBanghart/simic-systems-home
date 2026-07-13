@@ -1,7 +1,6 @@
 import {
   Grid,
   Typography,
-  Box,
   Container,
   ThemeProvider,
   Chip,

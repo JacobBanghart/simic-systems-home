@@ -36,7 +36,7 @@ document.documentElement.style.backgroundColor = '#08100e';
 />
 <script nonce={Astro.locals.nonce}>
 (function () {
-	var link = document.getElementById('google-fonts-css');
+	const link = document.getElementById('google-fonts-css');
 	if (!link) return;
 	if (link.sheet) { link.media = 'all'; return; }
 	link.addEventListener('load', function () { link.media = 'all'; }, { once: true });
