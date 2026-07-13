@@ -5,13 +5,15 @@ import BaseHead from "../components/BaseHead.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import { MainPage } from "../components/MainPage";
-import { SITE_TITLE, SITE_DESCRIPTION } from "../consts";
+import { SITE_TITLE, SITE_DESCRIPTION, FOUNDER_PLAYING_SINCE } from "../consts";
 import { fetchStoreProducts } from "../lib/stripeProducts";
+import { optimizeProductImage } from "../lib/optimizeProductImage";
 import type { ProductData } from "../types";
 import { env } from "cloudflare:workers";
 import { storeReviews, aggregateRating } from "../data/reviews";
 
 const homeTitle = `Buy Sealed MTG Booster Boxes & Packs | ${SITE_TITLE}`;
+const yearsPlaying = new Date().getFullYear() - FOUNDER_PLAYING_SINCE;
 
 let products: ProductData[] = [];
 
@@ -21,6 +23,16 @@ try {
   console.error("Failed to fetch products from Stripe:", error);
 }
 
+// A display-only copy: schema below deliberately keeps the original,
+// stable `image` URL (Google prefers a canonical image URL, not a
+// resized/format-shifted one) — only the on-page grid gets the optimized src.
+const displayProducts: ProductData[] = await Promise.all(
+  products.map(async (product) => ({
+    ...product,
+    imageOptimized: product.image ? await optimizeProductImage(product.image, 500) : product.image,
+  }))
+);
+
 const productListSchema = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
@@ -29,27 +41,16 @@ const productListSchema = {
   url: Astro.url.href,
   mainEntity: {
     "@type": "ItemList",
+    numberOfItems: products.length,
+    // Bare URL references only — matching the pattern already used on
+    // collector-boosters.astro/play-boosters.astro. Nesting a full Product
+    // here (as this previously did) is a listing-page schema misuse Google
+    // flags as an invalid itemListElement and can suppress rich results
+    // domain-wide; full Product/Offer markup belongs on the product page.
     itemListElement: products.map((product, index) => ({
       "@type": "ListItem",
       position: index + 1,
       url: new URL(`/product/${product.slug ?? product.id}/`, Astro.site).href,
-      item: {
-        "@type": "Product",
-        name: product.name,
-        description: product.description,
-        image: product.image ? [product.image] : undefined,
-        category: product.category,
-        offers: {
-          "@type": "Offer",
-          priceCurrency: "USD",
-          price: (product.price / 100).toFixed(2),
-          availability:
-            product.quantity > 0
-              ? "https://schema.org/InStock"
-              : "https://schema.org/OutOfStock",
-          url: new URL(`/product/${product.slug ?? product.id}/`, Astro.site).href,
-        },
-      },
     })),
   },
 };
@@ -89,32 +90,12 @@ const organizationSchema = {
   areaServed: "US",
   founder: {
     "@type": "Person",
-    name: "Jacob",
+    name: "Jacob Banghart",
     jobTitle: "Founder",
   },
   ...(rating ? { aggregateRating: rating } : {}),
 };
 
-const localBusinessSchema = {
-  "@context": "https://schema.org",
-  "@type": ["Store", "LocalBusiness"],
-  "@id": "https://simic.systems/#localbusiness",
-  name: "Simic Systems",
-  url: "https://simic.systems/",
-  telephone: "+16055534735",
-  email: "contact@simic.systems",
-  address: {
-    "@type": "PostalAddress",
-    streetAddress: "5115 Lankershim Blvd Apt 210",
-    addressLocality: "North Hollywood",
-    addressRegion: "CA",
-    postalCode: "91601",
-    addressCountry: "US",
-  },
-  areaServed: "US",
-  priceRange: "$$",
-  sameAs: "https://simic.systems/#organization",
-};
 ---
 
 <!doctype html>
@@ -123,19 +104,18 @@ const localBusinessSchema = {
         <BaseHead title={homeTitle} description={SITE_DESCRIPTION} />
         <script
             type="application/ld+json"
+            nonce={Astro.locals.nonce}
             set:html={JSON.stringify(productListSchema)}
         />
         <script
             type="application/ld+json"
+            nonce={Astro.locals.nonce}
             set:html={JSON.stringify(websiteSchema)}
         />
         <script
             type="application/ld+json"
+            nonce={Astro.locals.nonce}
             set:html={JSON.stringify(organizationSchema)}
-        />
-        <script
-            type="application/ld+json"
-            set:html={JSON.stringify(localBusinessSchema)}
         />
     </head>
     <body>
@@ -187,7 +167,7 @@ const localBusinessSchema = {
                 </div>
             </section>
             <div id="specimens">
-                <MainPage client:load products={products} />
+                <MainPage client:load products={displayProducts} />
             </div>
             <section class="trust-section">
                 <div class="reviews-section">
@@ -222,7 +202,7 @@ const localBusinessSchema = {
                         </div>
                     ) : (
                         <p class="reviews-empty">
-                            No reviews yet — be the first.
+                            No reviews yet. Be the first.
                             <a href="https://g.page/r/simic-systems/review" rel="noopener noreferrer" class="reviews-cta">Leave a Google Review</a>
                         </p>
                     )}
@@ -230,14 +210,14 @@ const localBusinessSchema = {
             </section>
             <section class="about-store">
                 <h2 class="about-heading">About the Store</h2>
-                <p>Simic Systems is an online sealed Magic: The Gathering store run by Jacob, a lifelong MTG player based in North Hollywood, CA. Every product in the catalog is factory-sealed in its original manufacturer packaging — booster boxes, collector boxes, play boosters, draft boosters, bundles, and commander decks. <a href="/about/">Learn more about Simic Systems →</a></p>
+                <p>Simic Systems is an online sealed Magic: The Gathering store run by Jacob Banghart, who's been playing and collecting since {FOUNDER_PLAYING_SINCE} ({yearsPlaying} years now) and is based in North Hollywood, CA. Every product in the catalog is factory-sealed in its original manufacturer packaging: booster boxes, collector boxes, play boosters, draft boosters, bundles, and commander decks. <a href="/about/">Learn more about Simic Systems →</a></p>
                 <p>Browse by product type: <a href="/collector-boosters/">Collector Booster Displays</a> for premium foils and special treatments, or <a href="/play-boosters/">Play Booster Displays</a> for drafting and set opening.</p>
                 <p>Checkout is powered by Stripe with support for Visa, Mastercard, Amex, Apple Pay, and Google Pay. All orders ship within the United States via USPS Ground Advantage. Orders over $250 require a signature upon delivery. Most orders are packed and shipped within 1–3 business days.</p>
                 <p>Have a question before buying? See the <a href="/faq/">FAQ</a> for answers on payments, shipping timelines, returns, and product authenticity, or <a href="/contact/">contact us</a> directly.</p>
             </section>
         </main>
         <Footer />
-        <script is:inline>
+        <script is:inline nonce={Astro.locals.nonce}>
         (function () {
             const form = document.getElementById('hero-search-form');
             const input = document.getElementById('hero-search-input');

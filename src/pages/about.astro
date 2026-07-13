@@ -2,14 +2,16 @@
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import { SITE_TITLE } from '../consts';
+import { SITE_TITLE, FOUNDER_PLAYING_SINCE } from '../consts';
+
+const yearsPlaying = new Date().getFullYear() - FOUNDER_PLAYING_SINCE;
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
 		<BaseHead title="About Simic Systems | Online MTG Sealed Products Store" description="Simic Systems is run by a lifelong Magic: The Gathering player and collector in North Hollywood, CA. Factory-sealed MTG products shipped across the US via USPS Ground Advantage." />
-		<script type="application/ld+json" set:html={JSON.stringify({
+		<script type="application/ld+json" nonce={Astro.locals.nonce} set:html={JSON.stringify({
 			"@context": "https://schema.org",
 			"@type": "Organization",
 			"@id": "https://simic.systems/#organization",
@@ -34,29 +36,9 @@ import { SITE_TITLE } from '../consts';
 			"areaServed": "US",
 			"founder": {
 				"@type": "Person",
-				"name": "Jacob",
+				"name": "Jacob Banghart",
 				"jobTitle": "Founder"
 			}
-		})}></script>
-		<script type="application/ld+json" set:html={JSON.stringify({
-			"@context": "https://schema.org",
-			"@type": ["Store", "LocalBusiness"],
-			"@id": "https://simic.systems/#localbusiness",
-			"name": "Simic Systems",
-			"url": "https://simic.systems/",
-			"telephone": "+16055534735",
-			"email": "contact@simic.systems",
-			"address": {
-				"@type": "PostalAddress",
-				"streetAddress": "5115 Lankershim Blvd Apt 210",
-				"addressLocality": "North Hollywood",
-				"addressRegion": "CA",
-				"postalCode": "91601",
-				"addressCountry": "US"
-			},
-			"areaServed": "US",
-			"priceRange": "$$",
-			"sameAs": "https://simic.systems/#organization"
 		})}></script>
 	</head>
 	<body>
@@ -66,11 +48,11 @@ import { SITE_TITLE } from '../consts';
 				<h1>About Simic Systems</h1>
 
 				<p>
-					Simic Systems is an online store built by Jacob, a lifelong Magic: The Gathering player and collector based in North Hollywood, California. What started as a deep love for the game turned into a mission: make it easier to buy sealed MTG product from someone who actually knows what they're selling.
+					Simic Systems is an online store built by Jacob Banghart, who's been playing and collecting Magic: The Gathering since {FOUNDER_PLAYING_SINCE} (that's {yearsPlaying} years now) and is based in North Hollywood, California. What started as a deep love for the game turned into a mission: make it easier to buy sealed MTG product from someone who actually knows what they're selling.
 				</p>
 
 				<p>
-					The trading card market can be a rough place to navigate. Inflated prices, mystery condition items, sellers who've never shuffled a deck — it gets old fast. Simic Systems exists to be the opposite of that: straightforward pricing, factory-sealed product only, and a seller who cares about the game as much as you do.
+					The trading card market can be rough to navigate: inflated prices, mystery condition items, sellers who've never shuffled a deck. Simic Systems runs on straightforward pricing, factory-sealed product only, and a seller who cares about the game as much as you do.
 				</p>
 
 				<h2>What We Carry</h2>
@@ -78,21 +60,21 @@ import { SITE_TITLE } from '../consts';
 					We stock factory-sealed Magic: The Gathering products with a focus on current and recent sets. Everything in the catalog is sealed in its original packaging, exactly as it left the manufacturer.
 				</p>
 				<ul>
-					<li><strong>Play Booster Displays</strong> — the current standard booster format for drafting and opening</li>
-					<li><strong>Collector Booster Displays</strong> — premium boxes loaded with foils, extended arts, and special treatments</li>
-					<li><strong>Bundles</strong> — the ideal entry point for a new set, with boosters, land cards, and accessories</li>
-					<li><strong>Commander Decks</strong> — ready-to-play 100-card preconstructed decks</li>
+					<li><strong>Play Booster Displays:</strong> the current standard booster format for drafting and opening</li>
+					<li><strong>Collector Booster Displays:</strong> premium boxes loaded with foils, extended arts, and special treatments</li>
+					<li><strong>Bundles:</strong> the ideal entry point for a new set, with boosters, land cards, and accessories</li>
+					<li><strong>Commander Decks:</strong> ready-to-play 100-card preconstructed decks</li>
 				</ul>
 				<p>
-					The catalog is intentionally focused. We carry what we know, and we keep quantities accurate in real time — no phantom stock, no orders that ship weeks late because something was already gone.
+					The catalog is intentionally focused. We carry what we know, and we keep quantities accurate in real time, so there's no phantom stock and no orders that ship weeks late because something was already gone.
 				</p>
 
 				<h2>Shipping & Orders</h2>
 				<p>
-					All orders ship within the United States via <strong>USPS Ground Advantage</strong>. Orders are typically packed and handed off within 1–3 business days. You'll get a tracking number the moment your order ships. Orders over $250 require a signature on delivery — sealed MTG product is valuable, and we want to make sure it reaches you safely.
+					All orders ship within the United States via <strong>USPS Ground Advantage</strong>. Orders are typically packed and handed off within 1–3 business days. You'll get a tracking number the moment your order ships. Orders over $250 require a signature on delivery, since sealed MTG product is valuable and we want it to reach you safely.
 				</p>
 				<p>
-					We don't accept returns on sealed product — once a box is in someone else's hands, its seal integrity can't be guaranteed. If something arrives damaged or we made a mistake on the order, reach out within 7 days and we'll make it right.
+					We don't accept returns on sealed product. Once a box is in someone else's hands, its seal integrity can't be guaranteed. If something arrives damaged or we made a mistake on the order, reach out within 7 days and we'll make it right.
 				</p>
 
 				<h2>Get in Touch</h2>

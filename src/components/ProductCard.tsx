@@ -35,7 +35,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const outOfStock = product.quantity <= 0;
   const lowStock = !outOfStock && product.quantity <= 3;
   const productUrl = `/product/${product.slug ?? product.id}/`;
-  const imageSrc = useCutoutImage(product.image);
+  const imageSrc = useCutoutImage(product.imageOptimized ?? product.image);
 
   return (
     <Grid size={{ xs: 6, sm: 6, md: 4, lg: 3 }}>
@@ -73,6 +73,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             loading="lazy"
             width={400}
             height={400}
+            crossOrigin="anonymous"
             sx={{
               width: "100%",
               height: "100%",

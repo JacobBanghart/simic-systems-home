@@ -7,6 +7,7 @@ import Footer from "../../components/Footer.astro";
 import { AddToCartSection } from "../../components/AddToCartSection";
 import { SITE_TITLE } from "../../consts";
 import { fetchStoreProducts } from "../../lib/stripeProducts";
+import { optimizeProductImage } from "../../lib/optimizeProductImage";
 import { formatPrice } from "../../lib/format";
 import { env } from "cloudflare:workers";
 import { productReviews, aggregateRating } from "../../data/reviews";
@@ -21,13 +22,15 @@ if (slug && slug.startsWith("prod_")) {
   if (product?.slug) {
     return Astro.redirect(`/product/${product.slug}/`, 301);
   }
-  return Astro.redirect("/404/");
+  // Rewrite (not redirect) so unknown product URLs return a real 404 status
+  // instead of a 302 to a page that responds 200 — see src/pages/404.astro.
+  return Astro.rewrite("/404");
 }
 
 const product = products.find((p) => p.slug === slug);
 
 if (!product) {
-  return Astro.redirect("/404/");
+  return Astro.rewrite("/404");
 }
 
 // Extract set name as the portion before the first " - " (e.g. "Tarkir: Dragonstorm")
@@ -45,6 +48,15 @@ const sameCategory = products.filter(
   (p) => p.slug !== slug && p.quantity > 0 && p.category === product.category && getSetName(p.name) !== productSetName
 );
 const relatedProducts = [...sameSet, ...sameCategory].slice(0, 3);
+
+// Display-only optimized renditions — schema below keeps product.image /
+// rel.image (the original, stable URL) unchanged for structured data.
+const productImageOptimized = product.image
+  ? await optimizeProductImage(product.image, 700)
+  : product.image;
+const relatedImagesOptimized = await Promise.all(
+  relatedProducts.map((rel) => (rel.image ? optimizeProductImage(rel.image, 250) : rel.image))
+);
 
 const BRAND_NAMES: Record<string, string> = {
   magic: "Magic: The Gathering",
@@ -164,8 +176,8 @@ const breadcrumbSchema = {
 <html lang="en">
   <head>
     <BaseHead title={pageTitle} description={pageDescription} image={product.image} ogType="product" robots={product.noindex ? "noindex, nofollow" : undefined} />
-    <script type="application/ld+json" set:html={JSON.stringify(productSchema)} />
-    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+    <script type="application/ld+json" nonce={Astro.locals.nonce} set:html={JSON.stringify(productSchema)} />
+    <script type="application/ld+json" nonce={Astro.locals.nonce} set:html={JSON.stringify(breadcrumbSchema)} />
   </head>
   <body>
     <Header showCart />
@@ -184,12 +196,13 @@ const breadcrumbSchema = {
           <div class="product-image-col">
             {product.image && (
               <img
-                src={product.image}
+                src={productImageOptimized}
                 alt={displayName}
                 width={500}
                 height={500}
                 loading="eager"
                 fetchpriority="high"
+                crossorigin="anonymous"
                 data-cutout
               />
             )}
@@ -256,7 +269,7 @@ const breadcrumbSchema = {
           <section class="related-products">
             <h2 class="related-heading">You might also like</h2>
             <div class="related-grid">
-              {relatedProducts.map((rel) => {
+              {relatedProducts.map((rel, relIndex) => {
                 const relM = rel.name.match(/ \([A-Z0-9]{2,5}\)\s*$/u);
                 const relDisplayName = relM
                   ? (() => { const base = rel.name.slice(0, relM.index); const sep = base.lastIndexOf(' - '); return sep >= 0 ? base.slice(0, sep).trim() : rel.name.trim(); })()
@@ -264,7 +277,7 @@ const breadcrumbSchema = {
                 return (
                   <a href={`/product/${rel.slug ?? rel.id}/`} class="related-card">
                     {rel.image && (
-                      <img src={rel.image} alt={relDisplayName} width={180} height={180} loading="lazy" data-cutout />
+                      <img src={relatedImagesOptimized[relIndex]} alt={relDisplayName} width={180} height={180} loading="lazy" crossorigin="anonymous" data-cutout />
                     )}
                     <p class="related-name">{relDisplayName}</p>
                     <p class="related-price">{formatPrice(rel.price)}</p>
@@ -297,7 +310,7 @@ const breadcrumbSchema = {
   });
 </script>
 
-<script is:inline define:vars={{ productSlug: product.slug, productName: product.name, productPrice: product.price, productCategory: product.category, productOutOfStock: outOfStock }}>
+<script is:inline nonce={Astro.locals.nonce} define:vars={{ productSlug: product.slug, productName: product.name, productPrice: product.price, productCategory: product.category, productOutOfStock: outOfStock }}>
   window.addEventListener('load', function () {
     try {
       window.posthog?.capture('product_viewed', {

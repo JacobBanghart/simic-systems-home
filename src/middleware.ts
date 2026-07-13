@@ -1,22 +1,31 @@
 import { defineMiddleware } from "astro:middleware";
 
-const SECURITY_HEADERS: Record<string, string> = {
-  "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "DENY",
-  "Referrer-Policy": "strict-origin-when-cross-origin",
-  "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-  "Content-Security-Policy":
-    "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' https://analytics.ahrefs.com https://*.i.posthog.com https://*.cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com; " +
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-    "font-src 'self' data: https://fonts.gstatic.com; " +
-    "img-src 'self' https://files.stripe.com data: blob: https://*.google-analytics.com; " +
-    "connect-src 'self' https://analytics.ahrefs.com https://api.stripe.com https://*.i.posthog.com https://*.cloudflareinsights.com https://*.google-analytics.com https://www.googletagmanager.com; " +
-    "frame-src https://js.stripe.com https://hooks.stripe.com; " +
-    "object-src 'none'; " +
-    "base-uri 'self'",
-};
+function buildSecurityHeaders(nonce: string): Record<string, string> {
+  return {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Content-Security-Policy":
+      "default-src 'self'; " +
+      // 'self' still covers Astro's own bundled/hydration scripts (served
+      // same-origin from /_astro/*.js — no nonce needed, and no way to
+      // attach one to Astro-generated tags). The nonce covers the small,
+      // fixed set of hand-authored inline <script> blocks (see Astro.locals.nonce
+      // usage). The explicit hosts cover third-party scripts, including
+      // PostHog's array.js, which it inserts dynamically but always from
+      // this same pre-listed host.
+      `script-src 'self' 'nonce-${nonce}' https://analytics.ahrefs.com https://*.i.posthog.com https://*.cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com; ` +
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+      "font-src 'self' data: https://fonts.gstatic.com; " +
+      "img-src 'self' https://files.stripe.com data: blob: https://*.google-analytics.com; " +
+      "connect-src 'self' https://analytics.ahrefs.com https://api.stripe.com https://*.i.posthog.com https://*.cloudflareinsights.com https://*.google-analytics.com https://www.googletagmanager.com; " +
+      "frame-src https://js.stripe.com https://hooks.stripe.com; " +
+      "object-src 'none'; " +
+      "base-uri 'self'",
+  };
+}
 
 const CACHEABLE_PATHS = new Set([
   "/about/",
@@ -28,9 +37,12 @@ const CACHEABLE_PATHS = new Set([
 ]);
 
 export const onRequest = defineMiddleware(async (context, next) => {
+  const nonce = crypto.randomUUID();
+  context.locals.nonce = nonce;
+
   const response = await next();
 
-  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+  for (const [key, value] of Object.entries(buildSecurityHeaders(nonce))) {
     response.headers.set(key, value);
   }
 

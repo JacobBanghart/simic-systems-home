@@ -3,3 +3,6 @@
 
 export const SITE_TITLE = "Simic Systems";
 export const SITE_DESCRIPTION = "Buy factory sealed MTG booster boxes, collector boxes, play boosters, draft boosters, bundles, and commander decks online with secure checkout and US shipping.";
+
+// Year founder Jacob Banghart started playing/collecting Magic: The Gathering.
+export const FOUNDER_PLAYING_SINCE = 2014;

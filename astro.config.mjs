@@ -10,6 +10,11 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   site: "https://simic.systems",
   trailingSlash: "always",
+  image: {
+    // Lets astro:assets (getImage/<Image>) optimize product photos that live
+    // on Stripe's file CDN instead of shipping the raw, full-resolution JPEG.
+    remotePatterns: [{ protocol: "https", hostname: "files.stripe.com" }],
+  },
   integrations: [
     sitemap({
       filter: (page) => !page.includes("/checkout/") && !page.includes("/api/"),

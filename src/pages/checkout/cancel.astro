@@ -17,7 +17,7 @@ import { SITE_TITLE } from "../../consts";
                 Back to Store
             </a>
         </main>
-    <script is:inline>
+    <script is:inline nonce={Astro.locals.nonce}>
       window.posthog?.capture('checkout_cancelled');
     </script>
     </body>

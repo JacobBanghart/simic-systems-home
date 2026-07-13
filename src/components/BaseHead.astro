@@ -19,7 +19,7 @@ const ogImageURL = new URL(image, Astro.site);
 ---
 
 <!-- Set background inline, synchronously before any stylesheet loads, to prevent a white flash. -->
-<script is:inline>
+<script is:inline nonce={Astro.locals.nonce}>
 document.documentElement.style.backgroundColor = '#08100e';
 </script>
 

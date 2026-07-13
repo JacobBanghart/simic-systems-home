@@ -34,7 +34,7 @@ const { showCart = false } = Astro.props;
 	</nav>
 </header>
 
-<script is:inline>
+<script is:inline nonce={Astro.locals.nonce}>
 (function() {
 	const menuBtn = document.getElementById('menu-toggle');
 	const nav = document.querySelector('header nav');
