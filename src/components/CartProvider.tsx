@@ -82,11 +82,43 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const removeFromCart = (productId: string) => {
+    const existing = cartItems.find((item) => item.productId === productId);
     setCartItems((prev) => removeItem(prev, productId));
+    if (!existing) return;
+    if (existing.quantity <= 1) {
+      getPostHog()?.capture("cart_item_removed", {
+        product_slug: productId,
+        product_name: existing.name,
+        quantity_removed: existing.quantity,
+      });
+    } else {
+      getPostHog()?.capture("cart_item_quantity_changed", {
+        product_slug: productId,
+        product_name: existing.name,
+        previous_quantity: existing.quantity,
+        new_quantity: existing.quantity - 1,
+      });
+    }
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
+    const existing = cartItems.find((item) => item.productId === productId);
     setCartItems((prev) => setItemQuantity(prev, productId, quantity));
+    if (!existing || existing.quantity === quantity) return;
+    if (quantity <= 0) {
+      getPostHog()?.capture("cart_item_removed", {
+        product_slug: productId,
+        product_name: existing.name,
+        quantity_removed: existing.quantity,
+      });
+    } else {
+      getPostHog()?.capture("cart_item_quantity_changed", {
+        product_slug: productId,
+        product_name: existing.name,
+        previous_quantity: existing.quantity,
+        new_quantity: quantity,
+      });
+    }
   };
 
   const clearCart = () => setCartItems([]);

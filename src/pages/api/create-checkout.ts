@@ -81,6 +81,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         return {
           priceId: price.id,
           quantity: item.quantity,
+          unitAmountCents: price.unit_amount ?? 0,
         };
       })
     );
@@ -92,6 +93,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const shippingOptions = shippingRates.data.map((shippingRate) => ({
       shipping_rate: shippingRate.id,
     }));
+
+    // Passed through to Stripe as client_reference_id so the webhook can
+    // recover it later — the webhook has no access to request headers, and
+    // without this, checkout_completed (the actual sale) gets stitched to a
+    // distinct_id that never appears anywhere else in the user's PostHog
+    // history, breaking funnel attribution for every completed purchase.
+    const posthogDistinctId = request.headers.get("X-PostHog-Distinct-Id") || undefined;
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -108,11 +116,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
         allowed_countries: ["US"],
       },
       ...(shippingOptions.length > 0 ? { shipping_options: shippingOptions } : {}),
+      ...(posthogDistinctId ? { client_reference_id: posthogDistinctId } : {}),
     });
 
     const sessionId = request.headers.get("X-PostHog-Session-Id") || undefined;
-    const distinctId =
-      request.headers.get("X-PostHog-Distinct-Id") || `anonymous-checkout-${session.id}`;
+    const distinctId = posthogDistinctId || `anonymous-checkout-${session.id}`;
+    const cartValueCents = checkoutItems.reduce(
+      (sum, item) => sum + item.unitAmountCents * item.quantity,
+      0
+    );
     const posthog = getPostHogServer();
     posthog.capture({
       distinctId,
@@ -121,6 +133,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         $session_id: sessionId,
         stripe_session_id: session.id,
         item_count: checkoutItems.reduce((sum, item) => sum + item.quantity, 0),
+        cart_value_cents: cartValueCents,
         source: "api",
       },
     });

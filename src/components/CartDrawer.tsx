@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Drawer,
   Box,
@@ -24,6 +24,16 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const { cartItems, removeFromCart, updateQuantity, clearCart, cartTotal } = useCart();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    getPostHog()?.capture("cart_viewed", {
+      item_count: cartItems.reduce((sum, item) => sum + item.quantity, 0),
+      cart_total_cents: cartTotal,
+    });
+    // Fire once per drawer-open transition, not on every cart mutation while open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handleCheckout = async () => {
     setCheckoutLoading(true);
@@ -55,11 +65,19 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
       const data: { url?: string; error?: string } = await res.json();
       if (!res.ok) {
         setError(data.error || "Checkout failed");
+        getPostHog()?.capture("checkout_error", {
+          reason: data.error || "unknown",
+          source: "api_response",
+        });
         return;
       }
       window.location.href = data.url!;
     } catch (err) {
       setError("Failed to connect to checkout service");
+      getPostHog()?.capture("checkout_error", {
+        reason: err instanceof Error ? err.message : "network_error",
+        source: "exception",
+      });
       getPostHog()?.captureException(err);
     } finally {
       setCheckoutLoading(false);
