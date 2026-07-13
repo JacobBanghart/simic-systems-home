@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import { useState, useEffect } from "react";
 import { themeOptions } from "./theme";
-import { Clear } from "@mui/icons-material";
+import Clear from "@mui/icons-material/Clear";
 import type { ProductData } from "../types";
 import { ProductCard } from "./ProductCard";
 import { CartProvider, useCart } from "./CartProvider";

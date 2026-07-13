@@ -7,6 +7,7 @@ import Footer from "../components/Footer.astro";
 import { SITE_TITLE } from "../consts";
 import { fetchStoreProducts } from "../lib/stripeProducts";
 import { formatPrice } from "../lib/format";
+import { extractSetName } from "../lib/productDisplay";
 import { env } from "cloudflare:workers";
 import type { ProductData } from "../types";
 
@@ -36,13 +37,7 @@ const collectorBoosterCards = collectorBoosters.map((product) => {
   const outOfStock = product.quantity <= 0;
   const lowStock = !outOfStock && product.quantity <= 3;
   const productUrl = `/product/${product.slug ?? product.id}/`;
-  const rawName = (() => {
-    const m = product.name.match(/ \([A-Z0-9]{2,5}\)\s*$/u);
-    return m ? product.name.slice(0, m.index).trim() : product.name.trim();
-  })();
-  const firstDash = rawName.indexOf(" - ");
-  const setName = firstDash >= 0 ? rawName.slice(0, firstDash).trim() : rawName;
-  const displayName = setName + " Collector Boosters";
+  const displayName = extractSetName(product.name) + " Collector Boosters";
   const stockText = outOfStock
     ? "Out of stock"
     : lowStock

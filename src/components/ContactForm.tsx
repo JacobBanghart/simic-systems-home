@@ -60,7 +60,9 @@ function ContactFormContent() {
       onSubmit={handleSubmit}
       sx={{ display: "flex", flexDirection: "column", gap: 2 }}
     >
-      {/* Honeypot - hidden from users */}
+      {/* Honeypot - hidden from users. tabIndex/-9999px keep it out of Tab
+          order, but screen readers navigating by virtual cursor (not Tab)
+          can still land on it without aria-hidden. */}
       <input
         type="text"
         name="_honey"
@@ -68,6 +70,7 @@ function ContactFormContent() {
         onChange={(e) => setHoney(e.target.value)}
         style={{ position: "absolute", left: "-9999px", opacity: 0 }}
         tabIndex={-1}
+        aria-hidden="true"
         autoComplete="off"
       />
 

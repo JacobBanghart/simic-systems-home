@@ -9,6 +9,7 @@ import { SITE_TITLE } from "../../consts";
 import { fetchStoreProducts } from "../../lib/stripeProducts";
 import { optimizeProductImage } from "../../lib/optimizeProductImage";
 import { formatPrice } from "../../lib/format";
+import { extractProductDisplayName } from "../../lib/productDisplay";
 import { env } from "cloudflare:workers";
 import { productReviews, aggregateRating } from "../../data/reviews";
 
@@ -130,15 +131,7 @@ const productSpecs = isCollectorBooster
     }
   : null;
 
-// Strip trailing Stripe set name suffix e.g. " - Tarkir: Dragonstorm (TDM)"
-// Uses lastIndexOf to handle hyphens within set names (e.g. "Spider-Man").
-const displayName = (() => {
-  const m = product.name.match(/ \([A-Z0-9]{2,5}\)\s*$/u);
-  if (!m) return product.name.trim();
-  const base = product.name.slice(0, m.index);
-  const sep = base.lastIndexOf(' - ');
-  return sep >= 0 ? base.slice(0, sep).trim() : product.name.trim();
-})();
+const displayName = extractProductDisplayName(product.name);
 
 const titleName = displayName.replace(/ Booster Display$/, " Boosters").replace(/ - /, " ");
 const pageTitle = `Buy ${titleName} – ${SITE_TITLE}`;
@@ -395,10 +388,7 @@ window.addEventListener('load', function () {
             <h2 class="related-heading">You might also like</h2>
             <div class="related-grid">
               {relatedProducts.map((rel, relIndex) => {
-                const relM = rel.name.match(/ \([A-Z0-9]{2,5}\)\s*$/u);
-                const relDisplayName = relM
-                  ? (() => { const base = rel.name.slice(0, relM.index); const sep = base.lastIndexOf(' - '); return sep >= 0 ? base.slice(0, sep).trim() : rel.name.trim(); })()
-                  : rel.name.trim();
+                const relDisplayName = extractProductDisplayName(rel.name);
                 return (
                   <a href={`/product/${rel.slug ?? rel.id}/`} class="related-card">
                     {rel.image && (
