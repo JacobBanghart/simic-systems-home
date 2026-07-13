@@ -27,13 +27,15 @@ function buildSecurityHeaders(nonce: string): Record<string, string> {
   };
 }
 
+// Only pages with no per-request nonce'd <script> belong here — caching a
+// response that has a nonce baked into it means every visitor within the
+// cache window shares one nonce, which defeats the point of a nonce and
+// was very likely the mechanism behind a bug where /about/, /faq/,
+// /shipping/, and /contact/ (all of which do use a nonce for JSON-LD
+// scripts) got stuck serving an empty cached response for hours.
 const CACHEABLE_PATHS = new Set([
-  "/about/",
-  "/faq/",
   "/privacy/",
   "/terms/",
-  "/shipping/",
-  "/contact/",
 ]);
 
 export const onRequest = defineMiddleware(async (context, next) => {

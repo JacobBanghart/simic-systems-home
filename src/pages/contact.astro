@@ -1,4 +1,6 @@
 ---
+export const prerender = false;
+
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
@@ -27,14 +29,6 @@ import { SITE_TITLE } from '../consts';
 				},
 				"email": "contact@simic.systems",
 				"telephone": "+16055534735",
-				"address": {
-					"@type": "PostalAddress",
-					"streetAddress": "5115 Lankershim Blvd Apt 210",
-					"addressLocality": "North Hollywood",
-					"addressRegion": "CA",
-					"postalCode": "91601",
-					"addressCountry": "US"
-				},
 				"contactPoint": {
 					"@type": "ContactPoint",
 					"email": "contact@simic.systems",

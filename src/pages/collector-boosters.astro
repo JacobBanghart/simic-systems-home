@@ -6,20 +6,25 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import { SITE_TITLE } from "../consts";
 import { fetchStoreProducts } from "../lib/stripeProducts";
-import { optimizeProductImage } from "../lib/optimizeProductImage";
 import { formatPrice } from "../lib/format";
 import { env } from "cloudflare:workers";
+import type { ProductData } from "../types";
 
-const products = await fetchStoreProducts(env);
+let products: ProductData[] = [];
+try {
+  products = await fetchStoreProducts(env);
+} catch (error) {
+  console.error("Failed to fetch products from Stripe:", error);
+}
 
-const collectorBoostersRaw = products.filter((p) =>
+// Grid thumbnails use the raw Stripe image directly rather than running every
+// product through optimizeProductImage() in parallel — fanning that out
+// across a whole category (5+ products at once) was tripping a Cloudflare
+// resource limit that took the entire page down with an uncaught 500,
+// since a hard isolate-level failure isn't something a per-image try/catch
+// inside optimizeProductImage() can always catch.
+const collectorBoosters = products.filter((p) =>
   p.name.toLowerCase().includes("collector booster")
-);
-const collectorBoosters = await Promise.all(
-  collectorBoostersRaw.map(async (p) => ({
-    ...p,
-    imageOptimized: p.image ? await optimizeProductImage(p.image, 300) : p.image,
-  }))
 );
 
 const pageTitle = `Buy MTG Collector Booster Displays | ${SITE_TITLE}`;
@@ -93,7 +98,7 @@ const categorySchema = {
               <a href={productUrl} class={`product-card${outOfStock ? " out-of-stock" : ""}`}>
                 {product.image && (
                   <img
-                    src={product.imageOptimized}
+                    src={product.image}
                     alt={displayName}
                     width={300}
                     height={300}

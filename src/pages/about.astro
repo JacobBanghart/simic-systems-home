@@ -1,4 +1,6 @@
 ---
+export const prerender = false;
+
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
@@ -24,14 +26,6 @@ const yearsPlaying = new Date().getFullYear() - FOUNDER_PLAYING_SINCE;
 			},
 			"email": "contact@simic.systems",
 			"telephone": "+16055534735",
-			"address": {
-				"@type": "PostalAddress",
-				"streetAddress": "5115 Lankershim Blvd Apt 210",
-				"addressLocality": "North Hollywood",
-				"addressRegion": "CA",
-				"postalCode": "91601",
-				"addressCountry": "US"
-			},
 			"description": "Online retailer specializing in factory-sealed Magic: The Gathering products including booster boxes and collector sets. Ships across the US.",
 			"areaServed": "US",
 			"founder": {
