@@ -91,6 +91,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
+  // Responses served from Cloudflare's edge cache (e.g. anything with the
+  // long-lived, immutable Cache-Control the image endpoint sets) come back
+  // with a frozen Headers object — calling .set() on it throws "Can't
+  // modify immutable headers" and 500s the request. Rebuilding the Response
+  // from itself always yields a fresh, mutable Headers object regardless of
+  // where the original came from.
+  response = new Response(response.body, response);
+
   for (const [key, value] of Object.entries(buildSecurityHeaders(nonce))) {
     response.headers.set(key, value);
   }
