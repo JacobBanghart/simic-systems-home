@@ -27,16 +27,14 @@ export default defineConfig({
     }),
   ],
   adapter: cloudflare({
-    // Default is 'cloudflare-binding', which routes every optimized image
-    // through the Cloudflare Images binding — but wrangler.json doesn't
-    // declare an `images` binding (that's a separate paid Cloudflare
-    // product that isn't provisioned on this account), so that binding is
-    // undefined at runtime and every transform request 500s. 'passthrough'
-    // proxies the original remote image with long-lived Cache-Control
-    // headers instead: no resize/format conversion, but it actually works,
-    // and it's what makes Cloudflare's edge cache the image at all. It also
-    // means local `astro dev` no longer needs a remote Cloudflare session.
-    imageService: "passthrough",
+    // Default ('cloudflare-binding') routes every optimized image through
+    // the Cloudflare Images binding, which the adapter auto-injects into
+    // the generated wrangler.json at build time — no manual binding config
+    // needed here. Requires the Cloudflare Images product to be enabled on
+    // the account before deploying (dashboard → Images); until then,
+    // production image transforms will 500. Local `astro dev` doesn't need
+    // that: the Cloudflare Vite plugin simulates the IMAGES binding via
+    // Miniflare, so transforms work locally regardless of account state.
   }),
   vite: {
     resolve: {

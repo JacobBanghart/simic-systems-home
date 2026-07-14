@@ -1,11 +1,10 @@
 import { getImage } from "astro:assets";
 
 /**
- * Routes a remote product image through Astro's image endpoint so it gets
- * served with long-lived Cache-Control headers instead of Stripe's own
- * (astro.config.mjs runs the 'passthrough' image service, which proxies the
- * original file rather than resizing/re-encoding — no Cloudflare Images
- * binding is provisioned on this account, so no actual transform happens).
+ * Routes a remote product image through Astro's image endpoint, which
+ * resizes/re-encodes it via the Cloudflare Images binding (astro.config.mjs)
+ * and serves it with long-lived Cache-Control headers instead of Stripe's
+ * original, full-resolution file.
  * Remote images require dimensions up front to avoid CLS — `inferSize: true`
  * has Astro probe the image's real dimensions server-side (a small ranged
  * fetch reading just the file header, not the whole image) rather than us
