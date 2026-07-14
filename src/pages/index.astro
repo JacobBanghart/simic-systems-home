@@ -168,7 +168,15 @@ const organizationSchema = {
                 </div>
             </section>
             <div id="specimens">
-                <MainPage client:load products={displayProducts} />
+                {/* client:idle (not client:visible): the hero search box above
+                    this section dispatches "site-search"/"site-search-submit"
+                    on window as soon as the user types, and MainPage's
+                    listeners only exist post-hydration with no event buffer —
+                    visibility-gated hydration would silently drop searches
+                    typed before this section scrolls into view. idle still
+                    keeps the ~450KB bundle off the critical initial-paint
+                    path, just without that scroll dependency. */}
+                <MainPage client:idle products={displayProducts} />
             </div>
             <section class="trust-section">
                 <div class="reviews-section">

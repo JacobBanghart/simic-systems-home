@@ -1,5 +1,5 @@
 import { Typography, Button, Box, Grid } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ProductData } from "../types";
 import { formatPrice } from "../lib/format";
 import { removeWhiteBackground } from "../lib/removeWhiteBackground";
@@ -12,6 +12,8 @@ interface ProductCardProps {
 function useCutoutImage(src: string) {
   const [resolvedSrc, setResolvedSrc] = useState(src);
   const [prevSrc, setPrevSrc] = useState(src);
+  const [visible, setVisible] = useState(false);
+  const imgRef = useRef<HTMLImageElement | null>(null);
 
   // Reset synchronously during render when src changes, rather than via an
   // effect — this is React's documented pattern for "adjusting state when a
@@ -21,8 +23,33 @@ function useCutoutImage(src: string) {
     setResolvedSrc(src);
   }
 
+  // Every card used to kick off its worker-based cutout fetch on mount,
+  // regardless of whether it was ever scrolled into view — on a full grid
+  // that's dozens of parallel image fetches competing with the actual LCP
+  // image for bandwidth. Gate it behind the same near-viewport signal the
+  // native loading="lazy" on the <img> already uses, so off-screen cards
+  // don't process until they're about to be seen.
   useEffect(() => {
-    if (!src) return;
+    const el = imgRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setVisible(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!src || !visible) return;
     let cancelled = false;
     removeWhiteBackground(src)
       .then((dataUrl) => {
@@ -34,16 +61,16 @@ function useCutoutImage(src: string) {
     return () => {
       cancelled = true;
     };
-  }, [src]);
+  }, [src, visible]);
 
-  return resolvedSrc;
+  return { resolvedSrc, imgRef };
 }
 
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const outOfStock = product.quantity <= 0;
   const lowStock = !outOfStock && product.quantity <= 3;
   const productUrl = `/product/${product.slug ?? product.id}/`;
-  const imageSrc = useCutoutImage(product.imageOptimized ?? product.image);
+  const { resolvedSrc: imageSrc, imgRef } = useCutoutImage(product.imageOptimized ?? product.image);
 
   return (
     <Grid size={{ xs: 6, sm: 6, md: 4, lg: 3 }}>
@@ -76,6 +103,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         >
           <Box
             component="img"
+            ref={imgRef}
             src={imageSrc}
             alt={product.name}
             loading="lazy"
