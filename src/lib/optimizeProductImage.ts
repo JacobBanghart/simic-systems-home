@@ -24,6 +24,18 @@ const CACHE_TTL_SECONDS = 60 * 60 * 24;
  * cause of ~1.3s TTFBs on catalog pages. Passing `cache` (the same KV
  * namespace fetchStoreProducts uses) memoizes the result per src+width so
  * only the first request after a deploy pays for the probe.
+ *
+ * The `h` Astro computes from that probe is dropped before returning: for
+ * at least some WebP files (seen on product photos with real alpha
+ * transparency), Astro's header-only dimension probe comes back with an
+ * aspect ratio that doesn't match the source, so the height it bakes into
+ * the /_image URL doesn't match `width`'s proportional height. Cloudflare
+ * then has to pad the shortfall to hit that exact box — and fills the pad
+ * with opaque black instead of preserving transparency, showing up as a
+ * solid black band across otherwise-transparent product images. Dropping
+ * `h` and requesting width-only lets Cloudflare's own transform (which
+ * decodes the real image bytes, not just a header probe) scale
+ * proportionally with no padding needed.
  */
 export async function optimizeProductImage(
   src: string,
@@ -41,10 +53,13 @@ export async function optimizeProductImage(
 
   try {
     const optimized = await getImage({ src, width, inferSize: true });
+    const url = new URL(optimized.src, "http://internal");
+    url.searchParams.delete("h");
+    const result = url.pathname + url.search;
     if (cache) {
-      await cache.put(cacheKey, optimized.src, { expirationTtl: CACHE_TTL_SECONDS });
+      await cache.put(cacheKey, result, { expirationTtl: CACHE_TTL_SECONDS });
     }
-    return optimized.src;
+    return result;
   } catch (error) {
     console.error(`optimizeProductImage: falling back to original for "${src}":`, error);
     return src;

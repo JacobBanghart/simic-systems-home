@@ -309,8 +309,6 @@ window.addEventListener('load', function () {
                 height={500}
                 loading="eager"
                 fetchpriority="high"
-                crossorigin="anonymous"
-                data-cutout
               />
             )}
           </div>
@@ -394,7 +392,7 @@ window.addEventListener('load', function () {
                 return (
                   <a href={`/product/${rel.slug ?? rel.id}/`} class="related-card">
                     {rel.image && (
-                      <img src={relatedImagesOptimized[relIndex]} alt={relDisplayName} width={180} height={180} loading="lazy" crossorigin="anonymous" data-cutout />
+                      <img src={relatedImagesOptimized[relIndex]} alt={relDisplayName} width={180} height={180} loading="lazy" />
                     )}
                     <p class="related-name">{relDisplayName}</p>
                     <p class="related-price">{formatPrice(rel.price)}</p>
@@ -410,22 +408,6 @@ window.addEventListener('load', function () {
     <Footer />
   </body>
 </html>
-
-<script>
-  import { removeWhiteBackground } from "../../lib/removeWhiteBackground";
-
-  document.querySelectorAll<HTMLImageElement>("img[data-cutout]").forEach((img) => {
-    const src = img.currentSrc || img.src;
-    if (!src) return;
-    removeWhiteBackground(src)
-      .then((dataUrl) => {
-        img.src = dataUrl;
-      })
-      .catch(() => {
-        // Leave the original image in place if cutout processing fails.
-      });
-  });
-</script>
 
 <script is:inline nonce={nonce} set:html={productViewedScript} />
 
