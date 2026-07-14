@@ -1,85 +1,20 @@
 import { Typography, Button, Box, Grid } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
 import type { ProductData } from "../types";
 import { formatPrice } from "../lib/format";
-import { removeWhiteBackground } from "../lib/removeWhiteBackground";
 
 interface ProductCardProps {
   product: ProductData;
   onAddToCart: (product: ProductData) => void;
   // First row of cards is the likely LCP element — load eagerly instead of
-  // via native lazy-loading, and skip the viewport-gate below so the cutout
-  // fetch starts immediately instead of waiting on an IntersectionObserver
-  // that's already satisfied.
+  // via native lazy-loading.
   priority?: boolean;
-}
-
-function useCutoutImage(src: string, skipViewportGate: boolean) {
-  const [resolvedSrc, setResolvedSrc] = useState(src);
-  const [prevSrc, setPrevSrc] = useState(src);
-  const [visible, setVisible] = useState(skipViewportGate);
-  const imgRef = useRef<HTMLImageElement | null>(null);
-
-  // Reset synchronously during render when src changes, rather than via an
-  // effect — this is React's documented pattern for "adjusting state when a
-  // prop changes" and avoids an extra committed render each time src changes.
-  if (src !== prevSrc) {
-    setPrevSrc(src);
-    setResolvedSrc(src);
-  }
-
-  // Every card used to kick off its worker-based cutout fetch on mount,
-  // regardless of whether it was ever scrolled into view — on a full grid
-  // that's dozens of parallel image fetches competing with the actual LCP
-  // image for bandwidth. Gate it behind the same near-viewport signal the
-  // native loading="lazy" on the <img> already uses, so off-screen cards
-  // don't process until they're about to be seen.
-  useEffect(() => {
-    if (skipViewportGate) return;
-    const el = imgRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") {
-      setVisible(true);
-      return;
-    }
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [skipViewportGate]);
-
-  useEffect(() => {
-    if (!src || !visible) return;
-    let cancelled = false;
-    removeWhiteBackground(src)
-      .then((dataUrl) => {
-        if (!cancelled) setResolvedSrc(dataUrl);
-      })
-      .catch(() => {
-        // Leave the original image in place if cutout processing fails.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [src, visible]);
-
-  return { resolvedSrc, imgRef };
 }
 
 export function ProductCard({ product, onAddToCart, priority = false }: ProductCardProps) {
   const outOfStock = product.quantity <= 0;
   const lowStock = !outOfStock && product.quantity <= 3;
   const productUrl = `/product/${product.slug ?? product.id}/`;
-  const { resolvedSrc: imageSrc, imgRef } = useCutoutImage(
-    product.imageOptimized ?? product.image,
-    priority
-  );
+  const imageSrc = product.imageOptimized ?? product.image;
 
   return (
     <Grid size={{ xs: 6, sm: 6, md: 4, lg: 3 }}>
@@ -112,14 +47,12 @@ export function ProductCard({ product, onAddToCart, priority = false }: ProductC
         >
           <Box
             component="img"
-            ref={imgRef}
             src={imageSrc}
             alt={product.name}
             loading={priority ? "eager" : "lazy"}
             fetchPriority={priority ? "high" : "auto"}
             width={400}
             height={400}
-            crossOrigin="anonymous"
             sx={{
               width: "100%",
               height: "100%",

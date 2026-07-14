@@ -11,17 +11,22 @@ function buildSecurityHeaders(nonce: string): Record<string, string> {
     "Content-Security-Policy":
       "default-src 'self'; " +
       // The nonce covers hand-authored inline <script> blocks (see
-      // Astro.locals.nonce usage). The two sha256 hashes are Astro's own
-      // framework-injected scripts for client:load hydration (the
-      // client-directive dispatcher + the astro-island custom element
-      // runtime) — they're inline, static, version-locked files that never
-      // carry our per-request nonce, so they're allowlisted by hash
-      // instead. They only change if Astro itself is upgraded; a CSP
-      // violation for an inline script on a client:load page after an
-      // Astro upgrade means these need recomputing. The explicit hosts
-      // cover third-party scripts, including PostHog's array.js, which it
-      // inserts dynamically but always from this same pre-listed host.
-      `script-src 'self' 'nonce-${nonce}' 'sha256-QzWFZi+FLIx23tnm9SBU4aEgx4x8DsuASP07mfqol/c=' 'sha256-SaCkFfPruIdTXT8/97JArQmGxiJAL2o4bBDvSgJ5y3Q=' https://analytics.ahrefs.com https://*.i.posthog.com https://*.cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com; ` +
+      // Astro.locals.nonce usage). The sha256 hashes are Astro's own
+      // framework-injected scripts, which are inline, static, version-locked
+      // files that never carry our per-request nonce, so they're
+      // allowlisted by hash instead: the astro-island custom element
+      // runtime (shared across every client directive), plus one
+      // client-directive dispatcher per directive actually used in this
+      // codebase — client:load (AddToCartSection, ContactForm) and
+      // client:idle (MainPage) each compile to a *different* dispatcher
+      // script, so each needs its own hash here. They only change if Astro
+      // itself is upgraded, or if a page starts using a client directive
+      // that isn't already covered (client:visible, client:media, ...) — a
+      // CSP violation on an island page after either of those means these
+      // need recomputing. The explicit hosts cover third-party scripts,
+      // including PostHog's array.js, which it inserts dynamically but
+      // always from this same pre-listed host.
+      `script-src 'self' 'nonce-${nonce}' 'sha256-QzWFZi+FLIx23tnm9SBU4aEgx4x8DsuASP07mfqol/c=' 'sha256-BF0290pkb3jxQsE7z00xR8Imp8X34FLC88L0lkMnrGw=' 'sha256-SaCkFfPruIdTXT8/97JArQmGxiJAL2o4bBDvSgJ5y3Q=' https://analytics.ahrefs.com https://*.i.posthog.com https://*.cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com; ` +
       "style-src 'self' 'unsafe-inline'; " +
       "font-src 'self' data:; " +
       "img-src 'self' https://files.stripe.com data: blob: https://*.google-analytics.com; " +
