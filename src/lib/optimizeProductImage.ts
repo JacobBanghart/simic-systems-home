@@ -1,6 +1,9 @@
 import { getImage } from "astro:assets";
 
-const CACHE_PREFIX = "imgopt:v1:";
+// v2: bumped to invalidate entries cached by v1, which stored the raw
+// (buggy, `h`-included) URL string — see the `h`-stripping note below.
+// Bump again if the cached URL shape ever changes.
+const CACHE_PREFIX = "imgopt:v2:";
 // Stripe file links embed a content hash, so the same href always resolves
 // to the same bytes — the probed dimensions/URL are safe to cache for a
 // long time rather than re-probing files.stripe.com on every request.
