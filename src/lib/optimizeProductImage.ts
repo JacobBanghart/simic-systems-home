@@ -1,9 +1,16 @@
 import { getImage } from "astro:assets";
 
-// v2: bumped to invalidate entries cached by v1, which stored the raw
-// (buggy, `h`-included) URL string — see the `h`-stripping note below.
-// Bump again if the cached URL shape ever changes.
-const CACHE_PREFIX = "imgopt:v2:";
+// v3: bumped to invalidate v2 entries, which had no `quality` param and so
+// defaulted to lossless WebP (~160-380KB per product image, ~2.9MB total
+// across the homepage grid) — see the quality note below. Bump again if
+// the cached URL shape ever changes.
+const CACHE_PREFIX = "imgopt:v3:";
+// Cloudflare's transform defaults to lossless encoding for WebP/PNG output
+// when no quality is given, which is enormous for photographic product
+// images. 80 is the standard "visually lossless" web default — cuts these
+// from ~160-380KB down to ~20-30KB with no perceptible difference on
+// product photography.
+const IMAGE_QUALITY = 80;
 // Stripe file links embed a content hash, so the same href always resolves
 // to the same bytes — the probed dimensions/URL are safe to cache for a
 // long time rather than re-probing files.stripe.com on every request.
@@ -55,7 +62,7 @@ export async function optimizeProductImage(
   }
 
   try {
-    const optimized = await getImage({ src, width, inferSize: true });
+    const optimized = await getImage({ src, width, quality: IMAGE_QUALITY, inferSize: true });
     const url = new URL(optimized.src, "http://internal");
     url.searchParams.delete("h");
     const result = url.pathname + url.search;
