@@ -53,10 +53,12 @@ const relatedProducts = [...sameSet, ...sameCategory].slice(0, 3);
 // Display-only optimized renditions — schema below keeps product.image /
 // rel.image (the original, stable URL) unchanged for structured data.
 const productImageOptimized = product.image
-  ? await optimizeProductImage(product.image, 700)
+  ? await optimizeProductImage(product.image, 700, env.PRODUCT_CACHE)
   : product.image;
 const relatedImagesOptimized = await Promise.all(
-  relatedProducts.map((rel) => (rel.image ? optimizeProductImage(rel.image, 250) : rel.image))
+  relatedProducts.map((rel) =>
+    rel.image ? optimizeProductImage(rel.image, 250, env.PRODUCT_CACHE) : rel.image
+  )
 );
 
 const BRAND_NAMES: Record<string, string> = {

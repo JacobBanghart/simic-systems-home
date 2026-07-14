@@ -11,7 +11,7 @@ export const themeOptions = createTheme({
         divider: 'rgba(185, 202, 196, 0.16)',
     },
     typography: {
-        fontFamily: '"Hanken Grotesk", sans-serif',
+        fontFamily: 'var(--font-body)',
     },
     shape: {
         borderRadius: 4,
@@ -20,7 +20,7 @@ export const themeOptions = createTheme({
         MuiButton: {
             styleOverrides: {
                 root: {
-                    fontFamily: '"JetBrains Mono", monospace',
+                    fontFamily: 'var(--font-mono)',
                     fontSize: '0.7rem',
                     fontWeight: 500,
                     letterSpacing: '0.1em',

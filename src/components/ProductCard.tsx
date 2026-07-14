@@ -7,12 +7,17 @@ import { removeWhiteBackground } from "../lib/removeWhiteBackground";
 interface ProductCardProps {
   product: ProductData;
   onAddToCart: (product: ProductData) => void;
+  // First row of cards is the likely LCP element — load eagerly instead of
+  // via native lazy-loading, and skip the viewport-gate below so the cutout
+  // fetch starts immediately instead of waiting on an IntersectionObserver
+  // that's already satisfied.
+  priority?: boolean;
 }
 
-function useCutoutImage(src: string) {
+function useCutoutImage(src: string, skipViewportGate: boolean) {
   const [resolvedSrc, setResolvedSrc] = useState(src);
   const [prevSrc, setPrevSrc] = useState(src);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(skipViewportGate);
   const imgRef = useRef<HTMLImageElement | null>(null);
 
   // Reset synchronously during render when src changes, rather than via an
@@ -30,6 +35,7 @@ function useCutoutImage(src: string) {
   // native loading="lazy" on the <img> already uses, so off-screen cards
   // don't process until they're about to be seen.
   useEffect(() => {
+    if (skipViewportGate) return;
     const el = imgRef.current;
     if (!el || typeof IntersectionObserver === "undefined") {
       setVisible(true);
@@ -46,7 +52,7 @@ function useCutoutImage(src: string) {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [skipViewportGate]);
 
   useEffect(() => {
     if (!src || !visible) return;
@@ -66,11 +72,14 @@ function useCutoutImage(src: string) {
   return { resolvedSrc, imgRef };
 }
 
-export function ProductCard({ product, onAddToCart }: ProductCardProps) {
+export function ProductCard({ product, onAddToCart, priority = false }: ProductCardProps) {
   const outOfStock = product.quantity <= 0;
   const lowStock = !outOfStock && product.quantity <= 3;
   const productUrl = `/product/${product.slug ?? product.id}/`;
-  const { resolvedSrc: imageSrc, imgRef } = useCutoutImage(product.imageOptimized ?? product.image);
+  const { resolvedSrc: imageSrc, imgRef } = useCutoutImage(
+    product.imageOptimized ?? product.image,
+    priority
+  );
 
   return (
     <Grid size={{ xs: 6, sm: 6, md: 4, lg: 3 }}>
@@ -106,7 +115,8 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             ref={imgRef}
             src={imageSrc}
             alt={product.name}
-            loading="lazy"
+            loading={priority ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : "auto"}
             width={400}
             height={400}
             crossOrigin="anonymous"
@@ -134,7 +144,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
                 color: "var(--md-error)",
                 border: "1px solid",
                 borderColor: "color-mix(in srgb, var(--md-error) 35%, transparent)",
-                fontFamily: '"JetBrains Mono", monospace',
+                fontFamily: 'var(--font-mono)',
                 fontSize: "9px",
                 fontWeight: 500,
                 letterSpacing: "0.1em",
@@ -156,7 +166,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             component="a"
             href={productUrl}
             sx={{
-              fontFamily: '"Hanken Grotesk", sans-serif',
+              fontFamily: 'var(--font-body)',
               fontSize: "0.95rem",
               lineHeight: 1.3,
               wordBreak: "break-word",

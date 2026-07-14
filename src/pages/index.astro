@@ -29,7 +29,7 @@ try {
 const displayProducts: ProductData[] = await Promise.all(
   products.map(async (product) => ({
     ...product,
-    imageOptimized: product.image ? await optimizeProductImage(product.image, 500) : product.image,
+    imageOptimized: product.image ? await optimizeProductImage(product.image, 500, env.PRODUCT_CACHE) : product.image,
   }))
 );
 

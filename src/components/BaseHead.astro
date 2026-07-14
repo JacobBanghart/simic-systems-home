@@ -23,31 +23,9 @@ const ogImageURL = new URL(image, Astro.site);
 document.documentElement.style.backgroundColor = '#08100e';
 </script>
 
-<!-- Fonts: loaded non-render-blocking (media="print" swapped to "all" once
-     fetched) since the CSP here is nonce-based and doesn't cover inline
-     onload="" attributes — the swap has to happen from a nonce'd <script>. -->
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link
-	id="google-fonts-css"
-	href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Hanken+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
-	rel="stylesheet"
-	media="print"
-/>
-<script nonce={Astro.locals.nonce}>
-(function () {
-	const link = document.getElementById('google-fonts-css');
-	if (!link) return;
-	if (link.sheet) { link.media = 'all'; return; }
-	link.addEventListener('load', function () { link.media = 'all'; }, { once: true });
-})();
-</script>
-<noscript>
-	<link
-		href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Hanken+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
-		rel="stylesheet"
-	/>
-</noscript>
+<!-- Fonts are self-hosted (imported in global.css via @fontsource) so there's
+     no fonts.googleapis.com/fonts.gstatic.com round trip to defer — the
+     @font-face rules already carry font-display: swap. -->
 
 <!-- Global Metadata -->
 <meta charset="utf-8" />

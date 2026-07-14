@@ -125,8 +125,13 @@ function StoreContent({ products }: MainPageProps) {
     }
     return (
       <Grid container spacing={{ xs: 2, md: 3 }}>
-        {items.map((product) => (
-          <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
+        {items.map((product, index) => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            onAddToCart={addToCart}
+            priority={index < 4}
+          />
         ))}
       </Grid>
     );

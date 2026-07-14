@@ -43,6 +43,16 @@ export default defineConfig({
         "react-dom/server": "react-dom/server.edge",
       },
     },
+    build: {
+      // Without this, Vite base64-inlines any built asset under 4kb straight
+      // into its importing CSS/JS file. The self-hosted font packages ship a
+      // separate @font-face per language subset (cyrillic, vietnamese, greek,
+      // ...) gated by unicode-range so a browser only ever fetches the one
+      // it needs — but a small subset file getting inlined bypasses that
+      // entirely, since its bytes ship inside the CSS response on every page
+      // load regardless of which unicode-range actually matches.
+      assetsInlineLimit: 0,
+    },
     plugins: [
       tailwindcss(),
       {

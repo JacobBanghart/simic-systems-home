@@ -22,8 +22,8 @@ function buildSecurityHeaders(nonce: string): Record<string, string> {
       // cover third-party scripts, including PostHog's array.js, which it
       // inserts dynamically but always from this same pre-listed host.
       `script-src 'self' 'nonce-${nonce}' 'sha256-QzWFZi+FLIx23tnm9SBU4aEgx4x8DsuASP07mfqol/c=' 'sha256-SaCkFfPruIdTXT8/97JArQmGxiJAL2o4bBDvSgJ5y3Q=' https://analytics.ahrefs.com https://*.i.posthog.com https://*.cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com; ` +
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-      "font-src 'self' data: https://fonts.gstatic.com; " +
+      "style-src 'self' 'unsafe-inline'; " +
+      "font-src 'self' data:; " +
       "img-src 'self' https://files.stripe.com data: blob: https://*.google-analytics.com; " +
       "connect-src 'self' https://analytics.ahrefs.com https://api.stripe.com https://*.i.posthog.com https://*.cloudflareinsights.com https://*.google-analytics.com https://www.googletagmanager.com; " +
       "frame-src https://js.stripe.com https://hooks.stripe.com; " +

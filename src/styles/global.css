@@ -1,11 +1,23 @@
 @import "tailwindcss";
+/* Self-hosted fonts: same-origin, no fonts.googleapis.com/fonts.gstatic.com
+   round trip. Only the weights actually used in the codebase — see the
+   font-weight audit in git history for how these were chosen. Hanken
+   Grotesk and JetBrains Mono use their variable-font builds (one file
+   covers every weight on the axis) since neither is ever set in italic;
+   Libre Caslon Text has no variable build, so only its used cuts (400
+   normal, 400 italic, 700 normal for the one bold headline) are imported. */
+@import "@fontsource-variable/hanken-grotesk/wght.css";
+@import "@fontsource-variable/jetbrains-mono/wght.css";
+@import "@fontsource/libre-caslon-text/latin-400.css";
+@import "@fontsource/libre-caslon-text/latin-400-italic.css";
+@import "@fontsource/libre-caslon-text/latin-700.css";
 @plugin "@tailwindcss/forms";
 @plugin "@tailwindcss/container-queries";
 
 @theme {
   --font-headline: "Libre Caslon Text", serif;
-  --font-body: "Hanken Grotesk", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  --font-body: "Hanken Grotesk Variable", sans-serif;
+  --font-mono: "JetBrains Mono Variable", monospace;
 
   --spacing-margin-mobile: 16px;
   --spacing-margin-desktop: 40px;
