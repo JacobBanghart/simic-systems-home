@@ -1,0 +1,82 @@
+name: Stripe drift check
+
+# Runs `terraform plan` against live Stripe and opens (or updates) a
+# "stripe-drift" issue when someone changed Stripe outside terraform/stripe.
+# Schedule/manual only: the repo is public, so this must never run on
+# pull_request (forks would otherwise reach the Stripe key and AWS role).
+on:
+  schedule:
+    - cron: "17 14 * * *" # daily, ~7am Pacific
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # AWS OIDC (role only trusts refs/heads/main)
+  issues: write
+
+concurrency:
+  group: stripe-drift
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    env:
+      MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
+    defaults:
+      run:
+        working-directory: terraform/stripe
+    steps:
+      - uses: actions/checkout@v4
+
+      # Installs the terraform version pinned in mise.toml.
+      - uses: jdx/mise-action@v2
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::043867949471:role/github-simic-stripe-drift
+          aws-region: us-east-1
+
+      - run: terraform init -input=false -no-color
+
+      - id: plan
+        env:
+          # Restricted key: read-only Products, Prices, Shipping rates.
+          STRIPE_API_KEY: ${{ secrets.STRIPE_DRIFT_API_KEY }}
+        run: |
+          set +e
+          # -lock=false: the role can only read state, and a plan never writes.
+          terraform plan -input=false -no-color -lock=false -detailed-exitcode > plan.txt 2>&1
+          code=$?
+          cat plan.txt
+          echo "exitcode=$code" >> "$GITHUB_OUTPUT"
+          if [ "$code" -eq 1 ]; then exit 1; fi
+
+      - name: Open or update drift issue
+        if: steps.plan.outputs.exitcode == '2'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "Live Stripe no longer matches \`terraform/stripe\` ($(date -u +%F))."
+            echo
+            echo "Either apply the config (\`mise run tf -- apply\`) to revert the dashboard change,"
+            echo "or update the .tf files to match what was changed on purpose."
+            echo
+            echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo
+            echo '```'
+            grep -E '^\s*(#|[~+-] |Plan:)' plan.txt | head -150
+            echo '```'
+          } > body.md
+          gh label create stripe-drift --color B60205 --description "Stripe changed outside Terraform" 2>/dev/null || true
+          existing=$(gh issue list --label stripe-drift --state open --json number -q '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file body.md
+          else
+            gh issue create --title "Stripe drift detected" --label stripe-drift --body-file body.md
+          fi
+
+      - name: Fail on drift
+        if: steps.plan.outputs.exitcode == '2'
+        run: exit 1
