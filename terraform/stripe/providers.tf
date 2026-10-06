@@ -17,6 +17,6 @@ terraform {
   }
 }
 
-# Reads STRIPE_API_KEY from the environment. Locally: `mise run tf -- plan`
+# Reads STRIPE_API_KEY from the environment. Locally: `mise run tf:stripe -- plan`
 # exports it from the repo's .env; CI gets it from a repository secret.
 provider "stripe" {}

@@ -60,7 +60,7 @@ jobs:
           {
             echo "Live Stripe no longer matches \`terraform/stripe\` ($(date -u +%F))."
             echo
-            echo "Either apply the config (\`mise run tf -- apply\`) to revert the dashboard change,"
+            echo "Either apply the config (\`mise run tf:stripe -- apply\`) to revert the dashboard change,"
             echo "or update the .tf files to match what was changed on purpose."
             echo
             echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

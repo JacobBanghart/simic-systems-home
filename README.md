@@ -49,7 +49,7 @@ src/
 terraform/
   stripe/                    # Stripe products, prices, shipping rates (Terraform)
   github-ci/                 # AWS OIDC role for the drift-check workflow
-  main.tf                    # Cloudflare KV namespaces
+  cloudflare/                # Cloudflare KV namespaces (`mise run tf:cloudflare`)
 tests/                       # Vitest unit tests
 ```
 
@@ -61,8 +61,8 @@ tests/                       # Vitest unit tests
 | `npm run dev` | Start dev server at `localhost:4321` |
 | `npm run build` | Production build to `./dist/` |
 | `npm run deploy` | Deploy to Cloudflare Workers |
-| `mise run tf -- plan` | Preview Stripe catalog changes (`terraform/stripe`) |
-| `mise run tf -- apply` | Apply Stripe catalog changes |
+| `mise run tf:stripe -- plan` | Preview Stripe catalog changes (`terraform/stripe`) |
+| `mise run tf:stripe -- apply` | Apply Stripe catalog changes |
 | `npm test` | Run Vitest unit tests |
 | `npm run lint` | Run ESLint |
 | `npm run typecheck` | Run TypeScript type checking |
@@ -83,11 +83,11 @@ Secrets are set via `wrangler secret put` or `.dev.vars` for local development. 
 
 ## Stripe Catalog Management
 
-Products, prices and shipping rates are managed with Terraform in `terraform/stripe/` (official `stripe/stripe` provider; state in S3). Tool versions are pinned in `mise.toml`; `mise run tf -- <args>` runs Terraform there with `STRIPE_API_KEY` taken from `.env`.
+Products, prices and shipping rates are managed with Terraform in `terraform/stripe/` (official `stripe/stripe` provider; state in S3). Tool versions are pinned in `mise.toml`; `mise run tf:stripe -- <args>` runs Terraform there with `STRIPE_API_KEY` taken from `.env`.
 
 ```bash
-mise run tf -- plan    # preview
-mise run tf -- apply   # apply
+mise run tf:stripe -- plan    # preview
+mise run tf:stripe -- apply   # apply
 ```
 
 - **Prices:** edit `unit_amount` (cents). Terraform creates the new price, moves the `lookup_key` (= the product's `catalogKey`) to it, and archives the old one. The storefront resolves prices by lookup key; products deliberately have no `default_price`.

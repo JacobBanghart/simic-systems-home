@@ -2,7 +2,18 @@
 node = "26.8.2"
 terraform = "1.15.8"
 
-[tasks.tf]
-description = "Run terraform in ./terraform/stripe with STRIPE_API_KEY from .env"
+# Terraform stacks under terraform/, e.g. `mise run tf:stripe -- plan`.
+[tasks."tf:stripe"]
+description = "Terraform for terraform/stripe (STRIPE_API_KEY from .env)"
 dir = "terraform/stripe"
 run = 'STRIPE_API_KEY="$(grep -E "^STRIPE_SECRET_KEY=" ../../.env | cut -d= -f2-)" terraform'
+
+[tasks."tf:cloudflare"]
+description = "Terraform for terraform/cloudflare (API token from Vault)"
+dir = "terraform/cloudflare"
+run = 'TF_VAR_cloudflare_api_token="$(vault kv get -field=api_token secret/simic-systems/cloudflare)" terraform'
+
+[tasks."tf:github-ci"]
+description = "Terraform for terraform/github-ci (AWS credentials from ~/.aws)"
+dir = "terraform/github-ci"
+run = "terraform"
