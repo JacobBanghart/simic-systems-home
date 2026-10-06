@@ -5,10 +5,13 @@ import {
   invalidateProductCache,
   retrieveSessionLineItems,
   restoreLineItemStock,
+  isStockOnlyUpdate,
 } from "../../lib/stripeProducts";
 import { getPostHogServer } from "../../lib/posthog-server";
-import { orderEmailFromSession } from "../../lib/email/fromCheckoutSession";
+import { orderEmailFromSession, orderNumberFor } from "../../lib/email/fromCheckoutSession";
 import { sendOrderConfirmation } from "../../lib/email/send";
+import { alertOwner, dashboardUrl } from "../../lib/alerts";
+import { STOCK_RELEASED_METADATA_KEY } from "../../lib/checkoutSessions";
 
 const INDEXNOW_KEY = "simic2026seo9x7y5z3w";
 const SITE = "https://simic.systems";
@@ -34,6 +37,68 @@ async function pingIndexNow(urls: string[]): Promise<void> {
 }
 
 export const prerender = false;
+
+const dollars = (cents: number | null | undefined) => `$${((cents ?? 0) / 100).toFixed(2)}`;
+
+// Customer confirmation + owner "new order" alert for a paid session. Runs
+// once per session (KV key), whether it's reached from
+// checkout.session.completed (card) or async_payment_succeeded (delayed
+// methods). A failed customer email is reported to the owner rather than
+// failing the webhook: Stripe's own receipt still reaches the customer, and a
+// retry would replay the PostHog capture.
+async function sendPaidOrderNotifications(
+  session: Stripe.Checkout.Session,
+  lineItems: Stripe.LineItem[]
+): Promise<void> {
+  const emailKey = `order-email-sent:${session.id}`;
+  if (await env.PRODUCT_CACHE.get(emailKey)) return;
+
+  const emailData = orderEmailFromSession(session, lineItems, SITE);
+  let messageId: string | null = null;
+  try {
+    messageId = emailData ? await sendOrderConfirmation(env, emailData) : null;
+    if (messageId) console.log(`Order confirmation sent for ${session.id}: ${messageId}`);
+  } catch (err) {
+    console.error(`Order confirmation email failed for ${session.id}:`, err);
+    await alertOwner(env, `Order confirmation email FAILED for ${orderNumberFor(session)}`, [
+      `The branded confirmation didn't send (Stripe's receipt still went out).`,
+      `Customer: ${session.customer_details?.email ?? "unknown"}`,
+      `Error: ${String(err)}`,
+    ]);
+  }
+  await env.PRODUCT_CACHE.put(emailKey, messageId ?? "not-sent", { expirationTtl: 30 * 24 * 60 * 60 });
+
+  const address = emailData?.shippingAddress;
+  await alertOwner(env, `New order ${orderNumberFor(session)} — ${dollars(session.amount_total)}`, [
+    ...lineItems.map((li) => `${li.quantity ?? 1} × ${li.description ?? "Item"}  ${dollars(li.amount_total)}`),
+    ``,
+    `Shipping: ${emailData?.shippingLabel ?? "?"} (${dollars(session.shipping_cost?.amount_total)})`,
+    `Total: ${dollars(session.amount_total)}`,
+    ``,
+    `Ship to:`,
+    ...(address
+      ? [address.name, address.line1, address.line2, `${address.city ?? ""}, ${address.state ?? ""} ${address.postalCode ?? ""}`].filter(
+          (line): line is string => Boolean(line)
+        )
+      : ["(no shipping address on the session)"]),
+    `Email: ${session.customer_details?.email ?? "?"}`,
+    ``,
+    `Payment: ${dashboardUrl(env, `payments/${typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? ""}`)}`,
+  ]);
+}
+
+// Releases a checkout's reserved stock — for sessions that expired or whose
+// delayed payment failed. Skips sessions the shop already released itself
+// (cancelOpenCheckoutSession flags them before expiring them).
+async function releaseSessionStock(stripe: Stripe, session: Stripe.Checkout.Session): Promise<void> {
+  if (session.metadata?.[STOCK_RELEASED_METADATA_KEY] === "1") {
+    console.log(`Stock for ${session.id} was already released when it was cancelled`);
+    return;
+  }
+  const { lineItems } = await retrieveSessionLineItems(stripe, session.id);
+  await restoreLineItemStock(stripe, lineItems, { kv: env.PRODUCT_CACHE, key: `stock-released:${session.id}` });
+  await invalidateProductCache(env);
+}
 
 const productCacheInvalidationEvents = new Set([
   "checkout.session.completed",
@@ -120,23 +185,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
       locals.cfContext.waitUntil(posthog.flush());
 
-      // Order confirmation email. Deduped per session with its own key, so a
-      // Stripe retry after a later failure in this handler can't send twice.
-      // A send failure is logged rather than failing the webhook: Stripe's
-      // own receipt still reaches the customer, and retrying would replay
-      // the PostHog capture above.
-      const emailKey = `order-email-sent:${session.id}`;
-      if (!(await env.PRODUCT_CACHE.get(emailKey))) {
-        try {
-          const emailData = orderEmailFromSession(fullSession, lineItems, SITE);
-          const messageId = emailData ? await sendOrderConfirmation(env, emailData) : null;
-          if (messageId) {
-            await env.PRODUCT_CACHE.put(emailKey, messageId, { expirationTtl: 30 * 24 * 60 * 60 });
-            console.log(`Order confirmation sent for ${session.id}: ${messageId}`);
-          }
-        } catch (err) {
-          console.error(`Order confirmation email failed for ${session.id}:`, err);
-        }
+      // Delayed payment methods complete the session before the money arrives
+      // (payment_status "unpaid"); those are confirmed on
+      // checkout.session.async_payment_succeeded instead.
+      if (fullSession.payment_status === "unpaid") {
+        console.log(`Checkout ${session.id} completed, awaiting delayed payment`);
+      } else {
+        await sendPaidOrderNotifications(fullSession, lineItems);
       }
 
       // Marked only after processing succeeds — if this throws below (or
@@ -149,7 +204,44 @@ export const POST: APIRoute = async ({ request, locals }) => {
       console.log(`Sale completed: ${session.id}, amount: ${session.amount_total}`);
     } catch (err) {
       console.error("Error processing checkout.session.completed:", err);
-      return new Response(JSON.stringify({ error: "PostHog capture failed" }), {
+      return new Response(JSON.stringify({ error: "Order processing failed" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  if (
+    event.type === "checkout.session.async_payment_succeeded" ||
+    event.type === "checkout.session.async_payment_failed"
+  ) {
+    const session = event.data.object as Stripe.Checkout.Session;
+    const idempotencyKey = `webhook-processed:${event.id}`;
+    if (await env.PRODUCT_CACHE.get(idempotencyKey)) {
+      return new Response(JSON.stringify({ received: true, duplicate: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    try {
+      if (event.type === "checkout.session.async_payment_succeeded") {
+        const { session: fullSession, lineItems } = await retrieveSessionLineItems(stripe, session.id);
+        await sendPaidOrderNotifications(fullSession, lineItems);
+      } else {
+        // The order never paid: its reservation goes back to the pool.
+        await releaseSessionStock(stripe, session);
+        await alertOwner(env, `Delayed payment failed for ${orderNumberFor(session)}`, [
+          `The customer's payment didn't clear, so the order is void and its stock was released.`,
+          `Customer: ${session.customer_details?.email ?? "unknown"}`,
+        ]);
+      }
+      locals.cfContext.waitUntil(
+        env.PRODUCT_CACHE.put(idempotencyKey, "1", { expirationTtl: 7 * 24 * 60 * 60 })
+      );
+    } catch (err) {
+      console.error(`Error processing ${event.type}:`, err);
+      return new Response(JSON.stringify({ error: "Delayed payment processing failed" }), {
         status: 500,
         headers: { "Content-Type": "application/json" },
       });
@@ -175,15 +267,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       // reservation for it was never claimed by a sale — release it back to
       // the pool, or that stock stays permanently held for a cart that will
       // never check out.
-      const { lineItems } = await retrieveSessionLineItems(stripe, session.id);
-      await restoreLineItemStock(stripe, lineItems);
-      await invalidateProductCache(env);
+      await releaseSessionStock(stripe, session);
 
       locals.cfContext.waitUntil(
         env.PRODUCT_CACHE.put(idempotencyKey, "1", { expirationTtl: 7 * 24 * 60 * 60 })
       );
 
-      console.log(`Checkout expired, stock released: ${session.id}`);
+      console.log(`Checkout expired: ${session.id}`);
     } catch (err) {
       console.error("Error processing checkout.session.expired:", err);
       return new Response(JSON.stringify({ error: "Stock release failed" }), {
@@ -208,28 +298,49 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     try {
+      const paymentIntentId =
+        typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
+      const paymentLink = dashboardUrl(env, `payments/${paymentIntentId ?? charge.id}`);
+
       if (!charge.refunded) {
         // Partial refund: Stripe's refund object doesn't map back to which
         // specific line items were returned, so guessing (e.g. splitting
-        // proportionally) risks restoring the wrong quantity. Flagged for
-        // manual reconciliation instead of silently getting it wrong.
+        // proportionally) risks restoring the wrong quantity.
         console.warn(
           `Partial refund on charge ${charge.id} (amount_refunded: ${charge.amount_refunded}/${charge.amount}) — stock not auto-adjusted, review manually.`
         );
-      } else if (charge.payment_intent) {
-        const paymentIntentId =
-          typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent.id;
+        await alertOwner(env, `Partial refund — check stock`, [
+          `Refunded ${dollars(charge.amount_refunded)} of ${dollars(charge.amount)}. Stock was NOT changed.`,
+          `If items came back, add them to the product's "quantity" metadata by hand.`,
+          paymentLink,
+        ]);
+      } else if (paymentIntentId) {
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
         const sessions = await stripe.checkout.sessions.list({
           payment_intent: paymentIntentId,
           limit: 1,
         });
         const session = sessions.data[0];
 
-        if (session) {
+        if (paymentIntent.metadata?.tracking_number) {
+          // It already shipped: refunding a lost package, a dispute or a
+          // goodwill refund doesn't put the box back on the shelf. Restocking
+          // here would let the site sell stock that doesn't exist.
+          await alertOwner(env, `Refund on a SHIPPED order — stock not restored`, [
+            `Order ${session ? orderNumberFor(session) : paymentIntentId} was fully refunded after shipping (tracking ${paymentIntent.metadata.tracking_number}).`,
+            `Stock was left alone. If the package actually came back to you, add it back to the product's "quantity" metadata.`,
+            paymentLink,
+          ]);
+        } else if (session) {
           const { lineItems } = await retrieveSessionLineItems(stripe, session.id);
-          await restoreLineItemStock(stripe, lineItems);
+          await restoreLineItemStock(stripe, lineItems, { kv: env.PRODUCT_CACHE, key: `stock-restocked:${charge.id}` });
           await invalidateProductCache(env);
           console.log(`Full refund processed, stock restored: charge ${charge.id}, session ${session.id}`);
+          await alertOwner(env, `Order ${orderNumberFor(session)} refunded — restocked`, [
+            `Full refund of ${dollars(charge.amount_refunded)} on an order that hadn't shipped; its items were put back in stock.`,
+            ...lineItems.map((li) => `+${li.quantity ?? 0} ${li.description ?? "item"}`),
+            paymentLink,
+          ]);
         } else {
           console.warn(
             `Full refund on charge ${charge.id} but no matching checkout session found — stock not auto-adjusted.`
@@ -258,19 +369,35 @@ export const POST: APIRoute = async ({ request, locals }) => {
     console.warn(
       `Dispute created on charge ${dispute.charge} — reason: ${dispute.reason}, amount: ${dispute.amount}. Review manually; stock is not auto-adjusted.`
     );
+    const dueBy = dispute.evidence_details?.due_by
+      ? new Date(dispute.evidence_details.due_by * 1000).toDateString()
+      : "see dashboard";
+    await alertOwner(env, `DISPUTE opened — ${dollars(dispute.amount)} (${dispute.reason})`, [
+      `A customer disputed a charge. Respond before: ${dueBy}.`,
+      `Evidence: tracking + delivery confirmation, signature, receipt, all-sales-final policy, packed-box photos.`,
+      dashboardUrl(env, `disputes/${dispute.id}`),
+    ]);
   }
 
   if (productCacheInvalidationEvents.has(event.type)) {
     await invalidateProductCache(env);
 
-    const urls = [`${SITE}/`];
-    if (event.type === "product.created" || event.type === "product.updated") {
-      const prod = event.data.object as Stripe.Product;
-      if (prod.metadata?.slug) {
-        urls.push(`${SITE}/product/${prod.metadata.slug}/`);
+    const stockOnly =
+      event.type === "checkout.session.completed" ||
+      (event.type === "product.updated" &&
+        isStockOnlyUpdate(event.data.previous_attributes as Record<string, unknown> | undefined));
+    if (!stockOnly) {
+      const urls = [`${SITE}/`];
+      if (event.type === "product.created" || event.type === "product.updated") {
+        const prod = event.data.object as Stripe.Product;
+        if (prod.metadata?.slug) {
+          urls.push(`${SITE}/product/${prod.metadata.slug}/`);
+        }
       }
+      locals.cfContext.waitUntil(
+        pingIndexNow(urls).catch((err) => console.error("IndexNow ping failed:", err))
+      );
     }
-    pingIndexNow(urls).catch((err) => console.error("IndexNow ping failed:", err));
   }
 
   return new Response(JSON.stringify({ received: true }), {

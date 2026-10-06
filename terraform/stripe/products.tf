@@ -23,7 +23,8 @@ resource "stripe_product" "avatar_the_last_airbender_jumpstart_booster_display" 
 
   lifecycle {
     # Stock is owned at runtime by checkout reservations and the webhook.
-    ignore_changes = [metadata["quantity"]]
+    ignore_changes  = [metadata["quantity"]]
+    prevent_destroy = true
   }
 }
 
@@ -59,7 +60,8 @@ resource "stripe_product" "avatar_the_last_airbender_play_booster_display" {
 
   lifecycle {
     # Stock is owned at runtime by checkout reservations and the webhook.
-    ignore_changes = [metadata["quantity"]]
+    ignore_changes  = [metadata["quantity"]]
+    prevent_destroy = true
   }
 }
 
@@ -95,7 +97,8 @@ resource "stripe_product" "final_fantasy_play_booster_display" {
 
   lifecycle {
     # Stock is owned at runtime by checkout reservations and the webhook.
-    ignore_changes = [metadata["quantity"]]
+    ignore_changes  = [metadata["quantity"]]
+    prevent_destroy = true
   }
 }
 
@@ -131,7 +134,8 @@ resource "stripe_product" "innistrad_crimson_vow_collector_booster_display" {
 
   lifecycle {
     # Stock is owned at runtime by checkout reservations and the webhook.
-    ignore_changes = [metadata["quantity"]]
+    ignore_changes  = [metadata["quantity"]]
+    prevent_destroy = true
   }
 }
 
@@ -167,7 +171,8 @@ resource "stripe_product" "kamigawa_neon_dynasty_collector_booster_display" {
 
   lifecycle {
     # Stock is owned at runtime by checkout reservations and the webhook.
-    ignore_changes = [metadata["quantity"]]
+    ignore_changes  = [metadata["quantity"]]
+    prevent_destroy = true
   }
 }
 
@@ -203,7 +208,8 @@ resource "stripe_product" "lorwyn_eclipsed_collector_booster_display" {
 
   lifecycle {
     # Stock is owned at runtime by checkout reservations and the webhook.
-    ignore_changes = [metadata["quantity"]]
+    ignore_changes  = [metadata["quantity"]]
+    prevent_destroy = true
   }
 }
 
@@ -239,7 +245,8 @@ resource "stripe_product" "lorwyn_eclipsed_play_booster_display" {
 
   lifecycle {
     # Stock is owned at runtime by checkout reservations and the webhook.
-    ignore_changes = [metadata["quantity"]]
+    ignore_changes  = [metadata["quantity"]]
+    prevent_destroy = true
   }
 }
 
@@ -275,7 +282,8 @@ resource "stripe_product" "magic_the_gathering_foundations_play_booster_display"
 
   lifecycle {
     # Stock is owned at runtime by checkout reservations and the webhook.
-    ignore_changes = [metadata["quantity"]]
+    ignore_changes  = [metadata["quantity"]]
+    prevent_destroy = true
   }
 }
 
@@ -311,7 +319,8 @@ resource "stripe_product" "marvels_spider_man_collector_booster_display" {
 
   lifecycle {
     # Stock is owned at runtime by checkout reservations and the webhook.
-    ignore_changes = [metadata["quantity"]]
+    ignore_changes  = [metadata["quantity"]]
+    prevent_destroy = true
   }
 }
 
@@ -347,7 +356,8 @@ resource "stripe_product" "marvels_spider_man_play_booster_display" {
 
   lifecycle {
     # Stock is owned at runtime by checkout reservations and the webhook.
-    ignore_changes = [metadata["quantity"]]
+    ignore_changes  = [metadata["quantity"]]
+    prevent_destroy = true
   }
 }
 
@@ -383,7 +393,8 @@ resource "stripe_product" "marvel_super_heros_jumpstart_booster_display" {
 
   lifecycle {
     # Stock is owned at runtime by checkout reservations and the webhook.
-    ignore_changes = [metadata["quantity"]]
+    ignore_changes  = [metadata["quantity"]]
+    prevent_destroy = true
   }
 }
 
@@ -419,7 +430,8 @@ resource "stripe_product" "secrets_of_strixhaven_play_booster_display" {
 
   lifecycle {
     # Stock is owned at runtime by checkout reservations and the webhook.
-    ignore_changes = [metadata["quantity"]]
+    ignore_changes  = [metadata["quantity"]]
+    prevent_destroy = true
   }
 }
 
@@ -455,7 +467,8 @@ resource "stripe_product" "tarkir_dragonstorm_play_booster_display" {
 
   lifecycle {
     # Stock is owned at runtime by checkout reservations and the webhook.
-    ignore_changes = [metadata["quantity"]]
+    ignore_changes  = [metadata["quantity"]]
+    prevent_destroy = true
   }
 }
 
@@ -491,7 +504,8 @@ resource "stripe_product" "teenage_mutant_ninja_turtles_play_booster_display" {
 
   lifecycle {
     # Stock is owned at runtime by checkout reservations and the webhook.
-    ignore_changes = [metadata["quantity"]]
+    ignore_changes  = [metadata["quantity"]]
+    prevent_destroy = true
   }
 }
 
@@ -527,7 +541,8 @@ resource "stripe_product" "wilds_of_eldraine_collector_booster_display" {
 
   lifecycle {
     # Stock is owned at runtime by checkout reservations and the webhook.
-    ignore_changes = [metadata["quantity"]]
+    ignore_changes  = [metadata["quantity"]]
+    prevent_destroy = true
   }
 }
 

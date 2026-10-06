@@ -1,5 +1,10 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import {
+  SIGNATURE_SHIPPING_CENTS,
+  SIGNATURE_THRESHOLD_CENTS,
+  STANDARD_SHIPPING_CENTS,
+} from "../src/lib/shipping";
 
 // Guardrails on the Terraform-managed catalog (terraform/stripe/products.tf),
 // replacing the old `catalog:gtin-check` script: a product can't go live
@@ -45,5 +50,55 @@ describe("terraform/stripe catalog", () => {
       const price = prices.find((p) => p.name === product.name);
       expect(price?.lookupKey, product.name).toBe(product.catalogKey);
     }
+  });
+});
+
+describe("terraform/stripe catalog keys", () => {
+  it("has unique catalogKey values across products", () => {
+    const keys = products.map((p) => p.catalogKey).filter(Boolean);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it("has unique lookup_key values across prices", () => {
+    const keys = prices.map((p) => p.lookupKey).filter(Boolean);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it("gives every active product's catalogKey a matching price lookup_key", () => {
+    const lookupKeys = new Set(prices.map((p) => p.lookupKey));
+    for (const product of products.filter((p) => p.active)) {
+      expect(product.catalogKey, product.name).toBeTruthy();
+      expect(lookupKeys.has(product.catalogKey), product.name).toBe(true);
+    }
+  });
+});
+
+// src/lib/shipping.ts holds display copies of the shipping tiers; Stripe
+// (terraform/stripe/shipping.tf) is what actually charges. Keep them equal.
+describe("terraform/stripe shipping rates", () => {
+  const shippingHcl = readFileSync(new URL("../terraform/stripe/shipping.tf", import.meta.url), "utf8");
+
+  const rateAmount = (name: string): number => {
+    const block = shippingHcl.match(
+      new RegExp(`resource "stripe_shipping_rate" "${name}" \\{([\\s\\S]*?)\\n\\}`)
+    )?.[1];
+    expect(block, `stripe_shipping_rate.${name}`).toBeDefined();
+    const amount = block!.match(/fixed_amount\s*\{[^}]*?\bamount\s*=\s*(\d+)/)?.[1];
+    expect(amount, `${name} fixed_amount.amount`).toBeDefined();
+    return Number(amount);
+  };
+
+  it("standard rate matches STANDARD_SHIPPING_CENTS", () => {
+    expect(rateAmount("standard")).toBe(STANDARD_SHIPPING_CENTS);
+  });
+
+  it("signature rate matches SIGNATURE_SHIPPING_CENTS", () => {
+    expect(rateAmount("signature")).toBe(SIGNATURE_SHIPPING_CENTS);
+  });
+
+  it("signature_threshold_cents matches SIGNATURE_THRESHOLD_CENTS", () => {
+    const threshold = shippingHcl.match(/\bsignature_threshold_cents\s*=\s*"?(\d+)"?/)?.[1];
+    expect(threshold).toBeDefined();
+    expect(Number(threshold)).toBe(SIGNATURE_THRESHOLD_CENTS);
   });
 });

@@ -1,21 +1,7 @@
 import { describe, it, expect } from "vitest";
 
-// Test the cart validation logic directly (extracted from CartProvider)
+import { isValidCartItem } from "../src/lib/cart";
 import type { CartItem } from "../src/types";
-
-function isValidCartItem(item: unknown): item is CartItem {
-  if (typeof item !== "object" || item === null) return false;
-  const record = item as Record<string, unknown>;
-  return (
-    typeof record.productId === "string" &&
-    typeof record.priceId === "string" &&
-    typeof record.name === "string" &&
-    typeof record.price === "number" &&
-    typeof record.image === "string" &&
-    typeof record.quantity === "number" &&
-    record.quantity > 0
-  );
-}
 
 describe("isValidCartItem", () => {
   const validItem: CartItem = {

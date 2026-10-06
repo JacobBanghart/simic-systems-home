@@ -16,7 +16,35 @@ import Delete from "@mui/icons-material/Delete";
 import Close from "@mui/icons-material/Close";
 import { useCart } from "./CartProvider";
 import { formatPrice } from "../lib/format";
+import { describeCartChange, maxQuantityFor, toCheckoutItems } from "../lib/cart";
+import { estimatedShippingCents, SIGNATURE_THRESHOLD_CENTS } from "../lib/shipping";
 import { getPostHog, getPostHogHeaders } from "../lib/posthog-client";
+
+const CHECKOUT_SESSION_KEY = "simic-checkout-session";
+
+function readStoredSessionId(): string | undefined {
+  try {
+    return localStorage.getItem(CHECKOUT_SESSION_KEY) || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function storeSessionId(sessionId: string) {
+  try {
+    localStorage.setItem(CHECKOUT_SESSION_KEY, sessionId);
+  } catch {
+    // Private mode / quota: losing the handoff only means the old session expires on its own.
+  }
+}
+
+function clearStoredSessionId() {
+  try {
+    localStorage.removeItem(CHECKOUT_SESSION_KEY);
+  } catch {
+    // ignore
+  }
+}
 
 interface CartDrawerProps {
   open: boolean;
@@ -24,12 +52,23 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
-  const { cartItems, removeFromCart, updateQuantity, clearCart, cartTotal } = useCart();
+  const {
+    cartItems,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    cartTotal,
+    cartNotices,
+    dismissCartNotices,
+    refreshCart,
+  } = useCart();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
+    // Prices and stock can change while a cart sits in localStorage.
+    void refreshCart();
     getPostHog()?.capture("cart_viewed", {
       item_count: cartItems.reduce((sum, item) => sum + item.quantity, 0),
       cart_total_cents: cartTotal,
@@ -39,6 +78,8 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
   }, [open]);
 
   const handleCheckout = async () => {
+    const items = toCheckoutItems(cartItems);
+    if (items.length === 0) return;
     setCheckoutLoading(true);
     setError(null);
     try {
@@ -59,21 +100,27 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
           ...getPostHogHeaders(),
         },
         body: JSON.stringify({
-          items: cartItems.map((item) => ({
-            priceId: item.priceId,
-            quantity: item.quantity,
-          })),
+          items,
+          previousSessionId: readStoredSessionId(),
         }),
       });
-      const data: { url?: string; error?: string } = await res.json();
+      const data: { url?: string; sessionId?: string; error?: string } = await res.json();
       if (!res.ok) {
         setError(data.error || "Checkout failed");
         getPostHog()?.capture("checkout_error", {
           reason: data.error || "unknown",
           source: "api_response",
         });
+        if (/available/i.test(data.error ?? "")) {
+          // The server already released any previous session we sent, so the
+          // stored id is spent; dropping it lets the re-sync below trust the
+          // stock it sees. Stale price or stock: the drawer shows what changed.
+          clearStoredSessionId();
+          await refreshCart();
+        }
         return;
       }
+      if (data.sessionId) storeSessionId(data.sessionId);
       window.location.href = data.url!;
     } catch (err) {
       setError("Failed to connect to checkout service");
@@ -86,6 +133,8 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
       setCheckoutLoading(false);
     }
   };
+
+  const estimatedShipping = estimatedShippingCents(cartTotal);
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
@@ -104,6 +153,16 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
           </IconButton>
         </Box>
         <Divider />
+
+        {cartNotices.length > 0 && (
+          <Alert severity="info" onClose={dismissCartNotices} sx={{ mt: 2 }}>
+            {cartNotices.map((change, i) => (
+              <Typography key={i} variant="body2">
+                {describeCartChange(change)}
+              </Typography>
+            ))}
+          </Alert>
+        )}
 
         {cartItems.length === 0 ? (
           <Typography sx={{ py: 4, textAlign: "center", color: "text.secondary" }}>
@@ -163,6 +222,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                       <IconButton
                         size="small"
                         onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                        disabled={item.quantity >= maxQuantityFor(item)}
                         aria-label={`Increase quantity of ${item.name}`}
                       >
                         <Add fontSize="small" />
@@ -185,16 +245,28 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
               ))}
             </List>
             <Divider sx={{ my: 2 }} />
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                mb: 2,
-              }}
-            >
-              <Typography variant="h6">Total</Typography>
-              <Typography variant="h6">{formatPrice(cartTotal)}</Typography>
+            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+              <Typography variant="body2">Subtotal</Typography>
+              <Typography variant="body2">{formatPrice(cartTotal)}</Typography>
             </Box>
+            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+              <Box>
+                <Typography variant="body2">Estimated shipping</Typography>
+                {cartTotal >= SIGNATURE_THRESHOLD_CENTS && (
+                  <Typography variant="caption" color="text.secondary">
+                    includes signature confirmation
+                  </Typography>
+                )}
+              </Box>
+              <Typography variant="body2">{formatPrice(estimatedShipping)}</Typography>
+            </Box>
+            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+              <Typography variant="h6">Estimated total</Typography>
+              <Typography variant="h6">{formatPrice(cartTotal + estimatedShipping)}</Typography>
+            </Box>
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
+              Tax calculated at checkout.
+            </Typography>
             {error && (
               <Alert severity="error" sx={{ mb: 2 }}>
                 {error}

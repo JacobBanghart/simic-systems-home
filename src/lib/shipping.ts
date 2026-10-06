@@ -24,3 +24,14 @@ export function shippingRateAppliesTo(
   if (max !== undefined && subtotalCents >= max) return false;
   return true;
 }
+
+// Display copy of the tiers above, for pages, structured data and the cart
+// estimate. Stripe (terraform/stripe/shipping.tf) is what actually charges;
+// tests/terraform-catalog.test.ts keeps these numbers in step with it.
+export const SIGNATURE_THRESHOLD_CENTS = 25000;
+export const STANDARD_SHIPPING_CENTS = 800;
+export const SIGNATURE_SHIPPING_CENTS = 1500;
+
+export function estimatedShippingCents(subtotalCents: number): number {
+  return subtotalCents >= SIGNATURE_THRESHOLD_CENTS ? SIGNATURE_SHIPPING_CENTS : STANDARD_SHIPPING_CENTS;
+}

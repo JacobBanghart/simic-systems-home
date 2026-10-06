@@ -3,6 +3,11 @@ import type { ProductData } from "../types";
 
 export const PRODUCT_CACHE_KEY = "products";
 export const PRODUCT_CACHE_TTL_SECONDS = 60;
+// A longer-lived copy of the last successful catalog fetch, served when Stripe
+// is unreachable so an outage shows (possibly slightly stale) products instead
+// of an empty store. Checkout re-checks live stock and prices regardless.
+export const PRODUCT_LAST_GOOD_KEY = "products:last-good";
+const PRODUCT_LAST_GOOD_TTL_SECONDS = 7 * 24 * 60 * 60;
 
 interface StoreEnv {
   PRODUCT_CACHE: KVNamespace;
@@ -61,6 +66,37 @@ export function mapStripeProduct(
   };
 }
 
+async function fetchProductsFromStripe(secretKey: string): Promise<ProductData[]> {
+  const stripe = new Stripe(secretKey);
+  const [stripeProducts, activePrices] = await Promise.all([
+    stripe.products.list({
+      active: true,
+      limit: 100,
+      expand: ["data.default_price"],
+    }),
+    stripe.prices.list({ active: true, limit: 100 }).autoPagingToArray({ limit: 1000 }),
+  ]);
+  const pricesByLookupKey = new Map(
+    activePrices
+      .filter((price) => price.lookup_key)
+      .map((price) => [price.lookup_key as string, price])
+  );
+
+  return stripeProducts.data
+    .map((product) => {
+      const key = product.metadata.catalogKey;
+      return mapStripeProduct(product, key ? pricesByLookupKey.get(key) : undefined);
+    })
+    .filter((product): product is ProductData => Boolean(product))
+    .sort((left, right) => {
+      if (left.sortOrder !== right.sortOrder) {
+        return left.sortOrder - right.sortOrder;
+      }
+
+      return left.name.localeCompare(right.name);
+    });
+}
+
 export async function fetchStoreProducts(
   env: StoreEnv,
   options: { useCache?: boolean } = {}
@@ -78,38 +114,21 @@ export async function fetchStoreProducts(
     }
   }
 
-  const stripe = new Stripe(env.STRIPE_SECRET_KEY);
-  const [stripeProducts, activePrices] = await Promise.all([
-    stripe.products.list({
-      active: true,
-      limit: 100,
-      expand: ["data.default_price"],
-    }),
-    stripe.prices.list({ active: true, limit: 100 }).autoPagingToArray({ limit: 1000 }),
+  let products: ProductData[];
+  try {
+    products = await fetchProductsFromStripe(env.STRIPE_SECRET_KEY);
+  } catch (err) {
+    const lastGood = (await env.PRODUCT_CACHE.get(PRODUCT_LAST_GOOD_KEY, "json")) as ProductData[] | null;
+    if (!lastGood) throw err;
+    console.error("Stripe product fetch failed; serving last-known-good catalog:", err);
+    return lastGood;
+  }
+
+  const serialized = JSON.stringify(products);
+  await Promise.all([
+    env.PRODUCT_CACHE.put(PRODUCT_CACHE_KEY, serialized, { expirationTtl: PRODUCT_CACHE_TTL_SECONDS }),
+    env.PRODUCT_CACHE.put(PRODUCT_LAST_GOOD_KEY, serialized, { expirationTtl: PRODUCT_LAST_GOOD_TTL_SECONDS }),
   ]);
-  const pricesByLookupKey = new Map(
-    activePrices
-      .filter((price) => price.lookup_key)
-      .map((price) => [price.lookup_key as string, price])
-  );
-
-  const products = stripeProducts.data
-    .map((product) => {
-      const key = product.metadata.catalogKey;
-      return mapStripeProduct(product, key ? pricesByLookupKey.get(key) : undefined);
-    })
-    .filter((product): product is ProductData => Boolean(product))
-    .sort((left, right) => {
-      if (left.sortOrder !== right.sortOrder) {
-        return left.sortOrder - right.sortOrder;
-      }
-
-      return left.name.localeCompare(right.name);
-    });
-
-  await env.PRODUCT_CACHE.put(PRODUCT_CACHE_KEY, JSON.stringify(products), {
-    expirationTtl: PRODUCT_CACHE_TTL_SECONDS,
-  });
 
   return products;
 }
@@ -118,22 +137,57 @@ export async function invalidateProductCache(env: StoreEnv): Promise<void> {
   await env.PRODUCT_CACHE.delete(PRODUCT_CACHE_KEY);
 }
 
-// Applies a signed delta (positive to restore/release, negative to reserve)
-// to a product's stock metadata. Re-reads live stock rather than working off
-// a snapshot, so concurrent callers don't clobber each other's adjustments —
-// this still isn't a true atomic increment (there's a small read-then-write
-// window), but that's an acceptable trade-off given how infrequently this
-// runs (checkout creation/rollback and expired-session cleanup only, not
-// high-frequency traffic).
+// product.updated also fires for every stock change (checkout reservations,
+// releases, restocks all write metadata.quantity). Those aren't content
+// changes worth asking search engines to recrawl for.
+export function isStockOnlyUpdate(previousAttributes: Record<string, unknown> | undefined): boolean {
+  if (!previousAttributes) return false;
+  return Object.entries(previousAttributes).every(([key, value]) => {
+    if (key === "updated") return true;
+    if (key !== "metadata" || !value || typeof value !== "object") return false;
+    return Object.keys(value).every((metadataKey) => metadataKey === "quantity");
+  });
+}
+
+export class InsufficientStockError extends Error {
+  constructor(
+    readonly productId: string,
+    readonly productName: string,
+    readonly available: number
+  ) {
+    super(
+      available > 0
+        ? `${productName} only has ${available} available`
+        : `${productName} is unavailable right now — it may be held in another active checkout. Please try again in a few minutes.`
+    );
+    this.name = "InsufficientStockError";
+  }
+}
+
+// Applies a signed integer delta (positive to restore/release, negative to
+// reserve) to a product's stock metadata, re-reading live stock first. A
+// reservation that would take stock below zero throws InsufficientStockError
+// instead of clamping: clamping let two checkouts both "reserve" the last unit
+// (overselling it) and later released both, inflating stock above what exists.
+// Still not a true atomic decrement — two writers can interleave between the
+// read and the write — but at this store's volume that window is tiny.
 export async function adjustProductStock(
   stripe: Stripe,
   productId: string,
   delta: number
 ): Promise<void> {
+  if (!Number.isInteger(delta)) {
+    throw new Error(`Stock delta must be an integer, got ${delta}`);
+  }
+  if (delta === 0) return;
   const product = await stripe.products.retrieve(productId);
-  const liveQuantity = parseInteger(product.metadata.quantity, 0);
+  const liveQuantity = Math.max(0, parseInteger(product.metadata.quantity, 0));
+  const next = liveQuantity + delta;
+  if (next < 0) {
+    throw new InsufficientStockError(productId, product.name || "This product", liveQuantity);
+  }
   await stripe.products.update(productId, {
-    metadata: { quantity: String(Math.max(0, liveQuantity + delta)) },
+    metadata: { quantity: String(next) },
   });
 }
 
@@ -150,15 +204,27 @@ export async function retrieveSessionLineItems(
   return { session, lineItems: session.line_items?.data || [] };
 }
 
-// Restores (or applies) each line item's quantity as a stock delta — used to
-// release a reservation on checkout.session.expired and to restore stock on
-// a full charge.refunded. Line items with an unexpanded/missing product are
-// skipped rather than erroring, since that shouldn't be possible given the
-// expand above but isn't guaranteed by the type.
-export async function restoreLineItemStock(stripe: Stripe, lineItems: Stripe.LineItem[]): Promise<void> {
+// Puts each line item's quantity back into stock — used to release a
+// reservation (expired/cancelled/failed checkout) and to restock a refund.
+// With `dedupe`, each product is marked in KV as it's restored, so when a
+// later item fails and Stripe retries the webhook, items already restored on
+// the first attempt aren't restored a second time. Line items with an
+// unexpanded product are skipped (shouldn't happen given the expand in
+// retrieveSessionLineItems, but isn't guaranteed by the type).
+export async function restoreLineItemStock(
+  stripe: Stripe,
+  lineItems: Stripe.LineItem[],
+  dedupe?: { kv: KVNamespace; key: string }
+): Promise<void> {
   for (const lineItem of lineItems) {
     const price = lineItem.price;
     if (!price || !price.product || typeof price.product === "string") continue;
-    await adjustProductStock(stripe, price.product.id, lineItem.quantity || 0);
+    const productId = price.product.id;
+    const marker = dedupe ? `${dedupe.key}:${productId}` : undefined;
+    if (dedupe && marker && (await dedupe.kv.get(marker))) continue;
+    await adjustProductStock(stripe, productId, lineItem.quantity || 0);
+    if (dedupe && marker) {
+      await dedupe.kv.put(marker, "1", { expirationTtl: 30 * 24 * 60 * 60 });
+    }
   }
 }

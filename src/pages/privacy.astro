@@ -15,7 +15,7 @@ import { SITE_TITLE } from '../consts';
 		<main>
 			<article>
 				<h1>Privacy Policy</h1>
-				<p><em>Last updated: March 7, 2026</em></p>
+				<p><em>Last updated: October 6, 2026</em></p>
 
 				<p>
 					Simic Systems ("we," "us," or "our") operates the website at simic.systems. This Privacy Policy describes how we collect, use, and protect your personal information when you use our website and make purchases.
@@ -28,6 +28,7 @@ import { SITE_TITLE } from '../consts';
 					<li><strong>Payment information</strong> — processed securely by Stripe; we do not store your credit card details</li>
 					<li><strong>Order information</strong> — items purchased, order total, transaction ID</li>
 				</ul>
+				<p>When you browse the site, we also collect usage information through analytics (see Third-Party Services and Cookies below): the pages you view, products you look at, items you add to or remove from your cart, checkout steps, on-site search terms, and basic device and browser details. We do not send your name, email address, or shipping address to our analytics provider.</p>
 
 				<h2>How We Use Your Information</h2>
 				<p>We use the information we collect to:</p>
@@ -35,6 +36,7 @@ import { SITE_TITLE } from '../consts';
 					<li>Process and fulfill your orders</li>
 					<li>Send order confirmations and shipping updates</li>
 					<li>Respond to customer service inquiries</li>
+					<li>Understand how the site is used so we can fix problems and improve it</li>
 					<li>Comply with legal obligations</li>
 				</ul>
 
@@ -44,9 +46,10 @@ import { SITE_TITLE } from '../consts';
 				</p>
 				<ul>
 					<li><strong>Stripe</strong> — payment processing. Stripe's privacy policy governs how they handle your payment data.</li>
-					<li><strong>Cloudflare</strong> — website hosting and delivery.</li>
-					<li><strong>USPS</strong> — order shipping and delivery.</li>
-					<li><strong>Ahrefs Analytics</strong> — website traffic analytics. Ahrefs Analytics is cookieless and does not collect personal data or use tracking cookies. No personally identifiable information is transmitted to Ahrefs.</li>
+					<li><strong>Cloudflare</strong> — website hosting and delivery, and Cloudflare Email Service, which sends our transactional emails (order confirmations and shipping notifications with tracking) from orders@simic.systems. Your email address and order details are passed to it for that purpose.</li>
+					<li><strong>Pirate Ship, USPS, and UPS</strong> — we buy shipping labels through Pirate Ship, and your name and shipping address are shared with it and with the carrier (USPS or UPS) so your order can be delivered.</li>
+					<li><strong>PostHog</strong> — product analytics. PostHog records page views, clicks and similar interactions, events such as adding to cart and the steps of checkout, and the terms you search for on the site. It uses an identifier stored in your browser (a first-party cookie and/or local storage) to recognize your browser across visits. When you start checkout, that anonymous identifier is passed to Stripe as a reference ID so that we can connect a completed order to the browsing session that led to it; order totals and item counts are recorded in PostHog, but not your name, email, or address. PostHog's privacy policy governs how it handles this data.</li>
+					<li><strong>Ahrefs Analytics</strong> — website traffic analytics. Ahrefs Analytics is cookieless and does not use tracking cookies or collect personal data. No personally identifiable information is transmitted to Ahrefs.</li>
 				</ul>
 				<p>We do not sell, trade, or rent your personal information to third parties.</p>
 
@@ -55,9 +58,14 @@ import { SITE_TITLE } from '../consts';
 					We retain order records as needed to fulfill orders, provide customer support, and comply with legal requirements. You may request deletion of your personal data by contacting us.
 				</p>
 
-				<h2>Cookies</h2>
+				<h2>Cookies and Local Storage</h2>
 				<p>
-					Our website uses local storage to maintain your shopping cart. We use Ahrefs Analytics for website traffic measurement; it is cookieless and does not use tracking cookies or collect personal data. We do not use any other third-party tracking cookies or analytics services.
+					Our website uses your browser's local storage to keep your shopping cart. Our analytics provider, PostHog, sets a first-party cookie and/or local storage entry containing an anonymous identifier so it can recognize your browser between visits. Ahrefs Analytics is cookieless. We do not use advertising or cross-site tracking cookies, and we do not sell your data.
+				</p>
+
+				<h2>Your Choices</h2>
+				<p>
+					You can block or clear cookies and local storage in your browser settings, or use a browser with tracking protection or a content blocker, to limit analytics; the store will still work, though your cart may not be saved between visits. To ask us to delete the data we hold about you, email <a href="mailto:contact@simic.systems">contact@simic.systems</a>.
 				</p>
 
 				<h2>Your Rights</h2>

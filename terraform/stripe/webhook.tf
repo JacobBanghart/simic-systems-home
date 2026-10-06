@@ -24,6 +24,8 @@ resource "stripe_webhook_endpoint" "storefront" {
     "price.deleted",
     "price.updated",
     "checkout.session.expired",
+    "checkout.session.async_payment_succeeded",
+    "checkout.session.async_payment_failed",
     "charge.refunded",
     "charge.dispute.created",
   ]

@@ -1,43 +1,51 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
-import type { CartItem, ProductData } from "../types";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  type ReactNode,
+} from "react";
+import type { ProductData } from "../types";
 import {
   addItem,
   removeItem,
   setItemQuantity,
   cartTotal as calcTotal,
   cartCount as calcCount,
+  isValidCartItem,
+  normalizeCart,
+  reconcileCart,
+  type CartChange,
+  type CartLine,
 } from "../lib/cart";
 import { getPostHog } from "../lib/posthog-client";
 
 interface CartContextValue {
-  cartItems: CartItem[];
+  cartItems: CartLine[];
   addToCart: (product: ProductData) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   cartTotal: number;
   cartCount: number;
+  /** Changes made by the last reconcile(s) that the shopper hasn't dismissed yet. */
+  cartNotices: CartChange[];
+  dismissCartNotices: () => void;
+  /**
+   * Re-sync the cart with the live catalogue (prices, stock, availability).
+   * Resolves with the changes it made; a failed /api/products fetch leaves the
+   * cart untouched and resolves with [].
+   */
+  refreshCart: () => Promise<CartChange[]>;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
 
 const STORAGE_KEY = "simic-cart";
 
-function isValidCartItem(item: unknown): item is CartItem {
-  if (typeof item !== "object" || item === null) return false;
-  const record = item as Record<string, unknown>;
-  return (
-    typeof record.productId === "string" &&
-    typeof record.priceId === "string" &&
-    typeof record.name === "string" &&
-    typeof record.price === "number" &&
-    typeof record.image === "string" &&
-    typeof record.quantity === "number" &&
-    record.quantity > 0
-  );
-}
-
-function loadCart(): CartItem[] {
+function loadCart(): CartLine[] {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return [];
@@ -47,7 +55,7 @@ function loadCart(): CartItem[] {
     if (valid.length !== parsed.length) {
       console.warn("Cleared invalid items from cart");
     }
-    return valid;
+    return normalizeCart(valid);
   } catch {
     console.warn("Failed to parse cart from localStorage, resetting");
     localStorage.removeItem(STORAGE_KEY);
@@ -56,14 +64,61 @@ function loadCart(): CartItem[] {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartItems, setCartItems] = useState<CartLine[]>([]);
   const [initialized, setInitialized] = useState(false);
+  const [cartNotices, setCartNotices] = useState<CartChange[]>([]);
+  const cartRef = useRef<CartLine[]>([]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating from localStorage on mount
-    setCartItems(loadCart());
-    setInitialized(true);
+    cartRef.current = cartItems;
+  }, [cartItems]);
+
+  const refreshCart = useCallback(async (): Promise<CartChange[]> => {
+    if (cartRef.current.length === 0) return [];
+    let products: ProductData[];
+    try {
+      const res = await fetch("/api/products");
+      if (!res.ok) return [];
+      const data: unknown = await res.json();
+      if (!Array.isArray(data)) return [];
+      products = data as ProductData[];
+    } catch {
+      return [];
+    }
+    // While a checkout session id is stored, the shopper may have just backed
+    // out of Stripe, and that session is still holding their items: the
+    // storefront shows them as sold out *because of the shopper's own hold*.
+    // Keep stock out of it then; checkout releases that hold
+    // (previousSessionId) and the server re-checks stock anyway.
+    let ownHoldPossible = false;
+    try {
+      ownHoldPossible = Boolean(localStorage.getItem("simic-checkout-session"));
+    } catch {
+      // ignore
+    }
+    // Read the ref after the await so we reconcile the latest cart.
+    const { cart, changes } = reconcileCart(cartRef.current, products, { ignoreStock: ownHoldPossible });
+    if (cart !== cartRef.current) {
+      cartRef.current = cart;
+      setCartItems(cart);
+    }
+    if (changes.length > 0) {
+      setCartNotices((prev) => [...prev, ...changes]);
+      getPostHog()?.capture("cart_reconciled", {
+        changes: changes.map((c) => c.type),
+      });
+    }
+    return changes;
   }, []);
+
+  useEffect(() => {
+    const loaded = loadCart();
+    cartRef.current = loaded;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating from localStorage on mount
+    setCartItems(loaded);
+    setInitialized(true);
+    void refreshCart();
+  }, [refreshCart]);
 
   useEffect(() => {
     if (initialized) {
@@ -104,8 +159,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const updateQuantity = (productId: string, quantity: number) => {
     const existing = cartItems.find((item) => item.productId === productId);
     setCartItems((prev) => setItemQuantity(prev, productId, quantity));
-    if (!existing || existing.quantity === quantity) return;
-    if (quantity <= 0) {
+    if (!existing) return;
+    // Report the quantity actually applied (capped at stock), not the requested one.
+    const applied =
+      setItemQuantity(cartItems, productId, quantity).find((item) => item.productId === productId)
+        ?.quantity ?? 0;
+    if (existing.quantity === applied) return;
+    if (applied <= 0) {
       getPostHog()?.capture("cart_item_removed", {
         product_slug: productId,
         product_name: existing.name,
@@ -116,12 +176,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
         product_slug: productId,
         product_name: existing.name,
         previous_quantity: existing.quantity,
-        new_quantity: quantity,
+        new_quantity: applied,
       });
     }
   };
 
   const clearCart = () => setCartItems([]);
+
+  const dismissCartNotices = useCallback(() => setCartNotices([]), []);
 
   return (
     <CartContext.Provider
@@ -133,6 +195,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         clearCart,
         cartTotal: calcTotal(cartItems),
         cartCount: calcCount(cartItems),
+        cartNotices,
+        dismissCartNotices,
+        refreshCart,
       }}
     >
       {children}

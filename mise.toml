@@ -8,7 +8,9 @@ terraform = "1.15.8"
 [tasks."tf:stripe"]
 description = "Terraform for terraform/stripe (live key from .env STRIPE_LIVE_SECRET_KEY)"
 dir = "terraform/stripe"
-run = 'STRIPE_API_KEY="$(grep -E "^STRIPE_LIVE_SECRET_KEY=" ../../.env | cut -d= -f2-)" terraform'
+# TF_WORKSPACE pinned so a `terraform workspace select sandbox` left behind in
+# .terraform/environment can never pair the live key with sandbox state.
+run = 'TF_WORKSPACE=default STRIPE_API_KEY="$(grep -E "^STRIPE_LIVE_SECRET_KEY=" ../../.env | cut -d= -f2-)" terraform'
 
 [tasks."tf:stripe-sandbox"]
 description = "Terraform for terraform/stripe against the Stripe SANDBOX (workspace 'sandbox', key from Vault)"

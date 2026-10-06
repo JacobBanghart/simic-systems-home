@@ -1,5 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
-import { mapStripeProduct, parseInteger, adjustProductStock } from "../src/lib/stripeProducts";
+import {
+  mapStripeProduct,
+  parseInteger,
+  adjustProductStock,
+  restoreLineItemStock,
+  InsufficientStockError,
+} from "../src/lib/stripeProducts";
 import type Stripe from "stripe";
 
 function fakeStripeProduct(
@@ -140,6 +146,7 @@ describe("mapStripeProduct", () => {
 function fakeStripeForStock(currentQuantity: string | undefined) {
   const retrieve = vi.fn().mockResolvedValue({
     id: "prod_test",
+    name: "Test Box",
     metadata: currentQuantity === undefined ? {} : { quantity: currentQuantity },
   });
   const update = vi.fn().mockResolvedValue({});
@@ -160,10 +167,32 @@ describe("adjustProductStock", () => {
     expect(update).toHaveBeenCalledWith("prod_test", { metadata: { quantity: "3" } });
   });
 
-  it("floors at 0 rather than going negative", async () => {
+  it("refuses a reservation that would go below zero instead of clamping", async () => {
     const { stripe, update } = fakeStripeForStock("2");
-    await adjustProductStock(stripe, "prod_test", -5);
+    await expect(adjustProductStock(stripe, "prod_test", -5)).rejects.toBeInstanceOf(InsufficientStockError);
+    await expect(adjustProductStock(stripe, "prod_test", -5)).rejects.toThrow("Test Box only has 2 available");
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("can take the last unit", async () => {
+    const { stripe, update } = fakeStripeForStock("1");
+    await adjustProductStock(stripe, "prod_test", -1);
     expect(update).toHaveBeenCalledWith("prod_test", { metadata: { quantity: "0" } });
+  });
+
+  it("rejects non-integer deltas before touching Stripe", async () => {
+    const { stripe, retrieve, update } = fakeStripeForStock("5");
+    for (const bad of [Number.NaN, 0.5, -1.5, Number.POSITIVE_INFINITY]) {
+      await expect(adjustProductStock(stripe, "prod_test", bad)).rejects.toThrow("integer");
+    }
+    expect(retrieve).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("is a no-op for a zero delta", async () => {
+    const { stripe, retrieve } = fakeStripeForStock("5");
+    await adjustProductStock(stripe, "prod_test", 0);
+    expect(retrieve).not.toHaveBeenCalled();
   });
 
   it("treats missing quantity metadata as 0", async () => {
@@ -203,5 +232,38 @@ describe("mapStripeProduct with a lookup-key price", () => {
   it("uses the lookup-key price when default_price is unset", () => {
     const result = mapStripeProduct(fakeStripeProduct({ default_price: null }), lookupPrice);
     expect(result?.priceId).toBe("price_lookup789");
+  });
+});
+
+describe("restoreLineItemStock", () => {
+  function fakeKv() {
+    const store = new Map<string, string>();
+    return {
+      store,
+      kv: {
+        get: vi.fn(async (k: string) => store.get(k) ?? null),
+        put: vi.fn(async (k: string, v: string) => void store.set(k, v)),
+      } as unknown as KVNamespace,
+    };
+  }
+  const lineItem = (productId: string, quantity: number) =>
+    ({ quantity, price: { product: { id: productId } } }) as unknown as Stripe.LineItem;
+
+  it("does not re-restore items already restored when a retry follows a partial failure", async () => {
+    const { kv } = fakeKv();
+    const retrieve = vi.fn().mockResolvedValue({ name: "Box", metadata: { quantity: "0" } });
+    const update = vi
+      .fn()
+      .mockResolvedValueOnce({}) // prod_a ok
+      .mockRejectedValueOnce(new Error("Stripe 500")) // prod_b fails
+      .mockResolvedValue({});
+    const stripe = { products: { retrieve, update } } as unknown as Stripe;
+    const items = [lineItem("prod_a", 1), lineItem("prod_b", 2)];
+
+    await expect(restoreLineItemStock(stripe, items, { kv, key: "stock-released:cs_1" })).rejects.toThrow("Stripe 500");
+    await restoreLineItemStock(stripe, items, { kv, key: "stock-released:cs_1" });
+
+    const updatedIds = update.mock.calls.map(([id]) => id);
+    expect(updatedIds).toEqual(["prod_a", "prod_b", "prod_b"]);
   });
 });

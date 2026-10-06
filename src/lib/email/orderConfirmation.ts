@@ -75,7 +75,7 @@ const DARK: Record<keyof typeof C, string> = {
   line: "#1c2e2a",
   text: "#dbe5e0",
   muted: "#8aa39b",
-  faint: "${C.faint}",
+  faint: "#6f8a82",
   accent: "#00dfc1",
   bio: "#9dff00",
   teal: "#0a9396",

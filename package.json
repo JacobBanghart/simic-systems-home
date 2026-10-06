@@ -42,7 +42,7 @@
     "astro": "astro",
     "build": "astro build && node scripts/patch-sitemap-index.mjs",
     "check": "astro build && node scripts/patch-sitemap-index.mjs && node scripts/patch-wrangler-deploy.mjs && tsc && wrangler deploy --config dist/server/wrangler.json --dry-run",
-    "deploy": "astro build && node scripts/patch-sitemap-index.mjs && node scripts/patch-wrangler-deploy.mjs && wrangler deploy --config dist/server/wrangler.json",
+    "deploy": "node scripts/predeploy-check.mjs && astro build && node scripts/patch-sitemap-index.mjs && node scripts/patch-wrangler-deploy.mjs && wrangler deploy --config dist/server/wrangler.json",
     "dev": "astro dev",
     "format": "prettier --write 'src/**/*.{ts,tsx,astro,css}'",
     "lint": "eslint src/",

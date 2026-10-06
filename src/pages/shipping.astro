@@ -5,15 +5,20 @@ import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE_TITLE } from '../consts';
+import { SIGNATURE_THRESHOLD_CENTS, STANDARD_SHIPPING_CENTS, SIGNATURE_SHIPPING_CENTS } from '../lib/shipping';
 
 const nonce = Astro.locals.nonce;
+const dollars = (cents: number) => `$${cents / 100}`;
+const standardRate = dollars(STANDARD_SHIPPING_CENTS);
+const signatureRate = dollars(SIGNATURE_SHIPPING_CENTS);
+const signatureThreshold = dollars(SIGNATURE_THRESHOLD_CENTS);
 
 const shippingSchema = {
 	"@context": "https://schema.org",
 	"@type": "WebPage",
 	"name": "Shipping Policy",
 	"url": "https://simic.systems/shipping/",
-	"description": "Shipping policy for Simic Systems. US shipping only. All sales final.",
+	"description": "Shipping policy for Simic Systems. US shipping only. Flat $8 shipping under $250; $15 with Signature Confirmation for $250 or more. All sales final.",
 	"mainEntity": {
 		"@type": "MerchantReturnPolicy",
 		"name": "Simic Systems Return Policy",
@@ -44,8 +49,23 @@ const shippingSchema = {
 					<li>Orders are typically processed and shipped within 1–3 business days.</li>
 					<li>You will receive a shipping confirmation email with tracking information once your order has shipped.</li>
 					<li>Delivery times vary by location but generally take 3–7 business days after shipment.</li>
-					<li>Orders over <strong>$250</strong> require a signature upon delivery for security.</li>
+					<li>Every order is insured for its full value.</li>
+					<li>Sales tax, where applicable, is calculated at checkout.</li>
 				</ul>
+
+				<h2>Shipping Rates</h2>
+				<table class="rates">
+					<thead>
+						<tr><th scope="col">Order subtotal</th><th scope="col">Shipping</th><th scope="col">Service</th></tr>
+					</thead>
+					<tbody>
+						<tr><td>Under {signatureThreshold}</td><td>{standardRate}</td><td>USPS Ground Advantage</td></tr>
+						<tr><td>{signatureThreshold} or more</td><td>{signatureRate}</td><td>USPS Ground Advantage with Signature Confirmation</td></tr>
+					</tbody>
+				</table>
+				<p>
+					Shipping is a flat rate per order, not per item. Orders of {signatureThreshold} or more require a signature upon delivery, since sealed product at that value is worth protecting.
+				</p>
 
 				<h2>Return Policy</h2>
 				<p>
@@ -83,5 +103,16 @@ const shippingSchema = {
 	}
 	li {
 		margin-bottom: 0.5em;
+	}
+	.rates {
+		width: 100%;
+		border-collapse: collapse;
+		margin-bottom: 1rem;
+	}
+	.rates th,
+	.rates td {
+		text-align: left;
+		padding: 0.6rem 0.75rem;
+		border-bottom: 1px solid rgba(var(--gray-light), 0.6);
 	}
 </style>

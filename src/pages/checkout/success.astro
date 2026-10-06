@@ -5,10 +5,15 @@ import Footer from "../../components/Footer.astro";
 import { SITE_TITLE } from "../../consts";
 import Stripe from "stripe";
 import { env } from "cloudflare:workers";
+import { isCheckoutSessionId } from "../../lib/checkoutSessions";
+import { orderNumberFor } from "../../lib/email/fromCheckoutSession";
 
 export const prerender = false;
 
-const sessionId = Astro.url.searchParams.get("session_id");
+// Only ever a real Checkout session id: the value is echoed into an inline
+// script below, so anything else is dropped rather than escaped and trusted.
+const rawSessionId = Astro.url.searchParams.get("session_id");
+const sessionId = isCheckoutSessionId(rawSessionId) ? rawSessionId : null;
 
 let session: Stripe.Checkout.Session | null = null;
 let lineItems: Stripe.LineItem[] = [];
@@ -28,25 +33,42 @@ if (sessionId) {
   }
 }
 
+// "paid" is the normal card case; a completed-but-unpaid session is a delayed
+// payment method (e.g. bank debit) that hasn't cleared yet.
+const paid = session?.status === "complete" && session.payment_status !== "unpaid";
+const processing = session?.status === "complete" && session.payment_status === "unpaid";
+const orderNumber = session && (paid || processing) ? orderNumberFor(session) : null;
 const email = session?.customer_details?.email;
-const shipping = session?.shipping_details;
+// Newer API versions moved shipping details under collected_information.
+const shipping =
+  session?.collected_information?.shipping_details ??
+  (session as unknown as { shipping_details?: Stripe.Checkout.Session.CollectedInformation.ShippingDetails } | null)
+    ?.shipping_details;
+
+// The page shows order details to whoever holds the URL: keep it out of
+// shared/browser caches.
+Astro.response.headers.set("Cache-Control", "no-store");
 
 const nonce = Astro.locals.nonce;
 
-// Vars are inlined via a template literal (JSON.stringify'd) instead of
-// define:vars — the Astro compiler silently drops any other dynamic
-// attribute (including nonce={...}) from a <script> tag that also uses
-// define:vars.
-const orderConfirmedScript = `(function(){
-var stripeSessionId = ${JSON.stringify(sessionId ?? null)};
-var amountTotal = ${JSON.stringify(session?.amount_total ?? null)};
-var itemCount = ${JSON.stringify(lineItems.reduce((s, i) => s + (i.quantity ?? 0), 0))};
+// JSON.stringify doesn't escape "<", so a value containing "</script>" could
+// close the tag early; \u003c keeps the inline script inert either way.
+const toScript = (value: unknown) => JSON.stringify(value).replace(/</g, "\\u003c");
+
+// Vars are inlined via a template literal instead of define:vars — the Astro
+// compiler silently drops any other dynamic attribute (including nonce={...})
+// from a <script> tag that also uses define:vars.
+const orderConfirmedScript = paid
+  ? `(function(){
+localStorage.removeItem("simic-cart");
+localStorage.removeItem("simic-checkout-session");
 window.posthog?.capture('order_confirmed', {
-  stripe_session_id: stripeSessionId,
-  amount_total_cents: amountTotal,
-  item_count: itemCount,
+  stripe_session_id: ${toScript(sessionId)},
+  amount_total_cents: ${toScript(session?.amount_total ?? null)},
+  item_count: ${toScript(lineItems.reduce((s, i) => s + (i.quantity ?? 0), 0))},
 });
-})();`;
+})();`
+  : "";
 ---
 
 <!doctype html>
@@ -120,12 +142,32 @@ window.posthog?.capture('order_confirmed', {
     <Header />
     <main>
       <div class="order-header">
-        <h1>Thank you for your order!</h1>
-        {email && <p>A confirmation receipt has been sent to <strong>{email}</strong>.</p>}
-        {!session && <p>Your payment was successful. You'll receive a confirmation email from Stripe.</p>}
+        {paid && (
+          <>
+            <h1>Thank you for your order!</h1>
+            <p>Order <strong>{orderNumber}</strong></p>
+            {email && <p>A confirmation has been sent to <strong>{email}</strong>.</p>}
+          </>
+        )}
+        {processing && (
+          <>
+            <h1>Your payment is processing</h1>
+            <p>Order <strong>{orderNumber}</strong></p>
+            <p>We'll email {email ? <strong>{email}</strong> : "you"} as soon as your payment clears. Your order ships after that.</p>
+          </>
+        )}
+        {!paid && !processing && (
+          <>
+            <h1>We couldn't find that order</h1>
+            <p>
+              If you just paid, check your email for a receipt from Stripe and an order confirmation from us.
+              Questions? <a href="/contact/">Contact us</a>.
+            </p>
+          </>
+        )}
       </div>
 
-      {lineItems.length > 0 && (
+      {(paid || processing) && lineItems.length > 0 && (
         <div class="order-section">
           <h2>Items Ordered</h2>
           {lineItems.map((item) => (
@@ -137,7 +179,7 @@ window.posthog?.capture('order_confirmed', {
         </div>
       )}
 
-      {session && (
+      {(paid || processing) && session && (
         <div class="order-section">
           {session.shipping_cost && session.shipping_cost.amount_total > 0 && (
             <div class="line-item">
@@ -158,7 +200,7 @@ window.posthog?.capture('order_confirmed', {
         </div>
       )}
 
-      {shipping?.address && (
+      {(paid || processing) && shipping?.address && (
         <div class="order-section">
           <h2>Shipping To</h2>
           <p style="margin: 0; line-height: 1.6;">
@@ -175,9 +217,6 @@ window.posthog?.capture('order_confirmed', {
       </div>
     </main>
     <Footer />
-    <script nonce={nonce}>
-      localStorage.removeItem("simic-cart");
-    </script>
-    <script is:inline nonce={nonce} set:html={orderConfirmedScript} />
+    {orderConfirmedScript && <script is:inline nonce={nonce} set:html={orderConfirmedScript} />}
   </body>
 </html>

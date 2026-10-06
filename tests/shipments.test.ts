@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { detectCarrier, shipmentFor } from "../src/lib/email/carriers";
-import { needsShippedEmail } from "../src/lib/email/shipments";
+import type Stripe from "stripe";
+import { isRefundedOrDisputed, needsShippedEmail } from "../src/lib/email/shipments";
 import { renderOrderConfirmation, type OrderEmailData } from "../src/lib/email/orderConfirmation";
 
 describe("carriers", () => {
@@ -58,5 +59,37 @@ describe("shipped email variant", () => {
     expect(subject).toBe("Order confirmed · SIM-TEST1234 · Simic Systems");
     expect(html).toContain("Total paid");
     expect(html).not.toContain("TRACK&nbsp;PACKAGE");
+  });
+});
+
+describe("carrier detection edge cases", () => {
+  it("recognises FedEx numbers instead of calling them USPS", () => {
+    expect(detectCarrier("9612019123456789012345")).toBe("FedEx");
+    expect(detectCarrier("123456789012")).toBe("FedEx");
+  });
+
+  it("accepts carrier names with a service suffix", () => {
+    expect(detectCarrier("1Z999AA10123456784", "UPS Ground")).toBe("UPS");
+  });
+
+  it("recognises USPS barcodes with the 420+ZIP routing prefix", () => {
+    expect(detectCarrier("420018529400111899223334445566")).toBe("USPS");
+  });
+
+  it("links unknown carriers to a search, not a USPS page", () => {
+    const shipment = shipmentFor("ABC123", "OnTrac");
+    expect(shipment.carrier).toBe("OnTrac");
+    expect(shipment.trackingUrl).toBe("https://www.google.com/search?q=ABC123");
+  });
+});
+
+describe("isRefundedOrDisputed", () => {
+  const pi = (charge: unknown) => ({ latest_charge: charge }) as unknown as Stripe.PaymentIntent;
+  it("skips refunded, partially refunded and disputed orders", () => {
+    expect(isRefundedOrDisputed(pi({ refunded: true, amount_refunded: 100, disputed: false }))).toBe(true);
+    expect(isRefundedOrDisputed(pi({ refunded: false, amount_refunded: 100, disputed: false }))).toBe(true);
+    expect(isRefundedOrDisputed(pi({ refunded: false, amount_refunded: 0, disputed: true }))).toBe(true);
+    expect(isRefundedOrDisputed(pi({ refunded: false, amount_refunded: 0, disputed: false }))).toBe(false);
+    expect(isRefundedOrDisputed(pi("ch_unexpanded"))).toBe(false);
   });
 });

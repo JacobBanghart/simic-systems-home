@@ -1,6 +1,10 @@
 # Checkout only offers the rates whose min/max_subtotal_cents bracket the cart
 # subtotal (src/lib/shipping.ts). Keep the two thresholds equal so every cart
 # gets exactly one option.
+#
+# create_before_destroy: changing an amount or name replaces the rate, and
+# without it there is a window where the old rate is archived and the new one
+# doesn't exist yet (checkout refuses carts with no matching rate).
 locals {
   signature_threshold_cents = "25000"
 }
@@ -19,6 +23,10 @@ resource "stripe_shipping_rate" "standard" {
   metadata = {
     max_subtotal_cents = local.signature_threshold_cents
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "stripe_shipping_rate" "signature" {
@@ -34,5 +42,9 @@ resource "stripe_shipping_rate" "signature" {
 
   metadata = {
     min_subtotal_cents = local.signature_threshold_cents
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }

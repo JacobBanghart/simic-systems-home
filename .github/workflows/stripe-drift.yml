@@ -52,29 +52,75 @@ jobs:
           echo "exitcode=$code" >> "$GITHUB_OUTPUT"
           if [ "$code" -eq 1 ]; then exit 1; fi
 
-      - name: Open or update drift issue
-        if: steps.plan.outputs.exitcode == '2'
+      # Keeps exactly one open issue per state, edited in place each run (no
+      # daily comment pile-up):
+      #   exit 0 -> plan clean: close any open drift / failing issue
+      #   exit 2 -> changes pending: create/update "Stripe drift detected".
+      #             NOTE: exit 2 also fires for Terraform changes that are
+      #             committed to main but not yet applied, not just dashboard
+      #             edits; apply (or revert) them to clear it.
+      #   other  -> plan (or init/auth) failed: create/update "Stripe drift
+      #             check failing" so a broken check is not silent
+      - name: Sync drift issues
+        if: always() && !cancelled()
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          CODE: ${{ steps.plan.outputs.exitcode }}
         run: |
-          {
-            echo "Live Stripe no longer matches \`terraform/stripe\` ($(date -u +%F))."
-            echo
-            echo "Either apply the config (\`mise run tf:stripe -- apply\`) to revert the dashboard change,"
-            echo "or update the .tf files to match what was changed on purpose."
-            echo
-            echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            echo
-            echo '```'
-            grep -E '^\s*(#|[~+-] |Plan:)' plan.txt | head -150
-            echo '```'
-          } > body.md
+          today=$(date -u +%F)
+          run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           gh label create stripe-drift --color B60205 --description "Stripe changed outside Terraform" 2>/dev/null || true
-          existing=$(gh issue list --label stripe-drift --state open --json number -q '.[0].number')
-          if [ -n "$existing" ]; then
-            gh issue comment "$existing" --body-file body.md
+          gh label create stripe-drift-error --color D93F0B --description "Stripe drift check is failing" 2>/dev/null || true
+
+          # upsert <label> <title>: body is in body.md
+          upsert() {
+            existing=$(gh issue list --label "$1" --state open --json number -q '.[0].number')
+            if [ -n "$existing" ]; then
+              gh issue edit "$existing" --title "$2" --body-file body.md
+            else
+              gh issue create --title "$2" --label "$1" --body-file body.md
+            fi
+          }
+
+          # close_all <label> <comment>
+          close_all() {
+            for n in $(gh issue list --label "$1" --state open --json number -q '.[].number'); do
+              gh issue close "$n" --comment "$2"
+            done
+          }
+
+          if [ "$CODE" = "0" ]; then
+            close_all stripe-drift "Plan is clean again as of $today"
+            close_all stripe-drift-error "Plan is clean again as of $today"
+          elif [ "$CODE" = "2" ]; then
+            {
+              echo "Live Stripe no longer matches \`terraform/stripe\` (last checked $today)."
+              echo
+              echo "Either apply the config (\`mise run tf:stripe -- apply\`) to revert the dashboard change,"
+              echo "or update the .tf files to match what was changed on purpose."
+              echo "(This also triggers for Terraform changes committed to main but not yet applied.)"
+              echo
+              echo "Run: $run_url"
+              echo
+              echo '```'
+              grep -E '^\s*(#|[~+-] |Plan:)' plan.txt | head -150
+              echo '```'
+            } > body.md
+            upsert stripe-drift "Stripe drift detected"
+            close_all stripe-drift-error "Plan works again (drift found, see the drift issue) as of $today"
           else
-            gh issue create --title "Stripe drift detected" --label stripe-drift --body-file body.md
+            {
+              echo "The Stripe drift check failed to produce a plan (last checked $today, exit code \"${CODE:-none}\")."
+              echo "Drift status is unknown until this is fixed."
+              echo
+              echo "Run: $run_url"
+              echo
+              echo '```'
+              if [ -f plan.txt ]; then grep -E -A6 '^(Error|╷)' plan.txt | head -60; fi
+              echo '```'
+            } > body.md
+            upsert stripe-drift-error "Stripe drift check failing"
           fi
 
       - name: Fail on drift

@@ -2,8 +2,11 @@ import type { APIRoute } from "astro";
 import Stripe from "stripe";
 import { env } from "cloudflare:workers";
 import { getPostHogServer } from "../../lib/posthog-server";
-import { invalidateProductCache, adjustProductStock } from "../../lib/stripeProducts";
+import { invalidateProductCache, adjustProductStock, InsufficientStockError } from "../../lib/stripeProducts";
 import { shippingRateAppliesTo } from "../../lib/shipping";
+import { cancelOpenCheckoutSession } from "../../lib/checkoutSessions";
+import { CheckoutError, parseCheckoutRequest, type CheckoutRequest } from "../../lib/checkoutRequest";
+import { alertOwner } from "../../lib/alerts";
 
 export const prerender = false;
 
@@ -31,6 +34,14 @@ async function restoreReservation(stripe: Stripe, productId: string, delta: numb
       `Failed to restore ${delta} unit(s) of stock for product ${productId} after a checkout rollback — inventory is understated until this is fixed manually:`,
       err
     );
+    await alertOwner(env, "Stock rollback failed — fix by hand", [
+      `A checkout failed after reserving stock, and putting the stock back failed too.`,
+      ``,
+      `Product: ${productId}`,
+      `Add back: ${delta} unit(s) to its "quantity" metadata in the Stripe dashboard.`,
+      ``,
+      `Error: ${String(err)}`,
+    ]);
   }
 }
 
@@ -59,18 +70,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // If rate limiting fails, allow the request through
   }
 
-  let body: { items: { priceId: string; quantity: number }[] };
+  let request_: CheckoutRequest;
   try {
-    body = await request.json();
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid request body" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  if (!body.items || !Array.isArray(body.items) || body.items.length === 0) {
-    return new Response(JSON.stringify({ error: "Cart is empty" }), {
+    request_ = parseCheckoutRequest(await request.json());
+  } catch (err) {
+    const message = err instanceof CheckoutError ? err.message : "Invalid request body";
+    return new Response(JSON.stringify({ error: message }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
@@ -79,43 +84,41 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const stripe = new Stripe(env.STRIPE_SECRET_KEY);
 
+    // The shopper's own earlier checkout (they backed out of Stripe and came
+    // back) is still holding stock until it expires; release it first, or the
+    // last unit of something looks unavailable to the very person holding it.
+    if (request_.previousSessionId) {
+      try {
+        await cancelOpenCheckoutSession(stripe, request_.previousSessionId);
+      } catch (err) {
+        console.warn(`Could not cancel previous checkout ${request_.previousSessionId}:`, err);
+      }
+    }
+
     const origin = new URL(request.url).origin;
     const checkoutItems = await Promise.all(
-      body.items.map(async (item) => {
-        if (!item.priceId || item.quantity <= 0) {
-          throw new Error("Invalid cart item");
-        }
-
+      request_.items.map(async (item) => {
         const price = await stripe.prices.retrieve(item.priceId, {
           expand: ["product"],
         });
 
-        if (!price.active) {
-          throw new Error("One or more cart items are no longer available");
-        }
-
-        if (!price.product || typeof price.product === "string") {
-          throw new Error("One or more cart items are no longer available");
+        if (!price.active || !price.product || typeof price.product === "string") {
+          throw new CheckoutError("One or more cart items are no longer available");
         }
 
         const product = price.product as Stripe.Product;
+        // Archiving a product in the dashboard leaves its prices active.
+        if (!product.active || ("deleted" in product && product.deleted)) {
+          throw new CheckoutError("One or more cart items are no longer available");
+        }
         const availableQuantity = parseInt(product.metadata.quantity || "0", 10);
 
         if (item.quantity > availableQuantity) {
-          const label = product.name || "This product";
-          // "is out of stock" reads as permanent, but this same metadata
-          // field is also what the reservation above decrements — a 0 here
-          // can just as easily mean someone else's active (uncompleted)
-          // checkout is holding the last unit for up to
-          // CHECKOUT_SESSION_TTL_SECONDS, not that it's genuinely gone.
-          // There's no separate "true stock" vs. "currently held" field to
-          // tell those apart from here, so the message hedges rather than
-          // asserting something that might be wrong in a few minutes.
-          throw new Error(
-            availableQuantity > 0
-              ? `${label} only has ${availableQuantity} available`
-              : `${label} is unavailable right now — it may be held in another active checkout. Please try again in a few minutes.`
-          );
+          // A 0 here can just as easily mean someone else's active
+          // (uncompleted) checkout is holding the last unit for up to
+          // CHECKOUT_SESSION_TTL_SECONDS, not that it's genuinely gone, so
+          // the message hedges (see InsufficientStockError).
+          throw new InsufficientStockError(product.id, product.name || "This product", Math.max(0, availableQuantity));
         }
 
         return {
@@ -133,7 +136,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // later. In that window two concurrent checkouts for the last unit of an
     // item could both pass validation and both pay, overselling it. Applied
     // sequentially (not Promise.all) so a mid-loop failure only needs to roll
-    // back what's already been applied, not race its own writes.
+    // back what's already been applied, not race its own writes. A
+    // reservation that would take stock below zero throws, so a unit that
+    // sold between the check above and here can't be reserved twice.
     const appliedReservations: { productId: string; delta: number }[] = [];
     try {
       for (const item of checkoutItems) {
@@ -161,6 +166,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
         .map((shippingRate) => ({
           shipping_rate: shippingRate.id,
         }));
+      // Never fall through to a checkout with no shipping charge at all.
+      if (shippingOptions.length === 0) {
+        locals.cfContext.waitUntil(
+          alertOwner(env, "Checkout blocked: no shipping rate", [
+            `No active Stripe shipping rate matches a $${(subtotalCents / 100).toFixed(2)} cart, so checkout was refused.`,
+            `Check terraform/stripe/shipping.tf against Stripe (mise run tf:stripe -- plan).`,
+          ])
+        );
+        throw new Error(`No shipping rate applies to a ${subtotalCents}-cent cart`);
+      }
 
       // Passed through to Stripe as client_reference_id so the webhook can
       // recover it later — the webhook has no access to request headers, and
@@ -184,7 +199,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         shipping_address_collection: {
           allowed_countries: ["US"],
         },
-        ...(shippingOptions.length > 0 ? { shipping_options: shippingOptions } : {}),
+        shipping_options: shippingOptions,
         ...(posthogDistinctId ? { client_reference_id: posthogDistinctId } : {}),
       });
 
@@ -209,7 +224,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
       locals.cfContext.waitUntil(posthog.flush());
 
-      return new Response(JSON.stringify({ url: session.url }), {
+      return new Response(JSON.stringify({ url: session.url, sessionId: session.id }), {
         headers: { "Content-Type": "application/json" },
       });
     } catch (postReserveError) {
@@ -219,16 +234,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       throw postReserveError;
     }
   } catch (error) {
-    console.error("Failed to create checkout session:", error);
-    const isStripeError = error instanceof Stripe.errors.StripeError;
-    const message = isStripeError
-      ? error.message
-      : error instanceof Error
-        ? error.message
-        : "Failed to create checkout session";
-    const status = isStripeError ? 500 : 400;
+    const expected = error instanceof CheckoutError || error instanceof InsufficientStockError;
+    if (!expected) console.error("Failed to create checkout session:", error);
+    const message = expected
+      ? (error as Error).message
+      : "Checkout is temporarily unavailable. Please try again in a few minutes.";
     return new Response(JSON.stringify({ error: message }), {
-      status,
+      status: expected ? 400 : 500,
       headers: { "Content-Type": "application/json" },
     });
   }

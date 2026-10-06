@@ -9,6 +9,7 @@ import { SITE_TITLE } from "../../consts";
 import { fetchStoreProducts } from "../../lib/stripeProducts";
 import { optimizeProductImage } from "../../lib/optimizeProductImage";
 import { formatPrice } from "../../lib/format";
+import { estimatedShippingCents } from "../../lib/shipping";
 import { extractProductDisplayName } from "../../lib/productDisplay";
 import { env } from "cloudflare:workers";
 import { productReviews, aggregateRating } from "../../data/reviews";
@@ -110,7 +111,7 @@ const productSpecs = isCollectorBooster
       packs: 24,
       cardsPerPack: 20,
       totalCards: 480,
-      rareGuarantee: "No deck-building needed — pick 2 themed boosters, shuffle, and play",
+      rareGuarantee: "1 rare or mythic rare in every pack",
       foilGuarantee: "Bonus themed foil/land card in every pack",
     }
   : isPlayBoosterFormat && isFoundations
@@ -150,7 +151,7 @@ const productSchema = {
   "@context": "https://schema.org",
   "@type": "Product",
   name: displayName,
-  description: product.description,
+  ...(product.description ? { description: product.description } : {}),
   image: product.image ? [product.image] : undefined,
   category: product.category,
   sku: product.id,
@@ -185,7 +186,7 @@ const productSchema = {
       shippingRate: {
         "@type": "MonetaryAmount",
         currency: "USD",
-        value: "0",
+        value: (estimatedShippingCents(product.price) / 100).toFixed(2),
       },
       shippingDestination: {
         "@type": "DefinedRegion",

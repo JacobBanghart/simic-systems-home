@@ -13,9 +13,10 @@ yarn-error.log*
 pnpm-debug.log*
 
 
-# environment variables
+# environment variables (examples stay tracked)
 .env
-.env.production
+.env.*
+!.env.example
 
 # macOS-specific files
 .DS_Store
@@ -26,19 +27,18 @@ pnpm-debug.log*
 # wrangler files
 .wrangler
 .dev.vars
+.dev.vars.*
+!.dev.vars.example
 
 # internal docs
 docs/
 seo-plan.md
 
-# terraform
-terraform/**/.terraform/
-terraform/*.tfstate
-terraform/*.tfstate.backup
-terraform/terraform.tfvars
-terraform/backend.conf
-terraform/.terraform.lock.hcl
-
-# terraform
-terraform/**/.terraform/
-terraform/**/*.tfplan
+# terraform (any stack under terraform/; .terraform.lock.hcl stays tracked)
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfplan
+**/*.tfvars
+!**/*.tfvars.example
+terraform/**/backend.conf
