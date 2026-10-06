@@ -12,17 +12,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Node (and terraform) versions come from mise.toml, same as local.
+      # Bun, Node and Terraform versions come from mise.toml, same as local.
+      # Bun is the package manager/script runner; tools still run on Node.
       - uses: jdx/mise-action@v2
         env:
           MISE_TRUSTED_CONFIG_PATHS: ${{ github.workspace }}
 
-      - run: npm ci
+      - run: bun install --frozen-lockfile
 
-      - run: npm run lint
+      - run: bun run lint
 
-      - run: npm test
+      # `bun run test` (Vitest), not `bun test` (Bun's own runner).
+      - run: bun run test
 
-      - run: npm run check
+      - run: bun run check
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

@@ -1,6 +1,7 @@
 [tools]
+bun = "1.4.2"
 node = "26.8.2"
-stripe-cli = "latest"
+stripe-cli = "1.53.0"
 terraform = "1.15.8"
 
 # Terraform stacks under terraform/, e.g. `mise run tf:stripe -- plan`.

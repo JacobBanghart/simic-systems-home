@@ -57,15 +57,15 @@ tests/                       # Vitest unit tests
 
 | Command | Action |
 |:--|:--|
-| `npm install` | Install dependencies |
-| `npm run dev` | Start dev server at `localhost:4321` |
-| `npm run build` | Production build to `./dist/` |
-| `npm run deploy` | Deploy to Cloudflare Workers |
+| `bun install` | Install dependencies (tool versions: `mise install`) |
+| `bun run dev` | Start dev server at `localhost:4321` |
+| `bun run build` | Production build to `./dist/` |
+| `bun run deploy` | Deploy to Cloudflare Workers |
 | `mise run tf:stripe -- plan` | Preview Stripe catalog changes (`terraform/stripe`) |
 | `mise run tf:stripe -- apply` | Apply Stripe catalog changes |
-| `npm test` | Run Vitest unit tests |
-| `npm run lint` | Run ESLint |
-| `npm run typecheck` | Run TypeScript type checking |
+| `bun run test` | Run Vitest unit tests (not `bun test`) |
+| `bun run lint` | Run ESLint |
+| `bun run typecheck` | Run TypeScript type checking |
 
 ## Cloudflare Bindings
 
