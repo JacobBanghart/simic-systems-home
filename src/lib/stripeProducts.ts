@@ -20,12 +20,25 @@ const VALID_CATEGORIES: ReadonlySet<string> = new Set<ProductData["category"]>([
   "unionarena",
 ]);
 
-export function mapStripeProduct(product: Stripe.Product): ProductData | null {
-  if (!product.default_price || typeof product.default_price === "string") {
+// Prices are resolved by lookup key (= the product's catalogKey metadata) rather
+// than product.default_price, because the Stripe Terraform provider can't set
+// default_price: a price change there creates a new Price and transfers the
+// lookup key to it, leaving default_price pointing at the archived one.
+// default_price is still honoured as a fallback for products whose prices
+// don't have a lookup key yet.
+export function mapStripeProduct(
+  product: Stripe.Product,
+  lookupPrice?: Stripe.Price
+): ProductData | null {
+  const fallback =
+    product.default_price && typeof product.default_price !== "string"
+      ? product.default_price
+      : undefined;
+  const price = lookupPrice ?? fallback;
+  if (!price) {
     return null;
   }
 
-  const price = product.default_price;
   const rawCategory = product.metadata.category || "magic";
   const category: ProductData["category"] = VALID_CATEGORIES.has(rawCategory)
     ? (rawCategory as ProductData["category"])
@@ -66,14 +79,25 @@ export async function fetchStoreProducts(
   }
 
   const stripe = new Stripe(env.STRIPE_SECRET_KEY);
-  const stripeProducts = await stripe.products.list({
-    active: true,
-    limit: 100,
-    expand: ["data.default_price"],
-  });
+  const [stripeProducts, activePrices] = await Promise.all([
+    stripe.products.list({
+      active: true,
+      limit: 100,
+      expand: ["data.default_price"],
+    }),
+    stripe.prices.list({ active: true, limit: 100 }).autoPagingToArray({ limit: 1000 }),
+  ]);
+  const pricesByLookupKey = new Map(
+    activePrices
+      .filter((price) => price.lookup_key)
+      .map((price) => [price.lookup_key as string, price])
+  );
 
   const products = stripeProducts.data
-    .map(mapStripeProduct)
+    .map((product) => {
+      const key = product.metadata.catalogKey;
+      return mapStripeProduct(product, key ? pricesByLookupKey.get(key) : undefined);
+    })
     .filter((product): product is ProductData => Boolean(product))
     .sort((left, right) => {
       if (left.sortOrder !== right.sortOrder) {
