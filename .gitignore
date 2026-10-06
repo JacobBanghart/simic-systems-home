@@ -32,9 +32,13 @@ docs/
 seo-plan.md
 
 # terraform
-terraform/.terraform/
+terraform/**/.terraform/
 terraform/*.tfstate
 terraform/*.tfstate.backup
 terraform/terraform.tfvars
 terraform/backend.conf
 terraform/.terraform.lock.hcl
+
+# terraform
+terraform/**/.terraform/
+terraform/**/*.tfplan

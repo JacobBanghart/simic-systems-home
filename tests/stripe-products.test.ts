@@ -184,3 +184,24 @@ describe("adjustProductStock", () => {
     expect(retrieve).toHaveBeenCalledWith("prod_test");
   });
 });
+
+describe("mapStripeProduct with a lookup-key price", () => {
+  const lookupPrice = {
+    id: "price_lookup789",
+    object: "price",
+    unit_amount: 15999,
+    currency: "usd",
+    lookup_key: "test-booster-box",
+  } as Stripe.Price;
+
+  it("prefers the lookup-key price over default_price", () => {
+    const result = mapStripeProduct(fakeStripeProduct(), lookupPrice);
+    expect(result?.priceId).toBe("price_lookup789");
+    expect(result?.price).toBe(15999);
+  });
+
+  it("uses the lookup-key price when default_price is unset", () => {
+    const result = mapStripeProduct(fakeStripeProduct({ default_price: null }), lookupPrice);
+    expect(result?.priceId).toBe("price_lookup789");
+  });
+});
