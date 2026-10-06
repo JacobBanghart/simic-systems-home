@@ -81,7 +81,13 @@ const DARK: Record<keyof typeof C, string> = {
   teal: "#0a9396",
 };
 
-// Bright brand colours that read on both themes (glow bar, button, lit dots).
+// Button label: white on solid teal survives Gmail's forced dark mode (it
+// darkens solid backgrounds and lightens dark text, but leaves light text on
+// a dark-ish fill alone). Deliberately not a palette value.
+const BUTTON_TEXT = "#fdfffe";
+
+// Bright brand colours that read on both themes (glow bar, lit dots). Used
+// as background-IMAGE gradients so Gmail's forced dark mode doesn't darken them.
 const NEON = { accent: "#00dfc1", bio: "#9dff00" };
 
 const FONT_BODY = "'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -156,7 +162,7 @@ function tracker(stage: number, note: string): string {
     .map((label, i) => {
       const lit = i <= stage;
       const dot = lit
-        ? `<div style="width:14px;height:14px;border-radius:7px;background:${NEON.bio};margin:0 auto;box-shadow:0 0 10px ${NEON.bio};border:1px solid ${C.bio};"></div>`
+        ? `<div style="width:14px;height:14px;border-radius:7px;background:${NEON.bio};background-image:linear-gradient(${NEON.bio}, ${NEON.bio});margin:0 auto;box-shadow:0 0 10px ${NEON.bio};border:1px solid ${C.bio};"></div>`
         : `<div style="width:12px;height:12px;border-radius:7px;border:1px solid ${C.muted};margin:0 auto;"></div>`;
       return `<td width="25%" align="center" valign="top" style="padding:0 2px;">
         ${dot}
@@ -178,8 +184,8 @@ function tracker(stage: number, note: string): string {
 function trackButton(s: OrderShipment): string {
   return `
 <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-  <td style="border-radius:999px;background:${NEON.bio};background-image:linear-gradient(90deg, ${NEON.accent}, ${NEON.bio});" bgcolor="${NEON.bio}">
-    <a href="${escapeHtml(s.trackingUrl)}" style="display:inline-block;padding:14px 28px;font-family:${FONT_MONO};font-size:13px;font-weight:700;letter-spacing:2px;color:#03140f;text-decoration:none;">TRACK&nbsp;PACKAGE&nbsp;&rarr;</a>
+  <td class="btn" style="border-radius:999px;background:${C.accent};" bgcolor="${C.accent}">
+    <a class="btn-a" href="${escapeHtml(s.trackingUrl)}" style="display:inline-block;padding:14px 28px;font-family:${FONT_MONO};font-size:13px;font-weight:700;letter-spacing:2px;color:${BUTTON_TEXT};text-decoration:none;">TRACK&nbsp;PACKAGE&nbsp;&rarr;</a>
   </td>
 </tr></table>
 <div style="padding-top:12px;font-family:${FONT_MONO};font-size:12px;line-height:18px;color:${C.muted};">${escapeHtml(s.carrier)}&nbsp;&middot;&nbsp;<span style="color:${C.text};">${escapeHtml(s.trackingNumber)}</span></div>`;
@@ -243,7 +249,7 @@ export function renderOrderConfirmation(data: OrderEmailData): { subject: string
 </head>
 <body style="margin:0;padding:0;background:${C.bg};" bgcolor="${C.bg}">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${C.bg};">${escapeHtml(preheader)}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.bg}" class="glow" style="background:${C.bg};background-image:radial-gradient(ellipse at top, #d3ebe2 0%, ${C.bg} 60%);">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.bg}" class="glow" style="background:${C.bg};">
 <tr><td align="center" style="padding:32px 12px 48px;">
 
   <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;">
@@ -412,6 +418,8 @@ function darkThemeCss(): string {
   return `@media (prefers-color-scheme: dark) {
     ${rules("", "")}
     .glow{background-image:radial-gradient(ellipse at top, #0c2a25 0%, ${DARK.bg} 60%) !important}
+    .btn{background-image:linear-gradient(90deg, ${NEON.accent}, ${NEON.bio}) !important}
+    .btn-a{color:#03140f !important}
   }
   ${rules("[data-ogsc] ", "[data-ogsb] ")}`;
 }
