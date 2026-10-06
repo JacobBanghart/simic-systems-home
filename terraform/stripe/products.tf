@@ -30,7 +30,7 @@ resource "stripe_product" "avatar_the_last_airbender_jumpstart_booster_display" 
 resource "stripe_price" "avatar_the_last_airbender_jumpstart_booster_display" {
   product             = stripe_product.avatar_the_last_airbender_jumpstart_booster_display.id
   currency            = "usd"
-  unit_amount         = 11246
+  unit_amount         = 11375
   tax_behavior        = "exclusive"
   lookup_key          = "avatar-the-last-airbender-jumpstart-booster-display-avatar-the-last-airbender-tla"
   transfer_lookup_key = true
@@ -66,7 +66,7 @@ resource "stripe_product" "avatar_the_last_airbender_play_booster_display" {
 resource "stripe_price" "avatar_the_last_airbender_play_booster_display" {
   product             = stripe_product.avatar_the_last_airbender_play_booster_display.id
   currency            = "usd"
-  unit_amount         = 13823
+  unit_amount         = 13982
   tax_behavior        = "exclusive"
   lookup_key          = "avatar-the-last-airbender-play-booster-display-avatar-the-last-airbender-tla"
   transfer_lookup_key = true
@@ -210,7 +210,7 @@ resource "stripe_product" "lorwyn_eclipsed_collector_booster_display" {
 resource "stripe_price" "lorwyn_eclipsed_collector_booster_display" {
   product             = stripe_product.lorwyn_eclipsed_collector_booster_display.id
   currency            = "usd"
-  unit_amount         = 39999
+  unit_amount         = 40450
   tax_behavior        = "exclusive"
   lookup_key          = "lorwyn-eclipsed-collector-booster-display-lorwyn-eclipsed-ecl"
   transfer_lookup_key = true
@@ -246,7 +246,7 @@ resource "stripe_product" "lorwyn_eclipsed_play_booster_display" {
 resource "stripe_price" "lorwyn_eclipsed_play_booster_display" {
   product             = stripe_product.lorwyn_eclipsed_play_booster_display.id
   currency            = "usd"
-  unit_amount         = 13512
+  unit_amount         = 13667
   tax_behavior        = "exclusive"
   lookup_key          = "lorwyn-eclipsed-play-booster-display-lorwyn-eclipsed-ecl"
   transfer_lookup_key = true
@@ -318,7 +318,7 @@ resource "stripe_product" "marvels_spider_man_collector_booster_display" {
 resource "stripe_price" "marvels_spider_man_collector_booster_display" {
   product             = stripe_product.marvels_spider_man_collector_booster_display.id
   currency            = "usd"
-  unit_amount         = 56674
+  unit_amount         = 57325
   tax_behavior        = "exclusive"
   lookup_key          = "marvel-s-spider-man-collector-booster-display"
   transfer_lookup_key = true
@@ -354,7 +354,7 @@ resource "stripe_product" "marvels_spider_man_play_booster_display" {
 resource "stripe_price" "marvels_spider_man_play_booster_display" {
   product             = stripe_product.marvels_spider_man_play_booster_display.id
   currency            = "usd"
-  unit_amount         = 12107
+  unit_amount         = 12246
   tax_behavior        = "exclusive"
   lookup_key          = "marvel-s-spider-man-play-booster-display-marvel-s-spider-man-spm"
   transfer_lookup_key = true
@@ -390,7 +390,7 @@ resource "stripe_product" "marvel_super_heros_jumpstart_booster_display" {
 resource "stripe_price" "marvel_super_heros_jumpstart_booster_display" {
   product             = stripe_product.marvel_super_heros_jumpstart_booster_display.id
   currency            = "usd"
-  unit_amount         = 16061
+  unit_amount         = 16245
   tax_behavior        = "exclusive"
   lookup_key          = "marvel-super-heros-jumpstart-booster-display-marvel-super-heros-msh"
   transfer_lookup_key = true
@@ -426,7 +426,7 @@ resource "stripe_product" "secrets_of_strixhaven_play_booster_display" {
 resource "stripe_price" "secrets_of_strixhaven_play_booster_display" {
   product             = stripe_product.secrets_of_strixhaven_play_booster_display.id
   currency            = "usd"
-  unit_amount         = 13002
+  unit_amount         = 13151
   tax_behavior        = "exclusive"
   lookup_key          = "secrets-of-strixhaven-play-booster-display-secrets-of-strixhaven-sos"
   transfer_lookup_key = true
@@ -498,7 +498,7 @@ resource "stripe_product" "teenage_mutant_ninja_turtles_play_booster_display" {
 resource "stripe_price" "teenage_mutant_ninja_turtles_play_booster_display" {
   product             = stripe_product.teenage_mutant_ninja_turtles_play_booster_display.id
   currency            = "usd"
-  unit_amount         = 13946
+  unit_amount         = 14106
   tax_behavior        = "exclusive"
   lookup_key          = "teenage-mutant-ninja-turtles-play-booster-display-teenage-mutant-ninja-turtles-tmt"
   transfer_lookup_key = true
@@ -534,7 +534,7 @@ resource "stripe_product" "wilds_of_eldraine_collector_booster_display" {
 resource "stripe_price" "wilds_of_eldraine_collector_booster_display" {
   product             = stripe_product.wilds_of_eldraine_collector_booster_display.id
   currency            = "usd"
-  unit_amount         = 113316
+  unit_amount         = 114619
   tax_behavior        = "exclusive"
   lookup_key          = "wilds-of-eldraine-collector-booster-display-wilds-of-eldraine-woe"
   transfer_lookup_key = true
