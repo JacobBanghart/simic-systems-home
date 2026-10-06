@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { env } from "cloudflare:workers";
 import { getPostHogServer } from "../../lib/posthog-server";
 import { invalidateProductCache, adjustProductStock } from "../../lib/stripeProducts";
+import { shippingRateAppliesTo } from "../../lib/shipping";
 
 export const prerender = false;
 
@@ -151,9 +152,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
         active: true,
         limit: 100,
       });
-      const shippingOptions = shippingRates.data.map((shippingRate) => ({
-        shipping_rate: shippingRate.id,
-      }));
+      const subtotalCents = checkoutItems.reduce(
+        (sum, item) => sum + item.unitAmountCents * item.quantity,
+        0
+      );
+      const shippingOptions = shippingRates.data
+        .filter((shippingRate) => shippingRateAppliesTo(shippingRate, subtotalCents))
+        .map((shippingRate) => ({
+          shipping_rate: shippingRate.id,
+        }));
 
       // Passed through to Stripe as client_reference_id so the webhook can
       // recover it later — the webhook has no access to request headers, and
@@ -188,10 +195,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
       const sessionId = request.headers.get("X-PostHog-Session-Id") || undefined;
       const distinctId = posthogDistinctId || `anonymous-checkout-${session.id}`;
-      const cartValueCents = checkoutItems.reduce(
-        (sum, item) => sum + item.unitAmountCents * item.quantity,
-        0
-      );
       const posthog = getPostHogServer();
       posthog.capture({
         distinctId,
@@ -200,7 +203,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           $session_id: sessionId,
           stripe_session_id: session.id,
           item_count: checkoutItems.reduce((sum, item) => sum + item.quantity, 0),
-          cart_value_cents: cartValueCents,
+          cart_value_cents: subtotalCents,
           source: "api",
         },
       });

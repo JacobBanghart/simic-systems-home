@@ -1,0 +1,7 @@
+[tools]
+terraform = "1.15.8"
+
+[tasks.tf]
+description = "Run terraform in ./terraform/stripe with STRIPE_API_KEY from .env"
+dir = "terraform/stripe"
+run = 'STRIPE_API_KEY="$(grep -E "^STRIPE_SECRET_KEY=" ../../.env | cut -d= -f2-)" terraform'
