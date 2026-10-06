@@ -23,3 +23,7 @@ run = 'TF_VAR_cloudflare_api_token="$(vault kv get -field=api_token secret/simic
 description = "Terraform for terraform/github-ci (AWS credentials from ~/.aws)"
 dir = "terraform/github-ci"
 run = "terraform"
+
+[tasks."sandbox:order"]
+description = "Place a paid order in the Stripe SANDBOX from the real catalog (see scripts/sandbox-order.mjs)"
+run = 'STRIPE_SECRET_KEY="$(vault kv get -field=secret_key secret/simic-systems/stripe-test)" node scripts/sandbox-order.mjs'

@@ -3,8 +3,14 @@
 // Email HTML is its own dialect: table layout, inline styles, no external CSS,
 // and clients that strip <style> (Gmail keeps it; Outlook desktop mangles it).
 // Everything that matters is inline; the <style> block only adds progressive
-// niceties (web fonts, mobile padding). The design is dark-only on purpose
-// (color-scheme: dark) to match the storefront's bioluminescent palette.
+// niceties (web fonts, mobile padding, dark mode).
+//
+// Light-first with an opt-in dark theme. Gmail's apps ignore color-scheme and
+// force-invert colours (they turned the original dark-only design light), so
+// the inline styles use a light palette and applyDarkTheme() tags every
+// palette colour with a class that a prefers-color-scheme (Apple Mail, iOS
+// Mail) / [data-ogsc] (Outlook.com) stylesheet swaps for the storefront's
+// dark "bioluminescent" palette. Gmail inverting a light design looks fine.
 
 export interface OrderEmailItem {
   name: string;
@@ -46,17 +52,37 @@ export interface OrderEmailData {
   shipment?: OrderShipment;
 }
 
+// Light palette (inline). Every value must be unique: applyDarkTheme maps
+// colours back to roles by value.
 const C = {
+  bg: "#e8f1ed",
+  card: "#ffffff",
+  cardRaised: "#f2f7f5",
+  line: "#d3e2dc",
+  text: "#0c1d18",
+  muted: "#56706a",
+  faint: "#7f9790",
+  accent: "#007f6d",
+  bio: "#3e8a00",
+  teal: "#0a9396",
+};
+
+// Dark palette, swapped in by the dark-mode stylesheet.
+const DARK: Record<keyof typeof C, string> = {
   bg: "#050b0a",
   card: "#0b1513",
   cardRaised: "#101d1a",
   line: "#1c2e2a",
   text: "#dbe5e0",
   muted: "#8aa39b",
+  faint: "${C.faint}",
   accent: "#00dfc1",
   bio: "#9dff00",
   teal: "#0a9396",
 };
+
+// Bright brand colours that read on both themes (glow bar, button, lit dots).
+const NEON = { accent: "#00dfc1", bio: "#9dff00" };
 
 const FONT_BODY = "'Hanken Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 const FONT_HEAD = "'Libre Caslon Text', Georgia, 'Times New Roman', serif";
@@ -130,7 +156,7 @@ function tracker(stage: number, note: string): string {
     .map((label, i) => {
       const lit = i <= stage;
       const dot = lit
-        ? `<div style="width:14px;height:14px;border-radius:7px;background:${C.bio};margin:0 auto;box-shadow:0 0 12px ${C.bio};"></div>`
+        ? `<div style="width:14px;height:14px;border-radius:7px;background:${NEON.bio};margin:0 auto;box-shadow:0 0 10px ${NEON.bio};border:1px solid ${C.bio};"></div>`
         : `<div style="width:12px;height:12px;border-radius:7px;border:1px solid ${C.muted};margin:0 auto;"></div>`;
       return `<td width="25%" align="center" valign="top" style="padding:0 2px;">
         ${dot}
@@ -152,7 +178,7 @@ function tracker(stage: number, note: string): string {
 function trackButton(s: OrderShipment): string {
   return `
 <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-  <td style="border-radius:999px;background:${C.bio};background-image:linear-gradient(90deg, ${C.accent}, ${C.bio});" bgcolor="${C.bio}">
+  <td style="border-radius:999px;background:${NEON.bio};background-image:linear-gradient(90deg, ${NEON.accent}, ${NEON.bio});" bgcolor="${NEON.bio}">
     <a href="${escapeHtml(s.trackingUrl)}" style="display:inline-block;padding:14px 28px;font-family:${FONT_MONO};font-size:13px;font-weight:700;letter-spacing:2px;color:#03140f;text-decoration:none;">TRACK&nbsp;PACKAGE&nbsp;&rarr;</a>
   </td>
 </tr></table>
@@ -200,14 +226,15 @@ export function renderOrderConfirmation(data: OrderEmailData): { subject: string
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark">
-<meta name="supported-color-schemes" content="dark">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
 <title>${escapeHtml(subject)}</title>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;700&family=Libre+Caslon+Text:ital@0;1&display=swap" rel="stylesheet">
 <style>
-  :root { color-scheme: dark; supported-color-schemes: dark; }
+  :root { color-scheme: light dark; supported-color-schemes: light dark; }
   body { margin:0; padding:0; background:${C.bg}; }
   a { color:${C.accent}; }
+  ${darkThemeCss()}
   @media (max-width: 620px) {
     .px { padding-left:20px !important; padding-right:20px !important; }
     .h1 { font-size:30px !important; line-height:36px !important; }
@@ -216,7 +243,7 @@ export function renderOrderConfirmation(data: OrderEmailData): { subject: string
 </head>
 <body style="margin:0;padding:0;background:${C.bg};" bgcolor="${C.bg}">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${C.bg};">${escapeHtml(preheader)}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.bg}" style="background:${C.bg};background-image:radial-gradient(ellipse at top, #0c2a25 0%, ${C.bg} 60%);">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.bg}" class="glow" style="background:${C.bg};background-image:radial-gradient(ellipse at top, #d3ebe2 0%, ${C.bg} 60%);">
 <tr><td align="center" style="padding:32px 12px 48px;">
 
   <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;">
@@ -230,7 +257,7 @@ export function renderOrderConfirmation(data: OrderEmailData): { subject: string
     <tr><td style="background:${C.card};border:1px solid ${C.line};border-radius:18px;overflow:hidden;" bgcolor="${C.card}">
       <!-- glow bar -->
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-        <td height="4" style="height:4px;line-height:4px;font-size:0;background:${C.accent};background-image:linear-gradient(90deg, ${C.teal}, ${C.accent} 45%, ${C.bio});border-radius:18px 18px 0 0;">&nbsp;</td>
+        <td height="4" style="height:4px;line-height:4px;font-size:0;background:${NEON.accent};background-image:linear-gradient(90deg, ${C.teal}, ${NEON.accent} 45%, ${NEON.bio});border-radius:18px 18px 0 0;">&nbsp;</td>
       </tr></table>
 
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -291,8 +318,8 @@ ${ship ? `
     <!-- footer -->
     <tr><td align="center" class="px" style="padding:28px 40px 0;font-family:${FONT_BODY};font-size:13px;line-height:21px;color:${C.muted};">
       Questions about your order? Just reply to this email,<br>or reach us at <a href="${site}/contact" style="color:${C.accent};text-decoration:none;">simic.systems/contact</a>.
-      <div style="padding-top:18px;font-family:${FONT_MONO};font-size:11px;letter-spacing:1px;color:#55706a;">
-        SIMIC SYSTEMS LLC &middot; SEALED MAGIC: THE GATHERING &middot; <a href="${site}" style="color:#55706a;text-decoration:none;">SIMIC.SYSTEMS</a>
+      <div style="padding-top:18px;font-family:${FONT_MONO};font-size:11px;letter-spacing:1px;color:${C.faint};">
+        SIMIC SYSTEMS LLC &middot; SEALED MAGIC: THE GATHERING &middot; <a href="${site}" style="color:${C.faint};text-decoration:none;">SIMIC.SYSTEMS</a>
       </div>
     </td></tr>
   </table>
@@ -316,7 +343,7 @@ ${ship ? `
       ...(address.length ? ["Shipping to:", ...address, ""] : []),
       `Questions? Reply to this email or visit ${site}/contact`,
     ].join("\n");
-    return { subject, html, text };
+    return { subject, html: applyDarkTheme(html), text };
   }
 
   const text = [
@@ -336,5 +363,55 @@ ${ship ? `
     `Questions? Reply to this email or visit ${site}/contact`,
   ].join("\n");
 
-  return { subject, html, text };
+  return { subject, html: applyDarkTheme(html), text };
+}
+
+type Role = keyof typeof C;
+const ROLE_BY_LIGHT = new Map<string, Role>(
+  (Object.keys(C) as Role[]).filter((r) => r !== "teal").map((r) => [C[r].toLowerCase(), r])
+);
+
+// Adds c-/b-/bd-<role> classes to every element whose inline style uses a
+// palette colour for text, background or border.
+export function applyDarkTheme(html: string): string {
+  return html.replace(/<([a-z0-9]+)(\s[^>]*?)?\sstyle="([^"]*)"/gi, (tag, name: string, attrs = "", style: string) => {
+    const classes = new Set<string>();
+    for (const decl of style.split(";")) {
+      const i = decl.indexOf(":");
+      if (i < 0) continue;
+      const prop = decl.slice(0, i).trim().toLowerCase();
+      const value = decl.slice(i + 1).toLowerCase();
+      for (const [hex, role] of ROLE_BY_LIGHT) {
+        if (!value.includes(hex)) continue;
+        if (prop === "color") classes.add(`c-${role}`);
+        else if (prop === "background" || prop === "background-color") classes.add(`b-${role}`);
+        else if (prop.startsWith("border")) classes.add(`bd-${role}`);
+      }
+    }
+    if (!classes.size) return tag;
+    const existing = /\sclass="([^"]*)"/.exec(attrs);
+    const merged = [existing?.[1], ...classes].filter(Boolean).join(" ");
+    const rest = existing ? attrs.replace(existing[0], "") : attrs;
+    return `<${name}${rest} class="${merged}" style="${style}"`;
+  });
+}
+
+function darkThemeCss(): string {
+  // cPre/bPre scope text vs background rules: empty inside the media query,
+  // Outlook.com's [data-ogsc]/[data-ogsb] markers outside it.
+  const rules = (cPre: string, bPre: string) =>
+    (Object.keys(DARK) as Role[])
+      .filter((r) => r !== "teal")
+      .map(
+        (r) =>
+          `${cPre}.c-${r}{color:${DARK[r]} !important} ` +
+          `${bPre}.b-${r}{background-color:${DARK[r]} !important} ` +
+          `${bPre}.bd-${r}{border-color:${DARK[r]} !important}`
+      )
+      .join(" ");
+  return `@media (prefers-color-scheme: dark) {
+    ${rules("", "")}
+    .glow{background-image:radial-gradient(ellipse at top, #0c2a25 0%, ${DARK.bg} 60%) !important}
+  }
+  ${rules("[data-ogsc] ", "[data-ogsb] ")}`;
 }

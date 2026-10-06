@@ -101,3 +101,22 @@ describe("resolveRecipient", () => {
     expect(resolveRecipient({ STRIPE_SECRET_KEY: "sk_test_x" }, "buyer@example.com")).toBeNull();
   });
 });
+
+describe("dark theme", () => {
+  const { html } = renderOrderConfirmation(orderEmailFromSession(session, lineItems, "https://simic.systems")!);
+
+  it("declares both schemes and tags palette colours with classes", () => {
+    expect(html).toContain('content="light dark"');
+    expect(html).toMatch(/class="[^"]*\bc-text\b/);
+    expect(html).toMatch(/class="[^"]*\bb-card\b/);
+  });
+
+  it("only applies unscoped dark rules inside the prefers-color-scheme block", () => {
+    const style = html.slice(html.indexOf("<style>"), html.indexOf("</style>"));
+    const outside = style.replace(/@media \(prefers-color-scheme: dark\) \{[\s\S]*?\.glow\{[^}]*\}\s*\}/, "");
+    for (const rule of outside.match(/[^{}\s][^{}]*\{[^}]*!important\}/g) ?? []) {
+      if (rule.includes("@media") || rule.includes("max-width") || /^\.(px|h1)\b/.test(rule.trim())) continue;
+      expect(rule.trim()).toMatch(/^\[data-og(sc|sb)\]/);
+    }
+  });
+});
