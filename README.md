@@ -46,10 +46,10 @@ src/
     stripeProducts.ts        # Stripe product mapping + category validation
     format.ts                # Price formatting
   types.ts                   # Shared types (ProductData, CartItem)
-catalog/
-  products.mjs               # Declarative product catalog (syncs to Stripe)
-scripts/
-  catalog-sync.mjs           # Stripe catalog sync tooling
+terraform/
+  stripe/                    # Stripe products, prices, shipping rates (Terraform)
+  github-ci/                 # AWS OIDC role for the drift-check workflow
+  main.tf                    # Cloudflare KV namespaces
 tests/                       # Vitest unit tests
 ```
 
@@ -61,9 +61,8 @@ tests/                       # Vitest unit tests
 | `npm run dev` | Start dev server at `localhost:4321` |
 | `npm run build` | Production build to `./dist/` |
 | `npm run deploy` | Deploy to Cloudflare Workers |
-| `npm run catalog:pull` | Pull current Stripe products into `catalog/products.mjs` |
-| `npm run catalog:plan` | Preview catalog changes (diff against Stripe) |
-| `npm run catalog:sync` | Apply catalog changes to Stripe |
+| `mise run tf -- plan` | Preview Stripe catalog changes (`terraform/stripe`) |
+| `mise run tf -- apply` | Apply Stripe catalog changes |
 | `npm test` | Run Vitest unit tests |
 | `npm run lint` | Run ESLint |
 | `npm run typecheck` | Run TypeScript type checking |
@@ -84,20 +83,16 @@ Secrets are set via `wrangler secret put` or `.dev.vars` for local development. 
 
 ## Stripe Catalog Management
 
-Products can be managed declaratively from `catalog/products.mjs` instead of editing each product in the Stripe dashboard.
+Products, prices and shipping rates are managed with Terraform in `terraform/stripe/` (official `stripe/stripe` provider; state in S3). Tool versions are pinned in `mise.toml`; `mise run tf -- <args>` runs Terraform there with `STRIPE_API_KEY` taken from `.env`.
 
 ```bash
-# Bootstrap from existing Stripe products
-npm run catalog:pull
-
-# Preview what would change
-npm run catalog:plan
-
-# Apply changes to Stripe
-npm run catalog:sync
+mise run tf -- plan    # preview
+mise run tf -- apply   # apply
 ```
 
-- Price changes create a new Stripe price and swap the default (correct Stripe workflow).
-- Omitting `quantity` preserves the current Stripe stock metadata.
-- Products removed from the catalog file are archived in Stripe on next sync.
+- **Prices:** edit `unit_amount` (cents). Terraform creates the new price, moves the `lookup_key` (= the product's `catalogKey`) to it, and archives the old one. The storefront resolves prices by lookup key; products deliberately have no `default_price`.
+- **Stock:** `metadata.quantity` is ignored by Terraform. Checkout reserves stock and the webhook releases it on expiry/refund; set restocks in the Stripe dashboard.
+- **New products:** add a `stripe_product` + `stripe_price` pair (see existing ones). `tests/terraform-catalog.test.ts` requires every active product to have a GTIN and a unique slug.
+- **Shipping:** rates carry `min_subtotal_cents` / `max_subtotal_cents` metadata; checkout only offers the rates that bracket the cart subtotal (currently $8 under $250, $15 with signature confirmation at $250+).
+- **Drift:** `.github/workflows/stripe-drift.yml` runs `terraform plan` daily and opens a `stripe-drift` issue if Stripe was changed outside Terraform. Don't edit products/prices/shipping rates in the dashboard (except stock).
 - The storefront cache refreshes within ~60 seconds after Stripe changes via webhook.
