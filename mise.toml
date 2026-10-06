@@ -9,6 +9,11 @@ description = "Terraform for terraform/stripe (live key from .env STRIPE_LIVE_SE
 dir = "terraform/stripe"
 run = 'STRIPE_API_KEY="$(grep -E "^STRIPE_LIVE_SECRET_KEY=" ../../.env | cut -d= -f2-)" terraform'
 
+[tasks."tf:stripe-sandbox"]
+description = "Terraform for terraform/stripe against the Stripe SANDBOX (workspace 'sandbox', key from Vault)"
+dir = "terraform/stripe"
+run = 'TF_WORKSPACE=sandbox STRIPE_API_KEY="$(vault kv get -field=secret_key secret/simic-systems/stripe-test)" terraform'
+
 [tasks."tf:cloudflare"]
 description = "Terraform for terraform/cloudflare (API token from Vault)"
 dir = "terraform/cloudflare"

@@ -23,6 +23,12 @@ export interface OrderEmailAddress {
   country?: string;
 }
 
+export interface OrderShipment {
+  carrier: string;
+  trackingNumber: string;
+  trackingUrl: string;
+}
+
 export interface OrderEmailData {
   orderNumber: string;
   orderDate: Date;
@@ -36,6 +42,8 @@ export interface OrderEmailData {
   totalCents: number;
   shippingAddress?: OrderEmailAddress;
   siteUrl: string;
+  // Present => the "shipped" variant: tracking CTA, tracker at Shipped, no totals.
+  shipment?: OrderShipment;
 }
 
 const C = {
@@ -115,12 +123,12 @@ function totalRow(label: string, value: string, opts: { strong?: boolean } = {})
 </tr>`;
 }
 
-// Four-stage tracker; stage 0 (confirmed) is lit, the rest are dim.
-function tracker(): string {
+// Four-stage tracker; stages up to and including `stage` are lit.
+function tracker(stage: number, note: string): string {
   const steps = ["Confirmed", "Packed", "Shipped", "Delivered"];
   const cells = steps
     .map((label, i) => {
-      const lit = i === 0;
+      const lit = i <= stage;
       const dot = lit
         ? `<div style="width:14px;height:14px;border-radius:7px;background:${C.bio};margin:0 auto;box-shadow:0 0 12px ${C.bio};"></div>`
         : `<div style="width:12px;height:12px;border-radius:7px;border:1px solid ${C.muted};margin:0 auto;"></div>`;
@@ -136,22 +144,51 @@ function tracker(): string {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${cells}</tr></table>
   </td></tr>
   <tr><td style="padding:10px 20px 18px;font-family:${FONT_BODY};font-size:13px;line-height:20px;color:${C.muted};" align="center">
-    We pack orders within 1&ndash;3 business days. You'll get a tracking link the moment it ships.
+    ${note}
   </td></tr>
 </table>`;
+}
+
+function trackButton(s: OrderShipment): string {
+  return `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+  <td style="border-radius:999px;background:${C.bio};background-image:linear-gradient(90deg, ${C.accent}, ${C.bio});" bgcolor="${C.bio}">
+    <a href="${escapeHtml(s.trackingUrl)}" style="display:inline-block;padding:14px 28px;font-family:${FONT_MONO};font-size:13px;font-weight:700;letter-spacing:2px;color:#03140f;text-decoration:none;">TRACK&nbsp;PACKAGE&nbsp;&rarr;</a>
+  </td>
+</tr></table>
+<div style="padding-top:12px;font-family:${FONT_MONO};font-size:12px;line-height:18px;color:${C.muted};">${escapeHtml(s.carrier)}&nbsp;&middot;&nbsp;<span style="color:${C.text};">${escapeHtml(s.trackingNumber)}</span></div>`;
 }
 
 export function renderOrderConfirmation(data: OrderEmailData): { subject: string; html: string; text: string } {
   const greetingName = firstName(data.customerName);
   const itemCount = data.items.reduce((n, i) => n + i.quantity, 0);
-  const subject = `Order confirmed · ${data.orderNumber} · Simic Systems`;
+  const ship = data.shipment;
+  const subject = ship
+    ? `Shipped · ${data.orderNumber} · Simic Systems`
+    : `Order confirmed · ${data.orderNumber} · Simic Systems`;
   const dateLabel = data.orderDate.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
     year: "numeric",
     timeZone: "America/Los_Angeles",
   });
-  const preheader = `${itemCount} sealed ${itemCount === 1 ? "item" : "items"} confirmed — ${money(data.totalCents)}. We'll email tracking as soon as it ships.`;
+  const preheader = ship
+    ? `Your order is on its way via ${ship.carrier}. Tracking: ${ship.trackingNumber}`
+    : `${itemCount} sealed ${itemCount === 1 ? "item" : "items"} confirmed — ${money(data.totalCents)}. We'll email tracking as soon as it ships.`;
+  const name = greetingName ? escapeHtml(greetingName) : "";
+  const hero = ship
+    ? {
+        eyebrow: "ORDER&nbsp;SHIPPED",
+        line1: name ? `It's on the way, ${name}.` : "It's on the way.",
+        line2: "Your packs just left the reef.",
+        intro: `Your sealed ${itemCount === 1 ? "display is" : "displays are"} packed and handed to ${escapeHtml(ship.carrier)}. Tracking can take a few hours to show the first scan.`,
+      }
+    : {
+        eyebrow: "ORDER&nbsp;CONFIRMED",
+        line1: name ? `Thank you, ${name}.` : "Thank you.",
+        line2: "Your packs are in good hands.",
+        intro: "Every display ships factory sealed, straight from authorized Wizards of the Coast distribution. Here's your receipt &mdash; keep it handy.",
+      };
   const address = addressLines(data.shippingAddress);
   const site = data.siteUrl.replace(/\/$/, "");
   // Under /hotlink-ok/ so Cloudflare hotlink protection lets webmail clients
@@ -199,10 +236,13 @@ export function renderOrderConfirmation(data: OrderEmailData): { subject: string
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
         <!-- hero -->
         <tr><td class="px" style="padding:36px 40px 8px;">
-          <div style="font-family:${FONT_MONO};font-size:12px;letter-spacing:3px;color:${C.bio};">&#9679;&nbsp;ORDER&nbsp;CONFIRMED</div>
-          <h1 class="h1" style="margin:14px 0 0;font-family:${FONT_HEAD};font-weight:400;font-size:36px;line-height:42px;color:${C.text};">${greetingName ? `Thank you, ${escapeHtml(greetingName)}.` : "Thank you."}<br><span style="color:${C.accent};font-style:italic;">Your packs are in good hands.</span></h1>
-          <p style="margin:16px 0 0;font-family:${FONT_BODY};font-size:15px;line-height:24px;color:${C.muted};">Every display ships factory sealed, straight from authorized Wizards of the Coast distribution. Here's your receipt &mdash; keep it handy.</p>
+          <div style="font-family:${FONT_MONO};font-size:12px;letter-spacing:3px;color:${C.bio};">&#9679;&nbsp;${hero.eyebrow}</div>
+          <h1 class="h1" style="margin:14px 0 0;font-family:${FONT_HEAD};font-weight:400;font-size:36px;line-height:42px;color:${C.text};">${hero.line1}<br><span style="color:${C.accent};font-style:italic;">${hero.line2}</span></h1>
+          <p style="margin:16px 0 0;font-family:${FONT_BODY};font-size:15px;line-height:24px;color:${C.muted};">${hero.intro}</p>
         </td></tr>
+${ship ? `
+        <!-- tracking CTA -->
+        <tr><td class="px" style="padding:24px 40px 4px;">${trackButton(ship)}</td></tr>` : ""}
 
         <!-- meta chips -->
         <tr><td class="px" style="padding:22px 40px 6px;">
@@ -218,7 +258,7 @@ export function renderOrderConfirmation(data: OrderEmailData): { subject: string
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${data.items.map(itemRow).join("")}</table>
         </td></tr>
 
-        <!-- totals -->
+        ${ship ? `<tr><td style="padding:0 0 28px;font-size:0;line-height:0;">&nbsp;</td></tr>` : `<!-- totals -->
         <tr><td class="px" style="padding:14px 40px 30px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
             ${totalRow("Subtotal", money(data.subtotalCents))}
@@ -227,10 +267,14 @@ export function renderOrderConfirmation(data: OrderEmailData): { subject: string
             <tr><td colspan="2" style="padding-top:10px;border-bottom:1px solid ${C.line};font-size:0;line-height:0;">&nbsp;</td></tr>
             ${totalRow("Total paid", money(data.totalCents), { strong: true })}
           </table>
-        </td></tr>
+        </td></tr>`}
 
         <!-- tracker -->
-        <tr><td class="px" style="padding:0 40px 28px;">${tracker()}</td></tr>
+        <tr><td class="px" style="padding:0 40px 28px;">${
+          ship
+            ? tracker(2, `Questions about delivery? Reply here &mdash; we keep the receipt, photos of your packed box, and the ${escapeHtml(ship.carrier)} drop-off scan.`)
+            : tracker(0, "We pack orders within 1&ndash;3 business days. You'll get a tracking link the moment it ships.")
+        }</td></tr>
 
         ${
           address.length
@@ -257,6 +301,23 @@ export function renderOrderConfirmation(data: OrderEmailData): { subject: string
 </table>
 </body>
 </html>`;
+
+  if (ship) {
+    const text = [
+      `ORDER SHIPPED — ${data.orderNumber}`,
+      "",
+      `${greetingName ? `It's on the way, ${greetingName}.` : "It's on the way."} Your packs just left the reef.`,
+      "",
+      `Track your package (${ship.carrier} ${ship.trackingNumber}):`,
+      ship.trackingUrl,
+      "",
+      ...data.items.map((i) => `${i.quantity} × ${i.name}`),
+      "",
+      ...(address.length ? ["Shipping to:", ...address, ""] : []),
+      `Questions? Reply to this email or visit ${site}/contact`,
+    ].join("\n");
+    return { subject, html, text };
+  }
 
   const text = [
     `ORDER CONFIRMED — ${data.orderNumber}`,

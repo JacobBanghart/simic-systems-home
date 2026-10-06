@@ -94,5 +94,7 @@ mise run tf:stripe -- apply   # apply
 - **Stock:** `metadata.quantity` is ignored by Terraform. Checkout reserves stock and the webhook releases it on expiry/refund; set restocks in the Stripe dashboard.
 - **New products:** add a `stripe_product` + `stripe_price` pair (see existing ones). `tests/terraform-catalog.test.ts` requires every active product to have a GTIN and a unique slug.
 - **Shipping:** rates carry `min_subtotal_cents` / `max_subtotal_cents` metadata; checkout only offers the rates that bracket the cart subtotal (currently $8 under $250, $15 with signature confirmation at $250+).
+- **Sandbox:** the same config is applied to the Stripe sandbox as Terraform workspace `sandbox` (`mise run tf:stripe-sandbox -- apply`, test key from Vault `secret/simic-systems/stripe-test`), so local testing uses an identical catalog. Apply to both after catalog changes.
+- **Shipping emails:** add `tracking_number` (and optionally `carrier`) metadata to a payment in the dashboard; a cron (every 10 min, `src/worker.ts` → `src/lib/email/shipments.ts`) emails the customer and records `shipped_email_tracking`. Dashboard metadata edits emit no webhook, hence the cron.
 - **Drift:** `.github/workflows/stripe-drift.yml` runs `terraform plan` daily and opens a `stripe-drift` issue if Stripe was changed outside Terraform. Don't edit products/prices/shipping rates in the dashboard (except stock).
 - The storefront cache refreshes within ~60 seconds after Stripe changes via webhook.

@@ -9,6 +9,7 @@ resource "stripe_shipping_rate" "standard" {
   display_name = "UPS/USPS Ground"
   tax_code     = "txcd_92010001"
   tax_behavior = "unspecified"
+  type         = "fixed_amount"
 
   fixed_amount {
     amount   = 800
@@ -24,6 +25,7 @@ resource "stripe_shipping_rate" "signature" {
   display_name = "Ground Advantage Signature Confirmation"
   tax_code     = "txcd_92010001"
   tax_behavior = "unspecified"
+  type         = "fixed_amount"
 
   fixed_amount {
     amount   = 1500
