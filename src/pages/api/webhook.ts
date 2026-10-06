@@ -7,6 +7,8 @@ import {
   restoreLineItemStock,
 } from "../../lib/stripeProducts";
 import { getPostHogServer } from "../../lib/posthog-server";
+import { orderEmailFromSession } from "../../lib/email/fromCheckoutSession";
+import { sendOrderConfirmation } from "../../lib/email/send";
 
 const INDEXNOW_KEY = "simic2026seo9x7y5z3w";
 const SITE = "https://simic.systems";
@@ -117,6 +119,25 @@ export const POST: APIRoute = async ({ request, locals }) => {
         },
       });
       locals.cfContext.waitUntil(posthog.flush());
+
+      // Order confirmation email. Deduped per session with its own key, so a
+      // Stripe retry after a later failure in this handler can't send twice.
+      // A send failure is logged rather than failing the webhook: Stripe's
+      // own receipt still reaches the customer, and retrying would replay
+      // the PostHog capture above.
+      const emailKey = `order-email-sent:${session.id}`;
+      if (!(await env.PRODUCT_CACHE.get(emailKey))) {
+        try {
+          const emailData = orderEmailFromSession(fullSession, lineItems, SITE);
+          const messageId = emailData ? await sendOrderConfirmation(env, emailData) : null;
+          if (messageId) {
+            await env.PRODUCT_CACHE.put(emailKey, messageId, { expirationTtl: 30 * 24 * 60 * 60 });
+            console.log(`Order confirmation sent for ${session.id}: ${messageId}`);
+          }
+        } catch (err) {
+          console.error(`Order confirmation email failed for ${session.id}:`, err);
+        }
+      }
 
       // Marked only after processing succeeds — if this throws below (or
       // above), Stripe's retry should actually reprocess, not be swallowed

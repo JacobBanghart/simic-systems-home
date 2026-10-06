@@ -23,6 +23,13 @@
 		{
 			"name": "CONTACT_EMAIL",
 			"destination_address": "contact@simic.systems"
+		},
+		{
+			"name": "ORDER_EMAIL",
+			"allowed_sender_addresses": [
+				"orders@simic.systems"
+			],
+			"remote": true
 		}
 	]
 }

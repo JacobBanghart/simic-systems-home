@@ -145,7 +145,7 @@ export async function retrieveSessionLineItems(
   sessionId: string
 ): Promise<{ session: Stripe.Checkout.Session; lineItems: Stripe.LineItem[] }> {
   const session = await stripe.checkout.sessions.retrieve(sessionId, {
-    expand: ["line_items.data.price.product"],
+    expand: ["line_items.data.price.product", "shipping_cost.shipping_rate"],
   });
   return { session, lineItems: session.line_items?.data || [] };
 }

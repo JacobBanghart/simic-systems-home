@@ -1,12 +1,13 @@
 [tools]
 node = "26.8.2"
+stripe-cli = "latest"
 terraform = "1.15.8"
 
 # Terraform stacks under terraform/, e.g. `mise run tf:stripe -- plan`.
 [tasks."tf:stripe"]
-description = "Terraform for terraform/stripe (STRIPE_API_KEY from .env)"
+description = "Terraform for terraform/stripe (live key from .env STRIPE_LIVE_SECRET_KEY)"
 dir = "terraform/stripe"
-run = 'STRIPE_API_KEY="$(grep -E "^STRIPE_SECRET_KEY=" ../../.env | cut -d= -f2-)" terraform'
+run = 'STRIPE_API_KEY="$(grep -E "^STRIPE_LIVE_SECRET_KEY=" ../../.env | cut -d= -f2-)" terraform'
 
 [tasks."tf:cloudflare"]
 description = "Terraform for terraform/cloudflare (API token from Vault)"

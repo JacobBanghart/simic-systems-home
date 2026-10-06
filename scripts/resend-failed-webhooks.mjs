@@ -29,10 +29,11 @@ const UNTIL = getArg("--until") ? Math.floor(new Date(getArg("--until")).getTime
 
 async function main() {
   const localEnv = await loadLocalEnv(new URL("../", import.meta.url));
-  const stripeKey = process.env.STRIPE_SECRET_KEY || localEnv.STRIPE_SECRET_KEY;
+  const stripeKey =
+    process.env.STRIPE_SECRET_KEY || localEnv.STRIPE_LIVE_SECRET_KEY || localEnv.STRIPE_SECRET_KEY;
 
   if (!stripeKey) {
-    throw new Error("Missing STRIPE_SECRET_KEY. Set it in .env or in the shell.");
+    throw new Error("Missing Stripe key. Set STRIPE_LIVE_SECRET_KEY in .env or STRIPE_SECRET_KEY in the shell.");
   }
 
   const stripe = new Stripe(stripeKey);
