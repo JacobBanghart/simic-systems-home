@@ -1,7 +1,0 @@
-# Copy to .dev.vars for local `astro dev` / `wrangler dev` — these populate
-# the Cloudflare `env` binding at runtime. Use TEST-mode Stripe keys locally.
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-# With an sk_test_ key, order confirmation emails go ONLY here (never to the
-# customer). Leave unset to skip sending entirely.
-ORDER_EMAIL_DEV_TO=you@example.com

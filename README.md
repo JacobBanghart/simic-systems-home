@@ -53,15 +53,17 @@ tests/                       # Vitest unit tests
 | Command | Action |
 |:--|:--|
 | `bun install` | Install dependencies (tool versions: `mise install`) |
-| `bun run dev` | Start dev server at `localhost:4321` |
+| `mise run dev` | Build and run the Worker locally at `127.0.0.1:8787` against the Stripe sandbox (cron: `curl 127.0.0.1:8787/cdn-cgi/handler/scheduled`) |
+| `mise run dev:webhooks` | Forward sandbox webhooks to the local Worker (run alongside `mise run dev`) |
+| `mise run sandbox:order` | Place a paid sandbox order from the real catalog |
 | `bun run build` | Production build to `./dist/` |
 | `bun run check` | Build, typecheck (`tsc`) and `wrangler deploy --dry-run` (what CI runs) |
-| `mise run deploy` | Deploy to Cloudflare Workers: pulls the PostHog token from Vault, then `bun run deploy` behind the deploy gate (below) |
+| `mise run deploy` | Deploy to Cloudflare Workers, behind the deploy gate (below) |
 | `bun run test` | Run Vitest unit tests (not `bun test`) |
 | `bun run lint` | Run ESLint (`lint:fix` to autofix) |
 | `mise run tf:stripe -- plan` | Preview Stripe catalog changes (`terraform/stripe`) |
 | `mise run tf:stripe -- apply` | Apply Stripe catalog changes |
-| `bun run webhook:resend` | Resend failed Stripe webhook deliveries (`webhook:resend:dry` to preview) |
+| `mise run stripe:resend-webhooks` | Resend failed LIVE webhook deliveries (`-- --dry-run` to preview) |
 
 ### Deploy gate
 
@@ -85,7 +87,19 @@ Configured in `wrangler.json`:
 | `STRIPE_WEBHOOK_SECRET` | Secret | Stripe webhook signature verification |
 | `ORDER_EMAIL_DEV_TO` | Secret (optional) | Test-mode (`sk_test_`) emails go only here, never to customers |
 
-Secrets are set via `wrangler secret put` or `.dev.vars` for local development. Copy `.dev.vars.example` to `.dev.vars` and `.env.example` to `.env` to get started; see those files for what each variable is for.
+Production secrets are set on the Worker with `wrangler secret put`.
+
+## Secrets (Vault + mise)
+
+There is no `.env` or `.dev.vars` to maintain. After `vault login -method=oidc role=admin`, mise's `[env]` (`mise.toml`) loads development values from Vault into every shell and task in the repo:
+
+| Variable | Vault (`secret/simic-systems/…`) | Notes |
+|:--|:--|:--|
+| `PUBLIC_POSTHOG_PROJECT_TOKEN` | `posthog` `project_token` | Baked in at build time; the deploy gate requires it |
+| `STRIPE_SECRET_KEY` | `stripe-test` `secret_key` | Sandbox key for local dev, `tf:stripe-sandbox`, `sandbox:order` |
+| `ORDER_EMAIL_DEV_TO` | (your `git config user.email`) | Test-mode emails go only here |
+
+These go through `scripts/cached-secret`, which caches the last good value for 12h in `~/.cache/simic-systems/` (mode 600). When the Vault login expires you get a warning and the cached value, not an error; after logging in again, `mise cache clear` refreshes them. The **live** Stripe key (`stripe-live` `secret_key`) is never loaded into the environment or cached: only `mise run tf:stripe` and `mise run stripe:resend-webhooks` fetch it, at run time. `mise run dev` writes just the Worker's keys to `dist/server/.dev.vars` and refuses to start with anything but a sandbox key.
 
 ## Checkout and Orders
 
@@ -100,7 +114,7 @@ Secrets are set via `wrangler secret put` or `.dev.vars` for local development. 
 
 ## Stripe Catalog Management
 
-Products, prices and shipping rates are managed with Terraform in `terraform/stripe/` (official `stripe/stripe` provider; state in S3). Tool versions are pinned in `mise.toml`; `mise run tf:stripe -- <args>` runs Terraform there with `STRIPE_API_KEY` taken from `.env`.
+Products, prices and shipping rates are managed with Terraform in `terraform/stripe/` (official `stripe/stripe` provider; state in S3). Tool versions are pinned in `mise.toml`; `mise run tf:stripe -- <args>` runs Terraform there with the live key from Vault (`secret/simic-systems/stripe-live`).
 
 ```bash
 mise run tf:stripe -- plan    # preview

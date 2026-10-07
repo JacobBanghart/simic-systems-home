@@ -4,24 +4,66 @@ node = "26.8.2"
 stripe-cli = "1.53.0"
 terraform = "1.15.8"
 
-# Deploy to Cloudflare Workers with the build-time PostHog token from Vault
-# (public by design, but kept out of the repo). Runs the deploy gate first.
+# Secrets for development come from Vault automatically (option "B": mise
+# [env]), through scripts/cached-secret, which caches the last good value for
+# 12h and degrades to a warning when the Vault login has expired. Run
+# `vault login -method=oidc role=admin` (then `mise cache clear` if a value
+# came back empty). Only test-mode and public values live here; the live
+# Stripe key is fetched by the tasks that need it, at run time, never cached.
+[env]
+VAULT_ADDR = "https://vault.k8s-homelab.jacobbanghart.com"
+PUBLIC_POSTHOG_HOST = "https://us.i.posthog.com"
+PUBLIC_POSTHOG_PROJECT_TOKEN = { value = "{{ exec(command=config_root ~ '/scripts/cached-secret posthog-project-token vault kv get -field=project_token secret/simic-systems/posthog') }}", redact = true }
+# The local Worker (mise run dev) runs against the Stripe SANDBOX.
+STRIPE_SECRET_KEY = { value = "{{ exec(command=config_root ~ '/scripts/cached-secret stripe-test-secret-key vault kv get -field=secret_key secret/simic-systems/stripe-test') }}", redact = true }
+# Test-mode order emails go only here (see src/lib/email/send.ts).
+ORDER_EMAIL_DEV_TO = "{{ exec(command='git config user.email || true') }}"
+
+# Deploy to Cloudflare Workers. The build-time PostHog token comes from [env];
+# the deploy gate refuses to ship without it.
 [tasks.deploy]
-description = "Build and deploy the Worker (PostHog token from Vault; deploy gate runs first)"
-run = 'PUBLIC_POSTHOG_PROJECT_TOKEN="$(vault kv get -field=project_token secret/simic-systems/posthog)" PUBLIC_POSTHOG_HOST=https://us.i.posthog.com bun run deploy'
+description = "Build and deploy the Worker (deploy gate runs first)"
+run = "bun run deploy"
+
+# Local development against the Stripe sandbox, e.g. in two terminals:
+#   mise run dev            # production build served by wrangler, cron testable
+#   mise run dev:webhooks   # forwards sandbox webhooks to it
+[tasks.dev]
+description = "Build and run the Worker locally against the Stripe sandbox (curl /cdn-cgi/handler/scheduled to run the cron)"
+# Worker bindings go in dist/server/.dev.vars, written with only the keys the
+# Worker reads (wrangler's "include process env" mode would dump the whole
+# shell environment into that file). STRIPE_WEBHOOK_SECRET is the signing
+# secret `stripe listen` uses on this machine, so dev:webhooks deliveries verify.
+run = """
+set -e
+case "$STRIPE_SECRET_KEY" in sk_test_*) ;; *) echo "refusing: STRIPE_SECRET_KEY is not a sandbox key"; exit 1;; esac
+bun run build
+node scripts/patch-wrangler-deploy.mjs
+umask 077
+{
+  printf 'STRIPE_SECRET_KEY=%s\n' "$STRIPE_SECRET_KEY"
+  printf 'STRIPE_WEBHOOK_SECRET=%s\n' "$(stripe listen --print-secret --api-key "$STRIPE_SECRET_KEY")"
+  printf 'ORDER_EMAIL_DEV_TO=%s\n' "$ORDER_EMAIL_DEV_TO"
+} > dist/server/.dev.vars
+bunx wrangler dev --config dist/server/wrangler.json --test-scheduled
+"""
+
+[tasks."dev:webhooks"]
+description = "Forward Stripe sandbox webhooks to the local Worker"
+run = 'stripe listen --api-key "$STRIPE_SECRET_KEY" --forward-to http://127.0.0.1:8787/api/webhook/'
 
 # Terraform stacks under terraform/, e.g. `mise run tf:stripe -- plan`.
 [tasks."tf:stripe"]
-description = "Terraform for terraform/stripe (live key from .env STRIPE_LIVE_SECRET_KEY)"
+description = "Terraform for terraform/stripe (LIVE key from Vault secret/simic-systems/stripe-live)"
 dir = "terraform/stripe"
 # TF_WORKSPACE pinned so a `terraform workspace select sandbox` left behind in
 # .terraform/environment can never pair the live key with sandbox state.
-run = 'TF_WORKSPACE=default STRIPE_API_KEY="$(grep -E "^STRIPE_LIVE_SECRET_KEY=" ../../.env | cut -d= -f2-)" terraform'
+run = 'TF_WORKSPACE=default STRIPE_API_KEY="$(vault kv get -field=secret_key secret/simic-systems/stripe-live)" terraform'
 
 [tasks."tf:stripe-sandbox"]
 description = "Terraform for terraform/stripe against the Stripe SANDBOX (workspace 'sandbox', key from Vault)"
 dir = "terraform/stripe"
-run = 'TF_WORKSPACE=sandbox STRIPE_API_KEY="$(vault kv get -field=secret_key secret/simic-systems/stripe-test)" terraform'
+run = 'TF_WORKSPACE=sandbox STRIPE_API_KEY="$STRIPE_SECRET_KEY" terraform'
 
 [tasks."tf:cloudflare"]
 description = "Terraform for terraform/cloudflare (API token from Vault)"
@@ -35,4 +77,8 @@ run = "terraform"
 
 [tasks."sandbox:order"]
 description = "Place a paid order in the Stripe SANDBOX from the real catalog (see scripts/sandbox-order.mjs)"
-run = 'STRIPE_SECRET_KEY="$(vault kv get -field=secret_key secret/simic-systems/stripe-test)" node scripts/sandbox-order.mjs'
+run = "node scripts/sandbox-order.mjs"
+
+[tasks."stripe:resend-webhooks"]
+description = "Resend failed LIVE webhook events to the endpoint (live key from Vault)"
+run = 'STRIPE_LIVE_SECRET_KEY="$(vault kv get -field=secret_key secret/simic-systems/stripe-live)" node scripts/resend-failed-webhooks.mjs'

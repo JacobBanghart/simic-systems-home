@@ -4,16 +4,15 @@
  * Fetches all failed webhook delivery attempts for a given event type
  * within a date range and resends them via the Stripe API.
  *
- * Usage:
- *   node scripts/resend-failed-webhooks.mjs
- *   node scripts/resend-failed-webhooks.mjs --type product.updated
- *   node scripts/resend-failed-webhooks.mjs --since 2026-04-06 --until 2026-04-09
- *   node scripts/resend-failed-webhooks.mjs --dry-run
+ * Usage (runs against LIVE Stripe; the key comes from Vault):
+ *   mise run stripe:resend-webhooks
+ *   mise run stripe:resend-webhooks -- --type product.updated
+ *   mise run stripe:resend-webhooks -- --since 2026-04-06 --until 2026-04-09
+ *   mise run stripe:resend-webhooks -- --dry-run
  */
 
 import process from "node:process";
 import Stripe from "stripe";
-import { loadLocalEnv } from "./lib/env.mjs";
 
 const args = process.argv.slice(2);
 const getArg = (flag) => {
@@ -28,13 +27,14 @@ const SINCE = getArg("--since") ? Math.floor(new Date(getArg("--since")).getTime
 const UNTIL = getArg("--until") ? Math.floor(new Date(getArg("--until")).getTime() / 1000) : null;
 
 async function main() {
-  const localEnv = await loadLocalEnv(new URL("../", import.meta.url));
-  const stripeKey =
-    process.env.STRIPE_SECRET_KEY || localEnv.STRIPE_LIVE_SECRET_KEY || localEnv.STRIPE_SECRET_KEY;
-
+  // Only the explicitly-named live key: STRIPE_SECRET_KEY in this repo's
+  // environment is the sandbox key (mise [env]), and silently resending
+  // sandbox events instead of live ones would look like "nothing failed".
+  const stripeKey = process.env.STRIPE_LIVE_SECRET_KEY;
   if (!stripeKey) {
-    throw new Error("Missing Stripe key. Set STRIPE_LIVE_SECRET_KEY in .env or STRIPE_SECRET_KEY in the shell.");
+    throw new Error("Missing STRIPE_LIVE_SECRET_KEY. Run via `mise run stripe:resend-webhooks`.");
   }
+  console.log(`Stripe mode: ${stripeKey.includes("_live_") ? "LIVE" : "TEST"}`);
 
   const stripe = new Stripe(stripeKey);
 
