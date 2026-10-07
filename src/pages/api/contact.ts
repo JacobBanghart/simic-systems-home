@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { EmailMessage } from "cloudflare:email";
 import { env } from "cloudflare:workers";
-import { validateContact, buildRawEmail, type ContactPayload } from "../../lib/contact";
+import { validateContact, buildRawEmail, verifyTurnstile, type ContactPayload } from "../../lib/contact";
 import { getPostHogServer } from "../../lib/posthog-server";
 
 export const prerender = false;
@@ -32,6 +32,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   let body: ContactPayload;
   try {
     body = await request.json();
+    if (!body || typeof body !== "object") throw new Error("not an object");
   } catch {
     return new Response(JSON.stringify({ error: "Invalid request body" }), {
       status: 400,
@@ -52,6 +53,24 @@ export const POST: APIRoute = async ({ request, locals }) => {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
+  }
+
+  // Bot check, once the Turnstile widget is configured (the secret is only
+  // set on the production Worker; local dev skips it).
+  const turnstileSecret = (env as unknown as { TURNSTILE_SECRET_KEY?: string }).TURNSTILE_SECRET_KEY;
+  if (turnstileSecret) {
+    let human = false;
+    try {
+      human = await verifyTurnstile(turnstileSecret, String(body.turnstileToken ?? ""), ip === "unknown" ? null : ip);
+    } catch (err) {
+      console.error("Turnstile verification errored:", err);
+    }
+    if (!human) {
+      return new Response(JSON.stringify({ error: "Please complete the verification and try again." }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
   }
 
   const submission = {

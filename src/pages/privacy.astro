@@ -1,4 +1,8 @@
 ---
+// Rendered per request (not prerendered) so the middleware's security
+// headers and a real per-request script nonce apply, like every other page.
+export const prerender = false;
+
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';

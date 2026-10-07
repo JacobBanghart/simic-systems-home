@@ -129,3 +129,34 @@ describe("buildRawEmail", () => {
     expect(email).not.toMatch(/[^\r]\n/); // no bare LF
   });
 });
+
+describe("contact form hardening", () => {
+  const valid = { name: "John", email: "john@example.com", subject: "Order Question", message: "Hi" };
+
+  it("treats non-object bodies and non-string fields as missing instead of throwing", () => {
+    expect(validateContact(null)).toContain("Name is required");
+    expect(validateContact("nope")).toContain("Email is required");
+    expect(validateContact({ ...valid, name: 42 })).toContain("Name is required");
+  });
+
+  it("caps name and message length", () => {
+    expect(validateContact({ ...valid, name: "x".repeat(101) })).toContain("Name must be 100 characters or fewer");
+    expect(validateContact({ ...valid, message: "x".repeat(5001) })).toContain(
+      "Message must be 5000 characters or fewer"
+    );
+  });
+
+  it("rejects address lists that would become a multi-recipient Reply-To", () => {
+    expect(isValidEmail("a@x.com,evil@y.com")).toBe(false);
+    expect(isValidEmail("a@x.com;evil@y.com")).toBe(false);
+    expect(isValidEmail("Name <a@x.com>")).toBe(false);
+  });
+
+  it("keeps a multi-line message valid MIME (CRLF only, short lines)", () => {
+    const raw = buildRawEmail({ ...valid, message: `line one\nline two\n${"word ".repeat(400)}` });
+    expect(raw).not.toMatch(/[^\r]\n/);
+    expect(Math.max(...raw.split("\r\n").map((l) => l.length))).toBeLessThanOrEqual(998);
+    expect(raw).toMatch(/^Message-ID: <.+@simic\.systems>$/m);
+    expect(raw).toMatch(/^Date: /m);
+  });
+});

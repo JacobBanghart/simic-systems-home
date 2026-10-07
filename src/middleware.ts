@@ -25,28 +25,20 @@ function buildSecurityHeaders(nonce: string): Record<string, string> {
       // CSP violation on an island page after either of those means these
       // need recomputing. The explicit hosts cover third-party scripts,
       // including PostHog's array.js, which it inserts dynamically but
-      // always from this same pre-listed host.
-      `script-src 'self' 'nonce-${nonce}' 'sha256-QzWFZi+FLIx23tnm9SBU4aEgx4x8DsuASP07mfqol/c=' 'sha256-BF0290pkb3jxQsE7z00xR8Imp8X34FLC88L0lkMnrGw=' 'sha256-SaCkFfPruIdTXT8/97JArQmGxiJAL2o4bBDvSgJ5y3Q=' https://analytics.ahrefs.com https://*.i.posthog.com https://*.cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com; ` +
+      // always from this same pre-listed host, and Cloudflare Turnstile on
+      // the contact form (script + challenge iframe).
+      `script-src 'self' 'nonce-${nonce}' 'sha256-QzWFZi+FLIx23tnm9SBU4aEgx4x8DsuASP07mfqol/c=' 'sha256-BF0290pkb3jxQsE7z00xR8Imp8X34FLC88L0lkMnrGw=' 'sha256-SaCkFfPruIdTXT8/97JArQmGxiJAL2o4bBDvSgJ5y3Q=' https://analytics.ahrefs.com https://*.i.posthog.com https://challenges.cloudflare.com; ` +
       "style-src 'self' 'unsafe-inline'; " +
       "font-src 'self' data:; " +
-      "img-src 'self' https://files.stripe.com data: blob: https://*.google-analytics.com; " +
-      "connect-src 'self' https://analytics.ahrefs.com https://api.stripe.com https://*.i.posthog.com https://*.cloudflareinsights.com https://*.google-analytics.com https://www.googletagmanager.com; " +
-      "frame-src https://js.stripe.com https://hooks.stripe.com; " +
+      "img-src 'self' https://files.stripe.com data: blob:; " +
+      "connect-src 'self' https://analytics.ahrefs.com https://api.stripe.com https://*.i.posthog.com; " +
+      "frame-src https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com; " +
       "object-src 'none'; " +
-      "base-uri 'self'",
+      "base-uri 'self'; " +
+      "form-action 'self'; " +
+      "frame-ancestors 'none'",
   };
 }
-
-// Only pages with no per-request nonce'd <script> belong here — caching a
-// response that has a nonce baked into it means every visitor within the
-// cache window shares one nonce, which defeats the point of a nonce and
-// was very likely the mechanism behind a bug where /about/, /faq/,
-// /shipping/, and /contact/ (all of which do use a nonce for JSON-LD
-// scripts) got stuck serving an empty cached response for hours.
-const CACHEABLE_PATHS = new Set([
-  "/privacy/",
-  "/terms/",
-]);
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const nonce = crypto.randomUUID();
@@ -101,10 +93,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   for (const [key, value] of Object.entries(buildSecurityHeaders(nonce))) {
     response.headers.set(key, value);
-  }
-
-  if (CACHEABLE_PATHS.has(context.url.pathname)) {
-    response.headers.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
   }
 
   // In workerd dev mode, astro-island component-url gets an absolute filesystem

@@ -1,8 +1,61 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box, TextField, Button, MenuItem, Alert, ThemeProvider } from "@mui/material";
 import { themeOptions } from "./theme";
 import { getPostHog, getPostHogHeaders } from "../lib/posthog-client";
 import { ErrorBoundary } from "./ErrorBoundary";
+import { TURNSTILE_SITE_KEY, TURNSTILE_TEST_SITE_KEY } from "../consts";
+
+interface TurnstileApi {
+  render: (el: HTMLElement, options: Record<string, unknown>) => string;
+  reset: (widgetId?: string) => void;
+}
+declare global {
+  interface Window {
+    turnstile?: TurnstileApi;
+  }
+}
+
+const TURNSTILE_ENABLED = Boolean(TURNSTILE_SITE_KEY);
+
+function turnstileSiteKey(): string {
+  if (!TURNSTILE_SITE_KEY) return "";
+  const host = typeof window === "undefined" ? "" : window.location.hostname;
+  return host === "localhost" || host === "127.0.0.1" ? TURNSTILE_TEST_SITE_KEY : TURNSTILE_SITE_KEY;
+}
+
+// Loads Cloudflare Turnstile once and renders the widget into `ref`; the token
+// it produces is sent with the form and verified by /api/contact.
+function useTurnstile(onToken: (token: string) => void) {
+  const ref = useRef<HTMLDivElement>(null);
+  const widgetId = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const sitekey = turnstileSiteKey();
+    if (!sitekey || !ref.current) return;
+    const render = () => {
+      if (!window.turnstile || !ref.current || widgetId.current) return;
+      widgetId.current = window.turnstile.render(ref.current, {
+        sitekey,
+        theme: "dark",
+        callback: onToken,
+        "expired-callback": () => onToken(""),
+      });
+    };
+    if (window.turnstile) {
+      render();
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    script.async = true;
+    script.onload = render;
+    document.head.appendChild(script);
+  }, [onToken]);
+  const reset = () => {
+    onToken("");
+    window.turnstile?.reset(widgetId.current);
+  };
+  return [ref, reset] as const;
+}
 
 const SUBJECTS = ["Order Question", "Product Inquiry", "Returns/Refunds", "Other"];
 
@@ -14,6 +67,8 @@ function ContactFormContent() {
   const [honey, setHoney] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileRef, resetTurnstile] = useTurnstile(setTurnstileToken);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +84,7 @@ function ContactFormContent() {
           "Content-Type": "application/json",
           ...getPostHogHeaders(),
         },
-        body: JSON.stringify({ name, email, subject, message, _honey: honey }),
+        body: JSON.stringify({ name, email, subject, message, _honey: honey, turnstileToken }),
       });
       const data: { success?: boolean; error?: string } = await res.json();
 
@@ -52,6 +107,8 @@ function ContactFormContent() {
       ph?.captureException?.(err);
     } finally {
       setLoading(false);
+      // Tokens are single-use: get a fresh one for any further submission.
+      if (TURNSTILE_ENABLED) resetTurnstile();
     }
   };
 
@@ -81,6 +138,7 @@ function ContactFormContent() {
         onChange={(e) => setName(e.target.value)}
         required
         size="small"
+        slotProps={{ htmlInput: { maxLength: 100 } }}
       />
       <TextField
         label="Email"
@@ -112,7 +170,10 @@ function ContactFormContent() {
         multiline
         rows={5}
         size="small"
+        slotProps={{ htmlInput: { maxLength: 5000 } }}
       />
+
+      {TURNSTILE_ENABLED && <div ref={turnstileRef} />}
 
       {result && (
         <Alert severity={result.type} onClose={() => setResult(null)}>
@@ -123,7 +184,7 @@ function ContactFormContent() {
       <Button
         type="submit"
         variant="contained"
-        disabled={loading}
+        disabled={loading || (TURNSTILE_ENABLED && !turnstileToken)}
         sx={{ textTransform: "none", alignSelf: "flex-start" }}
       >
         {loading ? "Sending..." : "Send Message"}
