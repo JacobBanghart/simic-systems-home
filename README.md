@@ -56,7 +56,7 @@ tests/                       # Vitest unit tests
 | `bun run dev` | Start dev server at `localhost:4321` |
 | `bun run build` | Production build to `./dist/` |
 | `bun run check` | Build, typecheck (`tsc`) and `wrangler deploy --dry-run` (what CI runs) |
-| `bun run deploy` | Deploy to Cloudflare Workers, behind the deploy gate (below) |
+| `mise run deploy` | Deploy to Cloudflare Workers: pulls the PostHog token from Vault, then `bun run deploy` behind the deploy gate (below) |
 | `bun run test` | Run Vitest unit tests (not `bun test`) |
 | `bun run lint` | Run ESLint (`lint:fix` to autofix) |
 | `mise run tf:stripe -- plan` | Preview Stripe catalog changes (`terraform/stripe`) |
@@ -65,7 +65,7 @@ tests/                       # Vitest unit tests
 
 ### Deploy gate
 
-`bun run deploy` first runs `scripts/predeploy-check.mjs` and refuses to continue unless the working tree is clean (untracked files included), the branch is `main`, `HEAD` equals `origin/main` (after a `git fetch`), and `lint` and `test` pass. Each failure is listed with its reason. Emergency bypass: `DEPLOY_SKIP_CHECKS=1 bun run deploy` (prints a loud warning).
+`bun run deploy` first runs `scripts/predeploy-check.mjs` and refuses to continue unless the working tree is clean (untracked files included), the branch is `main`, `HEAD` equals `origin/main` (after a `git fetch`), `lint` and `test` pass, and `PUBLIC_POSTHOG_PROJECT_TOKEN` is set (a build without it ships with analytics off). Each failure is listed with its reason. Emergency bypass: `DEPLOY_SKIP_CHECKS=1 bun run deploy` (prints a loud warning).
 
 CI (`.github/workflows/ci.yml`) runs lint, tests and `bun run check`, plus `terraform fmt -check` / `init -backend=false` / `validate` for each stack under `terraform/`.
 

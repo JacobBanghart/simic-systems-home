@@ -2,6 +2,7 @@
 // Refuses to deploy unless the tree is clean, on main, HEAD == origin/main,
 // and lint + tests pass. Set DEPLOY_SKIP_CHECKS=1 to bypass (loudly).
 import { spawnSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
 
 if (process.env.DEPLOY_SKIP_CHECKS === "1") {
   console.warn("\n!!! DEPLOY_SKIP_CHECKS=1: SKIPPING ALL PRE-DEPLOY CHECKS !!!");
@@ -15,6 +16,20 @@ const git = (...args) => {
 };
 
 const problems = [];
+
+// 0. Build-time env. PUBLIC_* values are baked into the bundle at build time;
+// a deploy without the PostHog token silently ships the site with analytics
+// (browser and server-side purchase events) switched off, which went
+// unnoticed for a while. `mise run deploy` pulls it from Vault.
+const dotenv = existsSync(".env") ? readFileSync(".env", "utf8") : "";
+const fromDotenv = dotenv.match(/^PUBLIC_POSTHOG_PROJECT_TOKEN=(.*)$/m)?.[1]?.trim();
+const posthogToken = process.env.PUBLIC_POSTHOG_PROJECT_TOKEN || fromDotenv || "";
+if (!posthogToken.startsWith("phc_")) {
+  problems.push(
+    "PUBLIC_POSTHOG_PROJECT_TOKEN is not set, so the build would ship with analytics off. " +
+      "Deploy with `mise run deploy` (reads it from Vault secret/simic-systems/posthog).",
+  );
+}
 
 // 1. Branch
 const branch = git("rev-parse", "--abbrev-ref", "HEAD");

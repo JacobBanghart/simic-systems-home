@@ -4,6 +4,12 @@ node = "26.8.2"
 stripe-cli = "1.53.0"
 terraform = "1.15.8"
 
+# Deploy to Cloudflare Workers with the build-time PostHog token from Vault
+# (public by design, but kept out of the repo). Runs the deploy gate first.
+[tasks.deploy]
+description = "Build and deploy the Worker (PostHog token from Vault; deploy gate runs first)"
+run = 'PUBLIC_POSTHOG_PROJECT_TOKEN="$(vault kv get -field=project_token secret/simic-systems/posthog)" PUBLIC_POSTHOG_HOST=https://us.i.posthog.com bun run deploy'
+
 # Terraform stacks under terraform/, e.g. `mise run tf:stripe -- plan`.
 [tasks."tf:stripe"]
 description = "Terraform for terraform/stripe (live key from .env STRIPE_LIVE_SECRET_KEY)"
