@@ -33,11 +33,10 @@ Simic Systems LLC is based in North Hollywood, CA. All products are factory-seal
 - [Terms of Service](https://simic.systems/terms/): Governs use of simic.systems and purchases. Covers product availability, payment via Stripe, US-only shipping and shipping fees, all-sales-final policy, and liability limitations.
 - [Privacy Policy](https://simic.systems/privacy/): Data collected (name, email, shipping address, order info). Third-party services: Stripe (payments), Cloudflare (hosting), Cloudflare Email Service (order emails), Pirate Ship and carriers (shipping labels), PostHog (product analytics, uses a first-party cookie/local storage identifier), Ahrefs Analytics (cookieless). No data sold to third parties.
 
-## Contact & Location
+## Contact
 
 - **Email**: contact@simic.systems
 - **Phone**: [phone removed]
-- **Address**: [address removed]
 - **Business hours**: Orders processed Monday–Friday
 - **Response time**: Email responses typically within 1 business day
 
